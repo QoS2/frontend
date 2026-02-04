@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { NaverMapView, NaverMapMarker, NaverMapCircleOverlay } from '@mj-studio/react-native-naver-map';
+import { NaverMapView, NaverMapMarkerOverlay, NaverMapCircleOverlay } from '@mj-studio/react-native-naver-map';
 import { LocationMarker } from '../../shared/api/contracts';
 
 interface MapViewWidgetProps {
@@ -24,7 +24,7 @@ export function MapViewWidget({ markers, onMarkerPress, userLocation, activeMark
       >
         {markers.map((marker) => (
           <React.Fragment key={marker.id}>
-            <NaverMapMarker
+            <NaverMapMarkerOverlay
               latitude={marker.coordinate.latitude}
               longitude={marker.coordinate.longitude}
               caption={{ text: marker.title }}
