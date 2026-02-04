@@ -31,12 +31,6 @@
     "plugins": [
       "expo-router",
       [
-        "@mj-studio/react-native-naver-map",
-        {
-          "client_id": "YOUR_NAVER_MAP_CLIENT_ID"
-        }
-      ],
-      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Quest of Seoul to use your location."

@@ -11,7 +11,7 @@ interface QuestBoardProps {
 
 export function QuestBoard({ quests }: QuestBoardProps) {
   const { completeQuest, completedQuestIds } = useUserProgress();
-  const [activeQuestIndex, setActiveQuestIndex] = useState(0);
+  const [activeQuestIndex] = useState(0);
 
   const currentQuest = quests[activeQuestIndex];
   const isCompleted = currentQuest ? completedQuestIds.includes(currentQuest.id) : false;

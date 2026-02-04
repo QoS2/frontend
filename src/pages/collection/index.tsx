@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, FlatList } from 'react-native';
+import { View, FlatList } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import { useUserProgress } from '../../entities/user/model';
 import { useLocationMarkers } from '../../entities/location/model';
