@@ -1,15 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
-import { NaverMapView, NaverMapMarker } from '@mj-studio/react-native-naver-map';
+import { NaverMapView, NaverMapMarker, NaverMapCircleOverlay } from '@mj-studio/react-native-naver-map';
 import { LocationMarker } from '../../shared/api/contracts';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
   onMarkerPress: (marker: LocationMarker) => void;
   userLocation: { latitude: number; longitude: number } | null;
+  activeMarkerId?: string | null;
 }
 
-export function MapViewWidget({ markers, onMarkerPress, userLocation }: MapViewWidgetProps) {
+export function MapViewWidget({ markers, onMarkerPress, userLocation, activeMarkerId }: MapViewWidgetProps) {
   return (
     <View className="flex-1">
       <NaverMapView
@@ -22,13 +23,24 @@ export function MapViewWidget({ markers, onMarkerPress, userLocation }: MapViewW
         isShowLocationButton={true}
       >
         {markers.map((marker) => (
-          <NaverMapMarker
-            key={marker.id}
-            latitude={marker.coordinate.latitude}
-            longitude={marker.coordinate.longitude}
-            caption={{ text: marker.title }}
-            onTap={() => onMarkerPress(marker)}
-          />
+          <React.Fragment key={marker.id}>
+            <NaverMapMarker
+              latitude={marker.coordinate.latitude}
+              longitude={marker.coordinate.longitude}
+              caption={{ text: marker.title }}
+              onTap={() => onMarkerPress(marker)}
+            />
+            {activeMarkerId === marker.id && (
+              <NaverMapCircleOverlay
+                latitude={marker.coordinate.latitude}
+                longitude={marker.coordinate.longitude}
+                radius={marker.radius}
+                color={'rgba(0, 122, 255, 0.3)'}
+                outlineColor={'#007AFF'}
+                outlineWidth={2}
+              />
+            )}
+          </React.Fragment>
         ))}
       </NaverMapView>
     </View>
