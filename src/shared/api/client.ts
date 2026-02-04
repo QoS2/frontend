@@ -4,7 +4,7 @@ import {
   ChatResponseSchema,
   ChatRequest,
   LocationMarker,
-  GuideContent
+  GuideContent,
 } from './contracts';
 
 // Mock Data
@@ -28,16 +28,21 @@ const MOCK_MARKERS: LocationMarker[] = [
     description: 'A statue dedicated to the naval commander.',
     contentId: null,
     thumbnailUrl: 'https://placehold.co/100x100.png',
-  }
+  },
 ];
 
 const MOCK_CONTENT: Record<string, GuideContent> = {
   'content-1': {
     id: 'content-1',
-    script: "Welcome to Gwanghwamun Gate! This is the main gate of Gyeongbokgung Palace. It has been restored to its original glory.",
+    script:
+      'Welcome to Gwanghwamun Gate! This is the main gate of Gyeongbokgung Palace. It has been restored to its original glory.',
     mediaMap: [
       { triggerIndex: 0, mediaUrl: 'https://placehold.co/400x300.png', type: 'IMAGE' },
-      { triggerIndex: 50, mediaUrl: 'https://placehold.co/400x300/orange/white.png', type: 'IMAGE' }
+      {
+        triggerIndex: 50,
+        mediaUrl: 'https://placehold.co/400x300/orange/white.png',
+        type: 'IMAGE',
+      },
     ],
     quests: [
       {
@@ -46,31 +51,31 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
         question: 'When was this gate originally built?',
         options: ['1395', '1950', '2010'],
         answer: '1395',
-        rewardMint: 50
-      }
-    ]
-  }
+        rewardMint: 50,
+      },
+    ],
+  },
 };
 
 export const apiClient = {
   getMarkers: async () => {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     return GetMarkersResponseSchema.parse(MOCK_MARKERS);
   },
 
   getGuideContent: async (contentId: string) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     const content = MOCK_CONTENT[contentId];
     if (!content) throw new Error('Content not found');
     return GetContentResponseSchema.parse(content);
   },
 
   sendChatMessage: async (payload: ChatRequest) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const response = {
-      reply: `AI Response to: "${payload.message}". This gate is very historical.`
+      reply: `AI Response to: "${payload.message}". This gate is very historical.`,
     };
     return ChatResponseSchema.parse(response);
-  }
+  },
 };

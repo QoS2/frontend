@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text } from '../../shared/ui/Text';
-import { useGuideContent } from '../../entities/guide/model';
-import { useTextStream } from '../../shared/lib/hooks/useTextStream';
-import { GuidePlayer } from '../../widgets/guide-player';
-import { QuestBoard } from '../../widgets/quest-board';
+import { Text } from '../../../shared/ui/Text';
+import { useGuideContent } from '../../../entities/guide/model';
+import { useTextStream } from '../../../shared/lib/hooks/useTextStream';
+import { GuidePlayer } from '../../../widgets/guide-player';
+import { QuestBoard } from '../../../widgets/quest-board';
 
 export function StepDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,21 +39,19 @@ export function StepDetailPage() {
 
       <ScrollView className="flex-1 p-4" contentContainerStyle={{ paddingBottom: 100 }}>
         <GuidePlayer content={content} currentIndex={currentIndex} />
-        
-        <TouchableOpacity 
-          activeOpacity={1} 
-          onPress={skip} 
+
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={skip}
           className="mt-6 p-4 bg-gray-50 rounded-2xl min-h-[150px]"
         >
-          <Text className="text-lg leading-7 text-gray-800">
-            {displayedText}
-          </Text>
+          <Text className="text-lg leading-7 text-gray-800">{displayedText}</Text>
         </TouchableOpacity>
 
         {isComplete && !showQuests && (
           <View className="mt-8">
             <Text className="text-lg font-bold mb-4">Ready for missions?</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-blue-600 p-4 rounded-xl items-center"
               onPress={() => setShowQuests(true)}
             >
@@ -62,9 +60,7 @@ export function StepDetailPage() {
           </View>
         )}
 
-        {showQuests && (
-          <QuestBoard quests={content.quests} />
-        )}
+        {showQuests && <QuestBoard quests={content.quests} />}
       </ScrollView>
     </View>
   );

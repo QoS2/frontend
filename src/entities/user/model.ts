@@ -9,7 +9,7 @@ interface UserProgressState {
   completedQuestIds: string[];
   inventory: any[]; // Define specific type if needed
   totalMint: number;
-  
+
   // Actions
   setCurrentStep: (stepId: string | null) => void;
   addVisitedPlace: (placeId: string) => void;
@@ -28,18 +28,20 @@ export const useUserProgress = create<UserProgressState>()(
       totalMint: 0,
 
       setCurrentStep: (stepId) => set({ currentStepId: stepId }),
-      addVisitedPlace: (placeId) => set((state) => ({ 
-        visitedPlaceIds: [...new Set([...state.visitedPlaceIds, placeId])] 
-      })),
+      addVisitedPlace: (placeId) =>
+        set((state) => ({
+          visitedPlaceIds: [...new Set([...state.visitedPlaceIds, placeId])],
+        })),
       updateTextProgress: (index) => set({ textProgressIndex: index }),
-      completeQuest: (questId, reward) => set((state) => ({
-        completedQuestIds: [...new Set([...state.completedQuestIds, questId])],
-        totalMint: state.totalMint + reward
-      })),
+      completeQuest: (questId, reward) =>
+        set((state) => ({
+          completedQuestIds: [...new Set([...state.completedQuestIds, questId])],
+          totalMint: state.totalMint + reward,
+        })),
     }),
     {
       name: 'user-progress-storage',
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );

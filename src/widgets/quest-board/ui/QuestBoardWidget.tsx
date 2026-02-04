@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { Text } from '../../shared/ui/Text';
-import { QuestPlay } from '../../features/quest-play';
-import { Quest } from '../../shared/api/contracts';
-import { useUserProgress } from '../../entities/user/model';
+import { Text } from '../../../shared/ui/Text';
+import { QuestPlay } from '../../../features/quest-play';
+import { Quest } from '../../../shared/api/contracts';
+import { useUserProgress } from '../../../entities/user/model';
 
 interface QuestBoardProps {
   quests: Quest[];
@@ -26,7 +26,9 @@ export function QuestBoard({ quests }: QuestBoardProps) {
 
   return (
     <View className="mt-4">
-      <Text className="text-xl font-bold mb-4">Quest {activeQuestIndex + 1}/{quests.length}</Text>
+      <Text className="text-xl font-bold mb-4">
+        Quest {activeQuestIndex + 1}/{quests.length}
+      </Text>
       {isCompleted ? (
         <View className="p-8 bg-green-50 rounded-2xl items-center">
           <Text className="text-green-700 font-bold text-lg">Quest Completed!</Text>

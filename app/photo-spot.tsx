@@ -10,10 +10,10 @@ export default function PhotoSpotScreen() {
   return (
     <View className="flex-1 bg-black">
       <AROverlay overlayImageUrl="https://placehold.co/400x400/png?text=Photo+Guide" />
-      
+
       {/* UI Overlays */}
       <View className="absolute top-12 left-4">
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.back()}
           className="bg-black/50 px-4 py-2 rounded-full"
         >

@@ -1,4 +1,4 @@
-import { CollectionPage } from '../../src/pages/collection';
+import { CollectionPage } from '@pages/collection';
 
 export default function CollectionScreen() {
   return <CollectionPage />;

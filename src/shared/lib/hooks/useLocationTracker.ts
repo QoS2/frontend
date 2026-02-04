@@ -31,7 +31,7 @@ export function useLocationTracker() {
         },
         (newLocation) => {
           setLocation(newLocation.coords);
-        }
+        },
       );
 
       return () => {

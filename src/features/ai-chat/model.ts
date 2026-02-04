@@ -21,28 +21,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isStreaming: false,
 
-  addMessage: (msg) => set((state) => ({
-    messages: [
-      ...state.messages,
-      {
-        ...msg,
-        id: Math.random().toString(36).substring(7),
-        timestamp: Date.now(),
-      }
-    ]
-  })),
+  addMessage: (msg) =>
+    set((state) => ({
+      messages: [
+        ...state.messages,
+        {
+          ...msg,
+          id: Math.random().toString(36).substring(7),
+          timestamp: Date.now(),
+        },
+      ],
+    })),
 
   setStreaming: (isStreaming) => set({ isStreaming }),
 
   streamReply: (fullText) => {
     const id = Math.random().toString(36).substring(7);
     const timestamp = Date.now();
-    
+
     set({ isStreaming: true });
-    
+
     // Add empty message first
     set((state) => ({
-      messages: [...state.messages, { id, sender: 'ai', text: '', timestamp }]
+      messages: [...state.messages, { id, sender: 'ai', text: '', timestamp }],
     }));
 
     let currentText = '';
@@ -51,7 +52,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (currentText.length < fullText.length) {
         currentText += fullText[currentText.length];
         set((state) => ({
-          messages: state.messages.map((m) => m.id === id ? { ...m, text: currentText } : m)
+          messages: state.messages.map((m) => (m.id === id ? { ...m, text: currentText } : m)),
         }));
       } else {
         clearInterval(interval);

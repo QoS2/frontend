@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, TextInput } from 'react-native';
-import { Text } from '../../shared/ui/Text';
-import { Quest } from '../../shared/api/contracts';
+import { Text } from '../../../shared/ui/Text';
+import { Quest } from '../../../shared/api/contracts';
 
 interface QuestPlayProps {
   quest: Quest;
@@ -56,7 +56,7 @@ export function QuestPlay({ quest, onComplete }: QuestPlayProps) {
         />
       )}
 
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={handleCheck}
         className="mt-6 bg-blue-600 p-4 rounded-xl items-center"
       >
@@ -64,7 +64,9 @@ export function QuestPlay({ quest, onComplete }: QuestPlayProps) {
       </TouchableOpacity>
 
       {isCorrect === true && (
-        <Text className="mt-4 text-green-600 font-bold text-center">Correct! +{quest.rewardMint} Mint</Text>
+        <Text className="mt-4 text-green-600 font-bold text-center">
+          Correct! +{quest.rewardMint} Mint
+        </Text>
       )}
       {isCorrect === false && (
         <Text className="mt-4 text-red-600 font-bold text-center">Try again!</Text>

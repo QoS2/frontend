@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import { Text } from '../../shared/ui/Text';
+import { Text } from '../../../shared/ui/Text';
 
 interface AROverlayProps {
   overlayImageUrl?: string;
@@ -19,10 +19,7 @@ export function AROverlay({ overlayImageUrl }: AROverlayProps) {
     return (
       <View className="flex-1 justify-center items-center p-4">
         <Text className="text-center mb-4">We need your permission to show the camera</Text>
-        <Text 
-          className="text-blue-500 font-bold"
-          onPress={requestPermission}
-        >
+        <Text className="text-blue-500 font-bold" onPress={requestPermission}>
           Grant Permission
         </Text>
       </View>

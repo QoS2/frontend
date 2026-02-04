@@ -14,7 +14,7 @@ export function useTextStream({ text, speed = 30, autoStart = true }: UseTextStr
 
   const startStreaming = useCallback(() => {
     if (timerRef.current) return;
-    
+
     setIsComplete(false);
     setDisplayedText('');
     setCurrentIndex(0);

@@ -8,9 +8,5 @@ interface ProvidersProps {
 }
 
 export function QueryProvider({ children }: ProvidersProps) {
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

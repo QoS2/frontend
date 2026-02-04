@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useLocationTracker } from '../../shared/lib/hooks/useLocationTracker';
-import { useLocationMarkers } from '../../entities/location/model';
-import { getDistance } from '../../shared/lib/geo';
+import { useLocationTracker } from '@shared/lib/hooks/useLocationTracker';
+import { useLocationMarkers } from '@entities/location/model';
+import { getDistance } from '@shared/lib/geo';
 import { useMapNavigationStore } from './model';
 
 const DWELL_TIME_MS = 3000;
@@ -11,7 +11,7 @@ export function useGeofenceTrigger() {
   const { location } = useLocationTracker();
   const { data: markers } = useLocationMarkers();
   const { activeMarkerId, setActiveMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
-  
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function useGeofenceTrigger() {
         location.latitude,
         location.longitude,
         marker.coordinate.latitude,
-        marker.coordinate.longitude
+        marker.coordinate.longitude,
       );
 
       if (distance <= marker.radius) {

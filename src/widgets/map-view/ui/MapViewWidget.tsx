@@ -1,7 +1,11 @@
 import React from 'react';
 import { View } from 'react-native';
-import { NaverMapView, NaverMapMarkerOverlay, NaverMapCircleOverlay } from '@mj-studio/react-native-naver-map';
-import { LocationMarker } from '../../shared/api/contracts';
+import {
+  NaverMapView,
+  NaverMapMarkerOverlay,
+  NaverMapCircleOverlay,
+} from '@mj-studio/react-native-naver-map';
+import { LocationMarker } from '@shared/api/contracts';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
@@ -10,7 +14,12 @@ interface MapViewWidgetProps {
   activeMarkerId?: string | null;
 }
 
-export function MapViewWidget({ markers, onMarkerPress, userLocation, activeMarkerId }: MapViewWidgetProps) {
+export function MapViewWidget({
+  markers,
+  onMarkerPress,
+  userLocation,
+  activeMarkerId,
+}: MapViewWidgetProps) {
   return (
     <View className="flex-1">
       <NaverMapView
