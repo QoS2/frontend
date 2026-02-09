@@ -1,5 +1,6 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useRef, useMemo } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BottomSheet from '@gorhom/bottom-sheet';
 import { MapViewWidget } from '@widgets/map-view';
 import { AIChatWidget } from '@widgets/ai-chat';
 import { useLocationMarkers } from '@entities/location/model';
@@ -8,6 +9,9 @@ import { useGeofenceTrigger } from '@features/map-navigation/useGeofenceTrigger'
 import { useMapNavigationStore } from '@features/map-navigation/model';
 
 export function MapPage() {
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['15%', '50%', '90%'], []);
+
   const { data: markers = [] } = useLocationMarkers();
   const { location } = useLocationTracker();
   const { activeMarkerId } = useMapNavigationStore();
@@ -20,14 +24,23 @@ export function MapPage() {
   };
 
   return (
-    <View className="flex-1">
+    <GestureHandlerRootView className="flex-1">
       <MapViewWidget
         markers={markers}
         userLocation={location}
         onMarkerPress={handleMarkerPress}
         activeMarkerId={activeMarkerId}
       />
-      <AIChatWidget />
-    </View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={false}
+        backgroundStyle={{ backgroundColor: 'white' }}
+        handleIndicatorStyle={{ backgroundColor: '#D1D5DB' }}
+      >
+        <AIChatWidget />
+      </BottomSheet>
+    </GestureHandlerRootView>
   );
 }

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text } from '@shared/ui/Text';
+import { Text, Button, Input, Avatar, AvatarFallback, Separator } from '@shared/ui';
 import { useChatStore } from '@features/ai-chat/model';
 import { useMapNavigationStore } from '@features/map-navigation/model';
 import { useLocationMarkers } from '@entities/location/model';
@@ -20,7 +21,6 @@ export function AIChatWidget() {
 
   useEffect(() => {
     if (activeMarker && messages.length === 0) {
-      // Initial greeting from AI
       streamReply(`Welcome to ${activeMarker.title}! ${activeMarker.description}`);
     }
   }, [activeMarker, messages.length, streamReply]);
@@ -34,7 +34,7 @@ export function AIChatWidget() {
 
   const handleCollectTreasure = () => {
     if (activeMarker) {
-      completeQuest(activeMarker.id, 100); // 100 Mint for treasure
+      completeQuest(activeMarker.id, 100);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       addMessage({
         sender: 'ai',
@@ -44,7 +44,6 @@ export function AIChatWidget() {
   };
 
   const handleTakePhoto = () => {
-    // Navigate to AR/Photo page (to be implemented)
     router.push('/photo-spot');
   };
 
@@ -54,7 +53,6 @@ export function AIChatWidget() {
     addMessage({ sender: 'user', text: inputText });
     setInputText('');
 
-    // Simulate AI response
     setTimeout(() => {
       streamReply(
         `I'm your AI guide for ${activeMarker?.title}. You asked about "${inputText}". This is a very interesting place with a long history...`,
@@ -62,71 +60,83 @@ export function AIChatWidget() {
     }, 500);
   };
 
-  // if (!triggeredMarkerId || !activeMarker) return null; // Always visible for testing
-
   const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg p-4 h-1/2">
-      <View className="flex-row justify-between items-center mb-4">
+    <View className="flex-1 bg-white px-4">
+      {/* Header */}
+      <View className="py-4">
         <Text className="text-xl font-bold">{displayTitle}</Text>
-
-        {activeMarker?.type === 'PLACE' && (
-          <TouchableOpacity
-            className="bg-blue-500 px-4 py-2 rounded-full"
-            onPress={handleEnterStep}
-          >
-            <Text className="text-white font-semibold">Enter Step Page</Text>
-          </TouchableOpacity>
-        )}
-
-        {activeMarker?.type === 'TREASURE' && (
-          <TouchableOpacity
-            className="bg-yellow-500 px-4 py-2 rounded-full"
-            onPress={handleCollectTreasure}
-          >
-            <Text className="text-black font-semibold">Collect</Text>
-          </TouchableOpacity>
-        )}
-
-        {activeMarker?.type === 'PHOTO' && (
-          <TouchableOpacity
-            className="bg-purple-500 px-4 py-2 rounded-full"
-            onPress={handleTakePhoto}
-          >
-            <Text className="text-white font-semibold">Take Photo</Text>
-          </TouchableOpacity>
-        )}
+        <Separator className="mt-2" />
       </View>
 
-      <ScrollView className="flex-1 mb-4">
+      {/* Action Buttons */}
+      {activeMarker && (
+        <View className="flex-row gap-2 mb-2">
+          {activeMarker.type === 'PLACE' && (
+            <Button size="sm" onPress={handleEnterStep}>
+              <Text className="text-primary-foreground font-semibold">Enter Step</Text>
+            </Button>
+          )}
+          {activeMarker.type === 'TREASURE' && (
+            <Button size="sm" variant="secondary" onPress={handleCollectTreasure}>
+              <Text className="font-semibold">Collect</Text>
+            </Button>
+          )}
+          {activeMarker.type === 'PHOTO' && (
+            <Button size="sm" variant="outline" onPress={handleTakePhoto}>
+              <Text className="font-semibold">Take Photo</Text>
+            </Button>
+          )}
+        </View>
+      )}
+
+      {/* Messages */}
+      <BottomSheetScrollView className="flex-1 mb-4" contentContainerStyle={{ paddingBottom: 16 }}>
         {messages.map((msg) => (
           <View
             key={msg.id}
-            className={`mb-2 p-3 rounded-2xl max-w-[80%] ${
-              msg.sender === 'ai' ? 'bg-gray-100 self-start' : 'bg-blue-100 self-end'
-            }`}
+            className={`flex-row mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <Text>{msg.text}</Text>
+            {msg.sender === 'ai' && (
+              <Avatar alt="AI Guide" className="w-8 h-8 mr-2">
+                <AvatarFallback>
+                  <Text className="text-xs">AI</Text>
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <View
+              className={`max-w-[75%] p-3 rounded-2xl ${
+                msg.sender === 'ai' ? 'bg-muted' : 'bg-primary'
+              }`}
+            >
+              <Text className={msg.sender === 'ai' ? '' : 'text-primary-foreground'}>
+                {msg.text}
+              </Text>
+            </View>
           </View>
         ))}
-      </ScrollView>
+      </BottomSheetScrollView>
 
-      <View className="flex-row items-center border-t border-gray-200 pt-2">
-        <TextInput
-          className="flex-1 bg-gray-50 rounded-full px-4 py-2 mr-2"
+      {/* Input Area */}
+      <View className="flex-row items-center gap-2 pb-4 border-t border-border pt-2">
+        <Input
+          className="flex-1"
           placeholder="Ask AI Guide..."
           value={inputText}
           onChangeText={setInputText}
           editable={!isStreaming}
         />
-        <TouchableOpacity
-          className={`p-2 rounded-full ${isStreaming ? 'bg-gray-300' : 'bg-blue-500'}`}
-          onPress={handleSend}
-          disabled={isStreaming}
-        >
-          <Text className="text-white">Send</Text>
-        </TouchableOpacity>
+        <Button size="icon" onPress={handleSend} disabled={isStreaming || !inputText.trim()}>
+          <Text className="text-primary-foreground text-lg">→</Text>
+        </Button>
+      </View>
+
+      {/* Next Guide Button */}
+      <View className="pb-4">
+        <Button className="w-full" variant="outline">
+          <Text className="font-semibold">Start next guide</Text>
+        </Button>
       </View>
     </View>
   );
