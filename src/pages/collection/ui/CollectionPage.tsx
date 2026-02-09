@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, FlatList } from 'react-native';
 import { Text } from '@shared/ui/Text';
 import { useUserProgress } from '@entities/user/model';
@@ -8,9 +8,13 @@ export function CollectionPage() {
   const { completedQuestIds, visitedPlaceIds, totalMint } = useUserProgress();
   const { data: markers } = useLocationMarkers();
 
-  const collectedItems =
-    markers?.filter((m) => visitedPlaceIds.includes(m.id) || completedQuestIds.includes(m.id)) ??
-    [];
+  const collectedItems = useMemo(
+    () =>
+      markers?.filter(
+        (m) => visitedPlaceIds.includes(m.id) || completedQuestIds.includes(m.id),
+      ) ?? [],
+    [markers, visitedPlaceIds, completedQuestIds],
+  );
 
   return (
     <View className="flex-1 bg-white p-4">

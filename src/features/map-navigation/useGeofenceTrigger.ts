@@ -1,25 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useLocationTracker } from '@shared/lib/hooks/useLocationTracker';
 import { useLocationMarkers } from '@entities/location/model';
 import { getDistance } from '@shared/lib/geo';
 import { useMapNavigationStore } from './model';
+import { LocationMarker } from '@shared/api/contracts';
 
 const DWELL_TIME_MS = 3000;
 
-export function useGeofenceTrigger() {
-  const { location } = useLocationTracker();
-  const { data: markers } = useLocationMarkers();
-  const { activeMarkerId, setActiveMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
+// Pure calculation hook
+function useGeofence(
+  location: { latitude: number; longitude: number } | null,
+  markers: LocationMarker[] | undefined,
+) {
+  return useMemo(() => {
+    if (!location || !markers) return null;
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (!location || !markers) return;
-
-    let currentMarkerId: string | null = null;
-
-    // Find if user is within any marker's radius
     for (const marker of markers) {
       const distance = getDistance(
         location.latitude,
@@ -29,12 +25,23 @@ export function useGeofenceTrigger() {
       );
 
       if (distance <= marker.radius) {
-        currentMarkerId = marker.id;
-        break;
+        return marker.id;
       }
     }
+    return null;
+  }, [location, markers]);
+}
 
-    // Handle state transitions
+export function useGeofenceTrigger() {
+  const { location } = useLocationTracker();
+  const { data: markers } = useLocationMarkers();
+  const { activeMarkerId, setActiveMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
+
+  const currentMarkerId = useGeofence(location, markers);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Handle state transitions based on calculated currentMarkerId
     if (currentMarkerId !== activeMarkerId) {
       // Clear existing timer if any
       if (timerRef.current) {
@@ -62,5 +69,5 @@ export function useGeofenceTrigger() {
         clearTimeout(timerRef.current);
       }
     };
-  }, [location, markers, activeMarkerId, setActiveMarkerId, setTriggeredMarkerId]);
+  }, [currentMarkerId, activeMarkerId, setActiveMarkerId, setTriggeredMarkerId]);
 }
