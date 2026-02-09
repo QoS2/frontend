@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { Text, Button, Input, Avatar, AvatarFallback, Separator } from '@shared/ui';
+import { Text, Avatar, AvatarFallback } from '@shared/ui';
 import { useChatStore } from '@features/ai-chat/model';
 import { useMapNavigationStore } from '@features/map-navigation/model';
 import { useLocationMarkers } from '@entities/location/model';
@@ -11,11 +11,10 @@ import { useUserProgress } from '@entities/user/model';
 
 export function AIChatWidget() {
   const router = useRouter();
-  const { messages, addMessage, streamReply, isStreaming } = useChatStore();
+  const { messages, streamReply } = useChatStore();
   const { triggeredMarkerId } = useMapNavigationStore();
   const { data: markers } = useLocationMarkers();
-  const { setCurrentStep, completeQuest } = useUserProgress();
-  const [inputText, setInputText] = useState('');
+  const { setCurrentStep } = useUserProgress();
 
   const activeMarker = markers?.find((m) => m.id === triggeredMarkerId);
 
@@ -32,112 +31,76 @@ export function AIChatWidget() {
     }
   };
 
-  const handleCollectTreasure = () => {
-    if (activeMarker) {
-      completeQuest(activeMarker.id, 100);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      addMessage({
-        sender: 'ai',
-        text: `You found the treasure: ${activeMarker.title}! 100 Mint added.`,
-      });
-    }
-  };
-
-  const handleTakePhoto = () => {
-    router.push('/photo-spot');
-  };
-
-  const handleSend = () => {
-    if (!inputText.trim() || isStreaming) return;
-
-    addMessage({ sender: 'user', text: inputText });
-    setInputText('');
-
-    setTimeout(() => {
-      streamReply(
-        `I'm your AI guide for ${activeMarker?.title}. You asked about "${inputText}". This is a very interesting place with a long history...`,
-      );
-    }, 500);
-  };
-
   const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';
 
   return (
-    <View className="flex-1 bg-white px-4">
+    <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="py-4">
-        <Text className="text-xl font-bold">{displayTitle}</Text>
-        <Separator className="mt-2" />
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
+        <View className="flex-row items-center flex-1">
+          <TouchableOpacity>
+            <Ionicons name="chevron-back-outline" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <View className="flex-row items-center ml-2 flex-1">
+            <View className="bg-[#5AC8FA] rounded-full w-7 h-7 items-center justify-center">
+              <Text className="text-white text-xs font-bold">3</Text>
+            </View>
+            <Text className="text-base font-bold ml-2 flex-1">{displayTitle}</Text>
+          </View>
+        </View>
+
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity className="bg-white rounded-3xl px-3 py-1.5 flex-row items-center border border-gray-200">
+            <Ionicons name="list" size={16} color="#000" />
+            <Text className="text-xs font-bold ml-1.5">Guide List</Text>
+          </TouchableOpacity>
+
+          <View className="bg-gray-100 rounded-2xl px-3 py-1.5 flex-row items-center">
+            <Ionicons name="checkmark-circle" size={14} color="#666" />
+            <Text className="text-xs text-gray-600 ml-1">Done</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Action Buttons */}
-      {activeMarker && (
-        <View className="flex-row gap-2 mb-2">
-          {activeMarker.type === 'PLACE' && (
-            <Button size="sm" onPress={handleEnterStep}>
-              <Text className="text-primary-foreground font-semibold">Enter Step</Text>
-            </Button>
-          )}
-          {activeMarker.type === 'TREASURE' && (
-            <Button size="sm" variant="secondary" onPress={handleCollectTreasure}>
-              <Text className="font-semibold">Collect</Text>
-            </Button>
-          )}
-          {activeMarker.type === 'PHOTO' && (
-            <Button size="sm" variant="outline" onPress={handleTakePhoto}>
-              <Text className="font-semibold">Take Photo</Text>
-            </Button>
-          )}
-        </View>
-      )}
-
       {/* Messages */}
-      <BottomSheetScrollView className="flex-1 mb-4" contentContainerStyle={{ paddingBottom: 16 }}>
+      <BottomSheetScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
         {messages.map((msg) => (
           <View
             key={msg.id}
-            className={`flex-row mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex-row mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.sender === 'ai' && (
-              <Avatar alt="AI Guide" className="w-8 h-8 mr-2">
+              <Avatar alt="AI Guide" className="w-10 h-10 mr-2">
                 <AvatarFallback>
-                  <Text className="text-xs">AI</Text>
+                  <Text className="text-base">🐯</Text>
                 </AvatarFallback>
               </Avatar>
             )}
             <View
-              className={`max-w-[75%] p-3 rounded-2xl ${
-                msg.sender === 'ai' ? 'bg-muted' : 'bg-primary'
+              className={`max-w-[75%] px-4 py-3 rounded-2xl ${
+                msg.sender === 'ai'
+                  ? 'bg-gray-100 border border-gray-200 rounded-tl-none'
+                  : 'bg-[#4FAAF0] rounded-br-none'
               }`}
             >
-              <Text className={msg.sender === 'ai' ? '' : 'text-primary-foreground'}>
+              <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
                 {msg.text}
               </Text>
             </View>
           </View>
         ))}
+
+        {/* Start Next Guide Button */}
+        <TouchableOpacity
+          onPress={handleEnterStep}
+          className="bg-[#8DC6F0] rounded-2xl p-4 flex-row items-center justify-center mt-4 mb-24"
+        >
+          <Ionicons name="people" size={20} color="#333" />
+          <Text className="text-base font-semibold text-gray-800 mx-2">Start next guide</Text>
+          <Ionicons name="arrow-forward" size={18} color="#333" />
+        </TouchableOpacity>
       </BottomSheetScrollView>
-
-      {/* Input Area */}
-      <View className="flex-row items-center gap-2 pb-4 border-t border-border pt-2">
-        <Input
-          className="flex-1"
-          placeholder="Ask AI Guide..."
-          value={inputText}
-          onChangeText={setInputText}
-          editable={!isStreaming}
-        />
-        <Button size="icon" onPress={handleSend} disabled={isStreaming || !inputText.trim()}>
-          <Text className="text-primary-foreground text-lg">→</Text>
-        </Button>
-      </View>
-
-      {/* Next Guide Button */}
-      <View className="pb-4">
-        <Button className="w-full" variant="outline">
-          <Text className="font-semibold">Start next guide</Text>
-        </Button>
-      </View>
     </View>
   );
 }

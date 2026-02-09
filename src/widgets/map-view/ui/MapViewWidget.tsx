@@ -23,7 +23,7 @@ export function MapViewWidget({
   return (
     <View className="flex-1">
       <NaverMapView
-        style={{ width: '100%', height: 500 }}
+        style={{ width: '100%', height: '100%' }}
         initialCamera={{
           latitude: 37.5759,
           longitude: 126.9768,
