@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
-import { Text } from '../../../shared/ui/Text';
-import { GuideContent } from '../../../shared/api/contracts';
+import { Text } from '@shared/ui/Text';
+import { GuideContent } from '@shared/api/contracts';
 
 interface GuidePlayerProps {
   content: GuideContent;

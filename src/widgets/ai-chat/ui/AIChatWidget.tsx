@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text } from '../../../shared/ui/Text';
-import { useChatStore } from '../../../features/ai-chat/model';
-import { useMapNavigationStore } from '../../../features/map-navigation/model';
-import { useLocationMarkers } from '../../../entities/location/model';
-import { useUserProgress } from '../../../entities/user/model';
+import { Text } from '@shared/ui/Text';
+import { useChatStore } from '@features/ai-chat/model';
+import { useMapNavigationStore } from '@features/map-navigation/model';
+import { useLocationMarkers } from '@entities/location/model';
+import { useUserProgress } from '@entities/user/model';
 
 export function AIChatWidget() {
   const router = useRouter();
@@ -62,14 +62,16 @@ export function AIChatWidget() {
     }, 500);
   };
 
-  if (!triggeredMarkerId || !activeMarker) return null;
+  // if (!triggeredMarkerId || !activeMarker) return null; // Always visible for testing
+
+  const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';
 
   return (
     <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg p-4 h-1/2">
       <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-xl font-bold">{activeMarker.title}</Text>
+        <Text className="text-xl font-bold">{displayTitle}</Text>
 
-        {activeMarker.type === 'PLACE' && (
+        {activeMarker?.type === 'PLACE' && (
           <TouchableOpacity
             className="bg-blue-500 px-4 py-2 rounded-full"
             onPress={handleEnterStep}
@@ -78,7 +80,7 @@ export function AIChatWidget() {
           </TouchableOpacity>
         )}
 
-        {activeMarker.type === 'TREASURE' && (
+        {activeMarker?.type === 'TREASURE' && (
           <TouchableOpacity
             className="bg-yellow-500 px-4 py-2 rounded-full"
             onPress={handleCollectTreasure}
@@ -87,7 +89,7 @@ export function AIChatWidget() {
           </TouchableOpacity>
         )}
 
-        {activeMarker.type === 'PHOTO' && (
+        {activeMarker?.type === 'PHOTO' && (
           <TouchableOpacity
             className="bg-purple-500 px-4 py-2 rounded-full"
             onPress={handleTakePhoto}

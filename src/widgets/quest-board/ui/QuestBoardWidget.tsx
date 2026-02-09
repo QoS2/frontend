@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { QuestPlay } from '../../../features/quest-play';
-import { Quest } from '../../../shared/api/contracts';
-import { useUserProgress } from '../../../entities/user/model';
+import { Text } from '@shared/ui/Text';
+import { QuestPlay } from '@features/quest-play';
+import { Quest } from '@shared/api/contracts';
+import { useUserProgress } from '@entities/user/model';
 
 interface QuestBoardProps {
   quests: Quest[];

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, TextInput } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { Quest } from '../../../shared/api/contracts';
+import { Text } from '@shared/ui/Text';
+import { Quest } from '@shared/api/contracts';
 
 interface QuestPlayProps {
   quest: Quest;

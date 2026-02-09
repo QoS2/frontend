@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, FlatList } from 'react-native';
-import { Text } from '../../../shared/ui/Text';
-import { useUserProgress } from '../../../entities/user/model';
-import { useLocationMarkers } from '../../../entities/location/model';
+import { Text } from '@shared/ui/Text';
+import { useUserProgress } from '@entities/user/model';
+import { useLocationMarkers } from '@entities/location/model';
 
 export function CollectionPage() {
   const { completedQuestIds, visitedPlaceIds, totalMint } = useUserProgress();

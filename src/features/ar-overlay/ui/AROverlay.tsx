@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import { Text } from '../../../shared/ui/Text';
+import { Text } from '@shared/ui/Text';
 
 interface AROverlayProps {
   overlayImageUrl?: string;
