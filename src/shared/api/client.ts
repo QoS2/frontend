@@ -10,17 +10,17 @@ import {
 // Mock Data
 const MOCK_MARKERS: LocationMarker[] = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     type: 'PLACE',
     coordinate: { latitude: 37.5759, longitude: 126.9768 }, // Gwanghwamun
     radius: 50,
     title: 'Gwanghwamun Gate',
     description: 'The main gate of Gyeongbokgung Palace.',
-    contentId: 'content-1',
+    contentId: '550e8400-e29b-41d4-a716-446655440011',
     thumbnailUrl: 'https://placehold.co/100x100.png',
   },
   {
-    id: '2',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     type: 'SUB_PLACE',
     coordinate: { latitude: 37.574, longitude: 126.9768 }, // Gwanghwamun Square
     radius: 30,
@@ -32,8 +32,8 @@ const MOCK_MARKERS: LocationMarker[] = [
 ];
 
 const MOCK_CONTENT: Record<string, GuideContent> = {
-  'content-1': {
-    id: 'content-1',
+  '550e8400-e29b-41d4-a716-446655440011': {
+    id: '550e8400-e29b-41d4-a716-446655440011',
     script:
       'Welcome to Gwanghwamun Gate! This is the main gate of Gyeongbokgung Palace. It has been restored to its original glory.',
     mediaMap: [
@@ -46,7 +46,7 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
     ],
     quests: [
       {
-        id: 'q1',
+        id: '550e8400-e29b-41d4-a716-446655440021',
         type: 'MULTIPLE_CHOICE',
         question: 'When was this gate originally built?',
         options: ['1395', '1950', '2010'],
