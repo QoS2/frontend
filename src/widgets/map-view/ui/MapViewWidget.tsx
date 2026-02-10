@@ -6,6 +6,7 @@ import {
   NaverMapCircleOverlay,
 } from '@mj-studio/react-native-naver-map';
 import { LocationMarker } from '@shared/api/contracts';
+import { getDistance } from '@shared/lib/geo';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
@@ -38,15 +39,15 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
   const getMarkerImage = (type: string) => {
     switch (type) {
       case 'PLACE':
-        return require('../../../../assets/icons/place.png');
+        return require('@shared/assets/icons/place.png');
       case 'SUB_PLACE':
-        return require('../../../../assets/icons/sub-place.png');
+        return require('@shared/assets/icons/sub-place.png');
       case 'PHOTO':
-        return require('../../../../assets/icons/photo.png');
+        return require('@shared/assets/icons/photo.png');
       case 'TREASURE':
-        return require('../../../../assets/icons/treasure.png');
+        return require('@shared/assets/icons/treasure.png');
       default:
-        return require('../../../../assets/icons/place.png');
+        return require('@shared/assets/icons/place.png');
     }
   };
 
@@ -61,6 +62,8 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
     }
   };
 
+
+
   return (
     <View className="flex-1">
       <NaverMapView
@@ -73,12 +76,28 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
         }}
         isShowLocationButton={false}
         isShowZoomControls={false}
+        locale="en"
+        maxZoom={18}
+        minZoom={14}
         onCameraChanged={handleCameraChange}
       >
         {visibleMarkers.map((marker) => {
           const image = getMarkerImage(marker.type);
           const size = getMarkerSize(marker.type);
-          
+
+          /* Calculate distance to user */
+          const distance = userLocation
+           ? getDistance(
+               userLocation.latitude,
+               userLocation.longitude,
+               marker.coordinate.latitude,
+               marker.coordinate.longitude,
+             )
+           : Infinity;
+
+          /* Show circle if active OR within 50m */
+          const showCircle = activeMarkerId === marker.id || distance < 50;
+
           return (
             <React.Fragment key={marker.id}>
               <NaverMapMarkerOverlay
@@ -88,22 +107,22 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
                 image={image}
                 width={size.width}
                 height={size.height}
+                anchor={{ x: 0.5, y: 0.5 }}
                 onTap={() => onMarkerPress(marker)}
               />
-              {activeMarkerId === marker.id && (
+              {showCircle && (
                 <NaverMapCircleOverlay
                   latitude={marker.coordinate.latitude}
                   longitude={marker.coordinate.longitude}
                   radius={marker.radius}
                   color={'rgba(0, 122, 255, 0.3)'}
                   outlineColor={'#007AFF'}
-                  outlineWidth={2}
                 />
               )}
             </React.Fragment>
           );
         })}
-        </NaverMapView>
+      </NaverMapView>
       </View>
     );
   },

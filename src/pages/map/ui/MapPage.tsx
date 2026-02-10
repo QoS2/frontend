@@ -1,4 +1,4 @@
-import React, {useRef, useMemo, useState, useCallback} from 'react';
+import React, {useRef, useMemo, useState, useCallback, useEffect} from 'react';
 import {View, TouchableOpacity, Keyboard} from 'react-native';
 import {Image} from 'expo-image';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -30,8 +30,18 @@ export function MapPage() {
 
     useGeofenceTrigger();
 
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            mapRef.current?.setLocationTrackingMode('Follow');
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleMarkerPress = (marker: any) => {
-        console.log('Marker pressed:', marker.title);
+      // TODO : 클릭 시 어떤 상호작용 할지 
+        console.log(`[Marker Click] ${marker.title}: ${marker.coordinate.latitude}, ${marker.coordinate.longitude}`);
     };
 
     const handleLocationButtonPress = () => {
@@ -70,7 +80,7 @@ export function MapPage() {
                     }}
                 >
                     <Image
-                        source={require('../../../../assets/icons/locate.svg')}
+                        source={require('@shared/assets/icons/locate.svg')}
                         style={{width: 48, height: 48}}
                         contentFit="contain"
                     />
@@ -140,7 +150,7 @@ export function MapPage() {
                         className="items-center justify-center"
                     >
                         <Image
-                            source={require('../../../../assets/icons/icon-park-solid_voice-one.svg')}
+                            source={require('@shared/assets/icons/icon-park-solid_voice-one.svg')}
                             style={{width: 28, height: 28}}
                             contentFit="contain"
                         />
