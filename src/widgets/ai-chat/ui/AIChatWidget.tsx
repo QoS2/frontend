@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
+import { ChatAvatar } from '@shared/assets/icons';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
-import { Text, Avatar} from '@shared/ui';
+import { Text} from '@shared/ui';
 import { useChatStore } from '@features/ai-chat/model';
 import { useMapNavigationStore } from '@features/map-navigation/model';
 import { useLocationMarkers } from '@entities/location/model';
@@ -73,11 +73,7 @@ export function AIChatWidget() {
           >
             {msg.sender === 'ai' && (
               <View className="w-10 h-10 mr-4">
-                <Image
-                  source={require('@shared/assets/icons/chat-avatar.svg')}
-                  style={{ width: 40, height: 40 }}
-                  contentFit="contain"
-                />
+                <ChatAvatar width={40} height={40} />
               </View>
             )}
             <View

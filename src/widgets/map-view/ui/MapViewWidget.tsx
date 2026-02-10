@@ -80,6 +80,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
         maxZoom={18}
         minZoom={14}
         onCameraChanged={handleCameraChange}
+        isShowCompass={false}
       >
         {visibleMarkers.map((marker) => {
           const image = getMarkerImage(marker.type);

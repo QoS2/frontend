@@ -28,6 +28,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    "src/declarations.d.ts",
     "nativewind-env.d.ts"
   ]
 }

@@ -1,10 +1,10 @@
 import React, {useRef, useMemo, useState, useCallback, useEffect} from 'react';
 import {View, TouchableOpacity, Keyboard} from 'react-native';
-import {Image} from 'expo-image';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Ionicons} from '@expo/vector-icons';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
+import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
 
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
@@ -79,11 +79,7 @@ export function MapPage() {
                         elevation: 5,
                     }}
                 >
-                    <Image
-                        source={require('@shared/assets/icons/locate.svg')}
-                        style={{width: 48, height: 48}}
-                        contentFit="contain"
-                    />
+                    <LocateIcon width={48} height={48} />
                 </TouchableOpacity>
             </View>
         ),
@@ -149,11 +145,7 @@ export function MapPage() {
                         disabled={!inputText.trim() || isStreaming}
                         className="items-center justify-center"
                     >
-                        <Image
-                            source={require('@shared/assets/icons/icon-park-solid_voice-one.svg')}
-                            style={{width: 28, height: 28}}
-                            contentFit="contain"
-                        />
+                        <VoiceIcon width={28} height={28} />
                     </TouchableOpacity>
                 </View>
                 <Spacing size={16}/>
