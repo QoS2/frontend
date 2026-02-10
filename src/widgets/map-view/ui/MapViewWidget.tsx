@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View } from 'react-native';
 import {
   NaverMapView,
@@ -14,44 +14,43 @@ interface MapViewWidgetProps {
   activeMarkerId?: string | null;
 }
 
-export function MapViewWidget({
-  markers,
-  onMarkerPress,
-  userLocation,
-  activeMarkerId,
-}: MapViewWidgetProps) {
-  return (
-    <View className="flex-1">
-      <NaverMapView
-        style={{ width: '100%', height: '100%' }}
-        initialCamera={{
-          latitude: 37.5759,
-          longitude: 126.9768,
-          zoom: 15,
-        }}
-        isShowLocationButton={true}
-      >
-        {markers.map((marker) => (
-          <React.Fragment key={marker.id}>
-            <NaverMapMarkerOverlay
-              latitude={marker.coordinate.latitude}
-              longitude={marker.coordinate.longitude}
-              caption={{ text: marker.title }}
-              onTap={() => onMarkerPress(marker)}
-            />
-            {activeMarkerId === marker.id && (
-              <NaverMapCircleOverlay
+export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, MapViewWidgetProps>(
+  ({ markers, onMarkerPress, userLocation, activeMarkerId }, ref) => {
+    return (
+      <View className="flex-1">
+        <NaverMapView
+          ref={ref}
+          style={{ width: '100%', height: '100%' }}
+          initialCamera={{
+            latitude: 37.5759,
+            longitude: 126.9768,
+            zoom: 15,
+          }}
+          isShowLocationButton={false}
+          isShowZoomControls={false}
+        >
+          {markers.map((marker) => (
+            <React.Fragment key={marker.id}>
+              <NaverMapMarkerOverlay
                 latitude={marker.coordinate.latitude}
                 longitude={marker.coordinate.longitude}
-                radius={marker.radius}
-                color={'rgba(0, 122, 255, 0.3)'}
-                outlineColor={'#007AFF'}
-                outlineWidth={2}
+                caption={{ text: marker.title }}
+                onTap={() => onMarkerPress(marker)}
               />
-            )}
-          </React.Fragment>
-        ))}
-      </NaverMapView>
-    </View>
-  );
-}
+              {activeMarkerId === marker.id && (
+                <NaverMapCircleOverlay
+                  latitude={marker.coordinate.latitude}
+                  longitude={marker.coordinate.longitude}
+                  radius={marker.radius}
+                  color={'rgba(0, 122, 255, 0.3)'}
+                  outlineColor={'#007AFF'}
+                  outlineWidth={2}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </NaverMapView>
+      </View>
+    );
+  },
+);
