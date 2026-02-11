@@ -15,4 +15,6 @@ config.resolver = {
   sourceExts: [...resolver.sourceExts, 'svg'],
 };
 
+config.maxWorkers = 1;
+
 module.exports = withNativeWind(config, { input: './global.css' });

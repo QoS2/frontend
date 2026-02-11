@@ -51,7 +51,7 @@ export function MapPage() {
         if (!inputText.trim() || isStreaming) return;
         Keyboard.dismiss();
 
-        addMessage({sender: 'user', text: inputText});
+        addMessage({sender: 'user', text: inputText, type: 'text'});
         setInputText('');
 
         setTimeout(() => {
@@ -119,12 +119,15 @@ export function MapPage() {
                 activeMarkerId={activeMarkerId}
             />
 
-            {/* Bottom Sheet */}
             <BottomSheet
                 ref={bottomSheetRef}
                 index={1}
                 snapPoints={snapPoints}
+                enableDynamicSizing={false}
                 enablePanDownToClose={false}
+                enableContentPanningGesture={true}
+                keyboardBehavior="interactive"
+                keyboardBlurBehavior="restore"
                 backgroundStyle={{backgroundColor: 'white'}}
                 handleComponent={renderHandle}
             >

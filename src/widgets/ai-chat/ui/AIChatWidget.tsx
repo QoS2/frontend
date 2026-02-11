@@ -1,5 +1,5 @@
-import {useEffect} from 'react';
-import {View, TouchableOpacity} from 'react-native';
+import {useEffect, useRef} from 'react';
+import {View, TouchableOpacity, Image, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {BottomSheetStackParamList} from '@features/bottom-sheet';
@@ -8,7 +8,7 @@ import {ChatAvatar} from '@shared/assets/icons';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
 import { Text} from '@shared/ui';
-import { useChatStore } from '@features/ai-chat';
+import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useUserProgress } from '@entities/user';
@@ -18,6 +18,7 @@ type NavigationProp = NativeStackNavigationProp<BottomSheetStackParamList, 'Chat
 export function AIChatWidget() {
   const router = useRouter();
   const navigation = useNavigation<NavigationProp>();
+  const scrollViewRef = useRef<ScrollView>(null);
   const {messages, streamReply} = useChatStore();
   const {triggeredMarkerId} = useMapNavigationStore();
   const {data: markers} = useLocationMarkers();
@@ -38,11 +39,70 @@ export function AIChatWidget() {
     }
   };
 
+  const handleAction = (action: ChatAction) => {
+    switch (action.actionId) {
+      case 'start-game':
+        // TODO: Implement game start logic
+        console.log('Start Game triggered');
+        break;
+      case 'next-guide':
+        handleEnterStep();
+        break;
+      default:
+        console.warn('Unknown action:', action.actionId);
+    }
+  };
+
   const handleShowGuideList = () => {
     navigation.navigate('GuideList');
   };
 
   const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';
+
+  const renderMessageContent = (msg: ChatMessage) => {
+    switch (msg.type) {
+      case 'image':
+        return (
+          <View className="rounded-2xl overflow-hidden border border-gray-200 mt-1">
+            <Image 
+              source={msg.imageUrl} 
+              style={{ width: 220, height: 160 }} 
+              resizeMode="cover" 
+            />
+          </View>
+        );
+      case 'action':
+        return (
+          <View className="flex-col gap-2 mt-1 min-w-[200px]">
+            {msg.actions?.map((action, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => handleAction(action)}
+                className="bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90"
+              >
+                  {/* Icon logic can be added here if needed */}
+                  <Text className="text-[#5AC8FA] font-bold text-base">{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        );
+      case 'text':
+      default:
+        return (
+          <View
+            className={`px-4 py-3 rounded-2xl max-w-[85%] ${
+              msg.sender === 'ai'
+                ? 'bg-gray-100 border border-gray-200 rounded-tl-none'
+                : 'bg-[#4FAAF0] rounded-br-none'
+            }`}
+          >
+            <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
+              {msg.text || ''}
+            </Text>
+          </View>
+        );
+    }
+  };
 
   return (
     <View className="flex-1 bg-white">
@@ -74,7 +134,12 @@ export function AIChatWidget() {
       </View>
 
       {/* Messages */}
-      <BottomSheetScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+      <BottomSheetScrollView 
+        ref={scrollViewRef}
+        className="flex-1" 
+        contentContainerStyle={{ padding: 16 }}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {messages.map((msg) => (
           <View
             key={msg.id}
@@ -85,29 +150,13 @@ export function AIChatWidget() {
                 <ChatAvatar width={40} height={40} />
               </View>
             )}
-            <View
-              className={`max-w-[75%] px-4 py-3 rounded-2xl ${
-                msg.sender === 'ai'
-                  ? 'bg-gray-100 border border-gray-200 rounded-tl-none'
-                  : 'bg-[#4FAAF0] rounded-br-none'
-              }`}
-            >
-              <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
-                {msg.text}
-              </Text>
-            </View>
+            
+            {/* Render Content based on Type */}
+            {renderMessageContent(msg)}
           </View>
         ))}
 
-        {/* Start Next Guide Button */}
-        <TouchableOpacity
-          onPress={handleEnterStep}
-          className="bg-[#8DC6F0] rounded-2xl p-4 flex-row items-center justify-center mt-4 mb-24"
-        >
-          <Users size={20} color="#333" />
-          <Text className="text-base font-semibold text-gray-800 mx-2">Start next guide</Text>
-          <ArrowRight size={18} color="#333" />
-        </TouchableOpacity>
+        {/* Removed Static 'Start Next Guide' Button - Now dynamically rendered via actions */}
       </BottomSheetScrollView>
     </View>
   );

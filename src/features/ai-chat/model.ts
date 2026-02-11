@@ -1,9 +1,20 @@
 import { create } from 'zustand';
 
+export type MessageType = 'text' | 'image' | 'action';
+
+export interface ChatAction {
+  label: string;
+  actionId: string;
+  data?: any;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'ai' | 'user';
-  text: string;
+  type: MessageType;
+  text?: string;
+  imageUrl?: any;
+  actions?: ChatAction[];
   timestamp: number;
   tags?: string[];
 }
@@ -43,7 +54,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Add empty message first
     set((state) => ({
-      messages: [...state.messages, { id, sender: 'ai', text: '', timestamp }],
+      messages: [...state.messages, { id, sender: 'ai', type: 'text', text: '', timestamp }],
     }));
 
     let currentText = '';
