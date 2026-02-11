@@ -1,7 +1,7 @@
 import React, {useRef, useMemo, useState, useCallback, useEffect} from 'react';
 import {View, TouchableOpacity, Keyboard} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Ionicons} from '@expo/vector-icons';
+import {Mic} from 'lucide-react-native';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
 import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
@@ -9,11 +9,12 @@ import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
 import {AIChatWidget} from '@widgets/ai-chat';
-import {useLocationMarkers} from '@entities/location/model';
-import {useLocationTracker} from '@shared/lib/hooks/useLocationTracker';
-import {useGeofenceTrigger} from '@features/map-navigation/useGeofenceTrigger';
-import {useMapNavigationStore} from '@features/map-navigation/model';
-import {useChatStore} from '@features/ai-chat/model';
+import {GuideListWidget} from '@widgets/guide-list';
+import {useLocationMarkers} from '@entities/location';
+import {useLocationTracker} from '@shared/lib';
+import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
+import {useChatStore} from '@features/ai-chat';
+import {useBottomSheetStore} from '@features/bottom-sheet';
 import {Input, Spacing} from '@shared/ui';
 
 export function MapPage() {
@@ -22,6 +23,7 @@ export function MapPage() {
     const snapPoints = useMemo(() => ['25%', '50%', '85%'], []);
 
     const [inputText, setInputText] = useState('');
+    const { currentView } = useBottomSheetStore();
 
     const {data: markers = []} = useLocationMarkers();
     const {location} = useLocationTracker();
@@ -111,7 +113,7 @@ export function MapPage() {
                 backgroundStyle={{backgroundColor: 'white'}}
                 handleComponent={renderHandle}
             >
-                <AIChatWidget/>
+                {currentView === 'chat' ? <AIChatWidget /> : <GuideListWidget />}
             </BottomSheet>
 
             {/* Floating Input - Fixed at Bottom */}
@@ -138,7 +140,7 @@ export function MapPage() {
                         returnKeyType="send"
                     />
                     <TouchableOpacity className="p-2 mr-1">
-                        <Ionicons name="mic" size={24} color="#6B7280"/>
+                        <Mic size={24} color="#6B7280"/>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={handleSend}
