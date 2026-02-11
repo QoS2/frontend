@@ -1,23 +1,27 @@
-import { useEffect } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { List, ArrowRight, CheckCircle, Send, Users } from 'lucide-react-native';
-import { ChatAvatar } from '@shared/assets/icons';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {useEffect} from 'react';
+import {View, TouchableOpacity} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {BottomSheetStackParamList} from '@features/bottom-sheet';
+import {List, ArrowRight, CheckCircle, Users} from 'lucide-react-native';
+import {ChatAvatar} from '@shared/assets/icons';
+import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
 import { Text} from '@shared/ui';
 import { useChatStore } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useUserProgress } from '@entities/user';
-import { useBottomSheetStore } from '@features/bottom-sheet';
+
+type NavigationProp = NativeStackNavigationProp<BottomSheetStackParamList, 'Chat'>;
 
 export function AIChatWidget() {
   const router = useRouter();
-  const { messages, streamReply } = useChatStore();
-  const { triggeredMarkerId } = useMapNavigationStore();
-  const { data: markers } = useLocationMarkers();
-  const { setCurrentStep } = useUserProgress();
-  const { setView } = useBottomSheetStore();
+  const navigation = useNavigation<NavigationProp>();
+  const {messages, streamReply} = useChatStore();
+  const {triggeredMarkerId} = useMapNavigationStore();
+  const {data: markers} = useLocationMarkers();
+  const {setCurrentStep} = useUserProgress();
 
   const activeMarker = markers?.find((m) => m.id === triggeredMarkerId);
 
@@ -35,7 +39,7 @@ export function AIChatWidget() {
   };
 
   const handleShowGuideList = () => {
-    setView('guide-list');
+    navigation.navigate('GuideList');
   };
 
   const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';

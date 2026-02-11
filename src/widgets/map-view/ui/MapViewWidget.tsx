@@ -7,6 +7,7 @@ import {
 } from '@mj-studio/react-native-naver-map';
 import { LocationMarker } from '@shared/api/contracts';
 import { getDistance } from '@shared/lib/geo';
+import { PlaceIcon, SubPlaceIcon, PhotoIcon, TreasureIcon } from '@shared/assets/icons';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
@@ -35,19 +36,19 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
     });
   }, [markers, zoomLevel]);
 
-  /* Helper to get marker image based on type */
-  const getMarkerImage = (type: string) => {
+  /* Helper to get marker icon component based on type */
+  const getMarkerIcon = (type: string) => {
     switch (type) {
       case 'PLACE':
-        return require('@shared/assets/icons/place.png');
+        return PlaceIcon;
       case 'SUB_PLACE':
-        return require('@shared/assets/icons/sub-place.png');
+        return SubPlaceIcon;
       case 'PHOTO':
-        return require('@shared/assets/icons/photo.png');
+        return PhotoIcon;
       case 'TREASURE':
-        return require('@shared/assets/icons/treasure.png');
+        return TreasureIcon;
       default:
-        return require('@shared/assets/icons/place.png');
+        return PlaceIcon;
     }
   };
 
@@ -55,14 +56,12 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
   const getMarkerSize = (type: string) => {
     switch (type) {
       case 'PLACE': return { width: 40, height: 40 };
-      case 'SUB_PLACE': return { width: 30, height: 30 };
-      case 'PHOTO': return { width: 30, height: 30 };
+      case 'SUB_PLACE': return { width: 25, height: 25 };
+      case 'PHOTO': return { width: 25, height: 25 };
       case 'TREASURE': return { width: 25, height: 25 };
       default: return { width: 30, height: 30 };
     }
   };
-
-
 
   return (
     <View className="flex-1">
@@ -83,7 +82,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
         isShowCompass={false}
       >
         {visibleMarkers.map((marker) => {
-          const image = getMarkerImage(marker.type);
+          const Icon = getMarkerIcon(marker.type);
           const size = getMarkerSize(marker.type);
 
           /* Calculate distance to user */
@@ -105,12 +104,14 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
                 latitude={marker.coordinate.latitude}
                 longitude={marker.coordinate.longitude}
                 caption={{ text: marker.title, textSize: 12 }}
-                image={image}
                 width={size.width}
                 height={size.height}
                 anchor={{ x: 0.5, y: 0.5 }}
                 onTap={() => onMarkerPress(marker)}
-              />
+              >
+                  <Icon width={size.width} height={size.height} />
+              </NaverMapMarkerOverlay>
+              
               {showCircle && (
                 <NaverMapCircleOverlay
                   latitude={marker.coordinate.latitude}
@@ -124,7 +125,6 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
           );
         })}
       </NaverMapView>
-      </View>
-    );
-  },
-);
+    </View>
+  );
+});

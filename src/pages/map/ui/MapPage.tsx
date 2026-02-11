@@ -1,36 +1,63 @@
-import React, {useRef, useMemo, useState, useCallback, useEffect} from 'react';
-import {View, TouchableOpacity, Keyboard} from 'react-native';
+import React, {useRef, useMemo, useCallback, useEffect} from 'react';
+import {View, TouchableOpacity, StyleSheet, Keyboard, TextInput} from 'react-native';
+import Animated, {useSharedValue, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Mic} from 'lucide-react-native';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
 import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
 
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
-import {AIChatWidget} from '@widgets/ai-chat';
-import {GuideListWidget} from '@widgets/guide-list';
+import {BottomSheetNavigator} from '@features/bottom-sheet';
+
+import {Send, Mic} from 'lucide-react-native';
+import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
 import {useLocationTracker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
-import {useChatStore} from '@features/ai-chat';
-import {useBottomSheetStore} from '@features/bottom-sheet';
-import {Input, Spacing} from '@shared/ui';
+import {useNavigationContainerRef} from 'expo-router';
 
 export function MapPage() {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const snapPoints = useMemo(() => ['25%', '50%', '85%'], []);
 
-    const [inputText, setInputText] = useState('');
-    const { currentView } = useBottomSheetStore();
-
     const {data: markers = []} = useLocationMarkers();
     const {location} = useLocationTracker();
     const {activeMarkerId} = useMapNavigationStore();
+    const [currentRoute, setCurrentRoute] = React.useState<string>('Chat');
+
     const {addMessage, streamReply, isStreaming} = useChatStore();
+    const [inputText, setInputText] = React.useState(''); 
 
     useGeofenceTrigger();
+
+    // Animation for input visibility
+    const inputOpacity = useSharedValue(1);
+    const inputTranslateY = useSharedValue(0);
+
+    useEffect(() => {
+        const shouldShow = currentRoute === 'Chat' || currentRoute === 'GuideChat';
+        inputOpacity.value = withTiming(shouldShow ? 1 : 0, {duration: 200});
+        inputTranslateY.value = withTiming(shouldShow ? 0 : 20, {duration: 200});
+    }, [currentRoute]);
+
+    const inputAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: inputOpacity.value,
+        transform: [{translateY: inputTranslateY.value}],
+    }));
+
+    const handleSend = () => {
+        if (!inputText.trim() || isStreaming) return;
+        Keyboard.dismiss();
+
+        addMessage({sender: 'user', text: inputText});
+        setInputText('');
+
+        setTimeout(() => {
+            streamReply(`Response: "${inputText}"`);
+        }, 500);
+    };
 
 
 
@@ -48,18 +75,6 @@ export function MapPage() {
 
     const handleLocationButtonPress = () => {
         mapRef.current?.setLocationTrackingMode('Follow');
-    };
-
-    const handleSend = () => {
-        if (!inputText.trim() || isStreaming) return;
-        Keyboard.dismiss();
-
-        addMessage({sender: 'user', text: inputText});
-        setInputText('');
-
-        setTimeout(() => {
-            streamReply(`Thank you for your message: "${inputText}". This is a response from the AI guide.`);
-        }, 500);
     };
 
     // Custom Handle Component
@@ -113,24 +128,20 @@ export function MapPage() {
                 backgroundStyle={{backgroundColor: 'white'}}
                 handleComponent={renderHandle}
             >
-                {currentView === 'chat' ? <AIChatWidget /> : <GuideListWidget />}
+                <BottomSheetNavigator onRouteChange={setCurrentRoute} />
             </BottomSheet>
 
-            {/* Floating Input - Fixed at Bottom */}
-            <View
-                className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4"
-                style={{
-                    elevation: 10,
-                    shadowColor: '#000',
-                    shadowOffset: {width: 0, height: -2},
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    zIndex: 30, // Input should be above everything
-                }}
+            {/* Animated Floating Input */}
+            <Animated.View
+                style={[
+                    styles.floatingInput,
+                    inputAnimatedStyle,
+                    {pointerEvents: currentRoute === 'Chat' || currentRoute === 'GuideChat' ? 'auto' : 'none'},
+                ]}
             >
-                <View className="flex-row items-center bg-white rounded-full px-2 h-[45px] shadow-lg">
-                    <Input
-                        className="flex-1 bg-transparent border-0 text-base font-tamedium"
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
                         placeholder="Type a message"
                         placeholderTextColor="#9CA3AF"
                         value={inputText}
@@ -139,19 +150,59 @@ export function MapPage() {
                         onSubmitEditing={handleSend}
                         returnKeyType="send"
                     />
-                    <TouchableOpacity className="p-2 mr-1">
-                        <Mic size={24} color="#6B7280"/>
+                    <TouchableOpacity style={styles.iconButton}>
+                        <Mic size={24} color="#6B7280" />
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={handleSend}
                         disabled={!inputText.trim() || isStreaming}
-                        className="items-center justify-center"
+                        style={styles.sendButton}
                     >
                         <VoiceIcon width={28} height={28} />
                     </TouchableOpacity>
                 </View>
-                <Spacing size={16}/>
-            </View>
+            </Animated.View>
         </GestureHandlerRootView>
     );
 }
+
+const styles = StyleSheet.create({
+    floatingInput: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 20,
+        paddingBottom: 32,
+        paddingTop: 16,
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: 24,
+        paddingHorizontal: 8,
+        height: 45,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    textInput: {
+        flex: 1,
+        paddingHorizontal: 12,
+        fontSize: 16,
+    },
+    iconButton: {
+        padding: 8,
+        marginRight: 4,
+    },
+    sendButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+});

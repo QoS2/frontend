@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import { View, TouchableOpacity, FlatList } from 'react-native';
 import { ChevronLeft, Check, LockKeyhole, LockKeyholeOpen, Radio } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomSheetStackParamList } from '@features/bottom-sheet';
 import { Text } from '@shared/ui';
 import { useLocationMarkers } from '@entities/location';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useUserProgress } from '@entities/user';
-import { useBottomSheetStore } from '@features/bottom-sheet';
 import { LocationMarker } from '@shared/api/contracts';
 
 type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 
 export function GuideListWidget() {
-  const { setView } = useBottomSheetStore();
+  const navigation = useNavigation();
   const { data: markers = [] } = useLocationMarkers();
   const { activeMarkerId } = useMapNavigationStore();
   const { visitedPlaceIds } = useUserProgress();
@@ -26,7 +28,7 @@ export function GuideListWidget() {
   ).length;
 
   const handleBackToChat = () => {
-    setView('chat');
+    navigation.goBack();
   };
 
   return (
@@ -96,13 +98,24 @@ interface GuideItemProps {
 }
 
 function GuideItem({ item, status }: GuideItemProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<BottomSheetStackParamList>>();
   const isDone = status === 'done';
   const isLive = status === 'live';
   const isUnlock = status === 'unlock';
   const isLock = status === 'lock';
 
+  const handlePress = () => {
+    if (item.contentId) {
+      navigation.navigate('GuideChat', {
+        stepId: item.contentId,
+        title: item.title
+      });
+    }
+  };
+
   return (
     <TouchableOpacity 
+      onPress={handlePress}
       className={`flex-row items-center py-4 px-4 border-b border-gray-50 ${
         isLive ? 'bg-sky-50/50' : 'bg-white'
       }`}
