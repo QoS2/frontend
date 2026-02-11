@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useLocationTracker } from '@shared/lib/hooks/useLocationTracker';
-import { useLocationMarkers } from '@entities/location/model';
+import { useLocationTracker } from '@shared/lib';
+import { useLocationMarkers } from '@entities/location';
 import { getDistance } from '@shared/lib/geo';
 import { useMapNavigationStore } from './model';
 import { LocationMarker } from '@shared/api/contracts';

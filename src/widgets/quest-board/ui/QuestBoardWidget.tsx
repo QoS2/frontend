@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@shared/ui/Text';
 import { QuestPlay } from '@features/quest-play';
 import { Quest } from '@shared/api/contracts';
-import { useUserProgress } from '@entities/user/model';
+import { useUserProgress } from '@entities/user';
 
 interface QuestBoardProps {
   quests: Quest[];

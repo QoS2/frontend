@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@shared/ui/Text';
-import { useGuideContent } from '@entities/guide/model';
+import { useGuideContent } from '@entities/guide';
 import { useTextStream } from '@shared/lib/hooks/useTextStream';
 import { GuidePlayer } from '@widgets/guide-player';
 import { QuestBoard } from '@widgets/quest-board';
