@@ -26,7 +26,7 @@ export function MapPage() {
     const {data: markers = []} = useLocationMarkers();
     const {location} = useLocationTracker();
     const {activeMarkerId} = useMapNavigationStore();
-    const [currentRoute, setCurrentRoute] = React.useState<string>('Chat');
+    const [currentRoute, setCurrentRoute] = React.useState<string>('GuideChat');
 
     const {addMessage, streamReply, isStreaming} = useChatStore();
     const [inputText, setInputText] = React.useState(''); 
@@ -38,7 +38,7 @@ export function MapPage() {
     const inputTranslateY = useSharedValue(0);
 
     useEffect(() => {
-        const shouldShow = currentRoute === 'Chat' || currentRoute === 'GuideChat';
+        const shouldShow = currentRoute === 'GuideChat';
         inputOpacity.value = withTiming(shouldShow ? 1 : 0, {duration: 200});
         inputTranslateY.value = withTiming(shouldShow ? 0 : 20, {duration: 200});
     }, [currentRoute]);
@@ -146,7 +146,7 @@ export function MapPage() {
                 style={[
                     styles.floatingInput,
                     inputAnimatedStyle,
-                    {pointerEvents: currentRoute === 'Chat' || currentRoute === 'GuideChat' ? 'auto' : 'none'},
+                    {pointerEvents: currentRoute === 'GuideChat' ? 'auto' : 'none'},
                 ]}
             >
                 <View style={styles.inputContainer}>

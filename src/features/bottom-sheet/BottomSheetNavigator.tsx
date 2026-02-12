@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native';
-import { AIChatWidget } from '@widgets/ai-chat';
 import { GuideListWidget } from '@widgets/guide-list';
 import { GuideChatWidget } from '@widgets/guide-chat';
 import { QuestBoard } from '@widgets/quest-board';
@@ -10,13 +9,9 @@ import { CollectionPage } from '@pages/collection/ui/CollectionPage';
 import { PhotoSpotPage } from '@pages/photo-spot/ui/PhotoSpotPage';
 import { PlacePage } from '@pages/place/ui/PlacePage';
 
-import { useMapNavigationStore } from '@features/map-navigation';
-import { useEffect } from 'react';
-
 export type BottomSheetStackParamList = {
-  Chat: undefined;
   GuideList: undefined;
-  GuideChat: { stepId: string; title: string };
+  GuideChat: { stepId?: string; title?: string } | undefined;
   QuestBoard: { contentId: string };
   Place: undefined;
   Treasure: undefined;
@@ -45,14 +40,14 @@ export function BottomSheetNavigator({onRouteChange, navigationRef}: BottomSheet
       >
         <Stack.Navigator
           id="BottomSheetStack"
+          initialRouteName="GuideChat"
           screenOptions={{
             headerShown: false,
             animation: 'fade',
           }}
         >
-          <Stack.Screen name="Chat" component={AIChatWidget} />
-          <Stack.Screen name="GuideList" component={GuideListWidget} />
           <Stack.Screen name="GuideChat" component={GuideChatWidget} />
+          <Stack.Screen name="GuideList" component={GuideListWidget} />
           <Stack.Screen name="QuestBoard" component={QuestBoardScreen} />
           <Stack.Screen name="Place" component={PlacePage} />
           <Stack.Screen name="Treasure" component={CollectionPage} />

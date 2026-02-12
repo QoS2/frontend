@@ -1,7 +1,6 @@
 import React from 'react';
 import { CommonCollectionLayout } from '@shared/ui/CommonCollectionLayout';
-import { useNavigationContainerRef } from '@react-navigation/native';
-import { BottomSheetStackParamList } from '@features/bottom-sheet/BottomSheetNavigator';
+
 import { View, Pressable } from 'react-native';
 import { Camera } from 'lucide-react-native';
 
@@ -21,27 +20,7 @@ const MOCK_PHOTOS = [
 ];
 
 export function PhotoSpotPage() {
-  const customNavigation = useNavigationContainerRef<BottomSheetStackParamList>();
 
-  const handleTabPress = (tabId: string) => {
-    switch (tabId) {
-        case 'guide-list':
-            customNavigation.navigate('GuideList');
-            break;
-        case 'ai-tour-guide':
-            customNavigation.navigate('Chat');
-            break;
-        case 'place':
-            customNavigation.navigate('Place');
-            break;
-        case 'treasure':
-            customNavigation.navigate('Treasure');
-            break;
-        case 'photo':
-            // Already here
-            break;
-    }
-  };
 
   const renderCameraLauncher = () => (
     <Pressable 

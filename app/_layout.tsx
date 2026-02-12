@@ -19,8 +19,6 @@ export default function RootLayout() {
               headerShadowVisible: false,
             }} 
           />
-          <Stack.Screen name="collection" options={{ headerShown: false }} />
-          <Stack.Screen name="photo-spot" options={{ headerShown: false }} />
           <Stack.Screen name="step/[id]" options={{ presentation: 'modal' }} />
         </Stack>
       </QueryProvider>

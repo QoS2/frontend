@@ -14,7 +14,6 @@ import { LocationMarker } from '@shared/api/contracts';
 type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 
 export function GuideListWidget() {
-  const navigation = useNavigation();
   const { data: markers = [] } = useLocationMarkers();
   const { activeMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
   const { visitedPlaceIds } = useUserProgress();
@@ -27,10 +26,6 @@ export function GuideListWidget() {
   const completedCount = guideItems.filter((item) => 
     visitedPlaceIds.includes(item.id)
   ).length;
-
-  const handleBackToChat = () => {
-    navigation.goBack();
-  };
 
   return (
     <View className="flex-1 bg-white">
@@ -114,7 +109,7 @@ function GuideItem({ item, status }: GuideItemProps) {
     if (isLive) {
       // Ensure the chat context is immediately updated to this marker
       setTriggeredMarkerId(item.id);
-      navigation.navigate('Chat');
+      navigation.navigate('GuideChat', { stepId: item.id, title: item.title });
       return;
     }
     

@@ -23,7 +23,7 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
     if (!currentRoute) return 'ai-tour-guide';
     switch (currentRoute) {
         case 'GuideList': return 'guide-list';
-        case 'Chat': return 'ai-tour-guide';
+        case 'GuideChat': return 'ai-tour-guide';
         case 'Treasure': return 'treasure';
         case 'Photo': return 'photo';
         case 'Place': return 'place';
@@ -39,7 +39,7 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
               navigationRef.current.navigate('GuideList');
               break;
           case 'ai-tour-guide':
-              navigationRef.current.navigate('Chat');
+              navigationRef.current.navigate('GuideChat');
               break;
           case 'treasure':
               navigationRef.current.navigate('Treasure');
