@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as MediaLibrary from 'expo-media-library';
@@ -64,24 +64,24 @@ export function PhotoSpotPage() {
 
       {/* UI Overlays */}
       <View className="absolute top-12 left-4">
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
-          className="bg-black/50 px-4 py-2 rounded-full"
+          className="bg-black/50 px-4 py-2 rounded-full active:opacity-70"
         >
           <Text className="text-white font-bold">Close</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View className="absolute bottom-12 left-0 right-0 items-center">
-        <TouchableOpacity
+        <Pressable
           onPress={handleCapture}
           disabled={isCapturing}
-          className={`w-20 h-20 bg-white rounded-full border-4 border-gray-300 items-center justify-center ${
+          className={`w-20 h-20 bg-white rounded-full border-4 border-gray-300 items-center justify-center active:opacity-70 ${
             isCapturing ? 'opacity-50' : ''
           }`}
         >
           <View className="w-16 h-16 bg-white rounded-full border-2 border-gray-100" />
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-white mt-4 font-bold shadow-lg">
           {isCapturing ? 'Capturing...' : 'Align with the guide and shoot!'}
         </Text>

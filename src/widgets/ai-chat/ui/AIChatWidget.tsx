@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {View, TouchableOpacity, Image, ScrollView} from 'react-native';
+import {View, Pressable, Image, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {BottomSheetStackParamList} from '@features/bottom-sheet';
@@ -80,14 +80,14 @@ export function AIChatWidget() {
         return (
           <View className="flex-col gap-2 mt-1 min-w-[200px]">
             {msg.actions?.map((action, idx) => (
-              <TouchableOpacity
+              <Pressable
                 key={idx}
                 onPress={() => handleAction(action)}
                 className="bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90"
               >
                   {/* Icon logic can be added here if needed */}
                   <Text className="text-[#5AC8FA] font-bold text-base">{action.label}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         );
@@ -124,27 +124,27 @@ export function AIChatWidget() {
 
         <View className="flex-row items-center gap-2">
           {/* Test Buttons */}
-          <TouchableOpacity 
+          <Pressable 
             onPress={() => router.push('/step/550e8400-e29b-41d4-a716-446655440011')} 
-            className="bg-indigo-100 p-2 rounded-full border border-indigo-200"
+            className="bg-indigo-100 p-2 rounded-full border border-indigo-200 active:opacity-70"
           >
             <Text className="text-xs">🚀</Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity onPress={() => router.push('/photo-spot')} className="bg-gray-100 p-2 rounded-full">
+          <Pressable onPress={() => router.push('/photo-spot')} className="bg-gray-100 p-2 rounded-full active:opacity-70">
             <Text className="text-xs">📸</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/collection')} className="bg-gray-100 p-2 rounded-full">
+          </Pressable>
+          <Pressable onPress={() => router.push('/collection')} className="bg-gray-100 p-2 rounded-full active:opacity-70">
             <Text className="text-xs">🎒</Text>
-          </TouchableOpacity>
+          </Pressable>
           
-          <TouchableOpacity 
+          <Pressable 
             onPress={handleShowGuideList}
-            className="bg-white rounded-3xl px-3 py-1.5 flex-row items-center border border-gray-200"
+            className="bg-white rounded-3xl px-3 py-1.5 flex-row items-center border border-gray-200 active:opacity-70"
           >
             <List size={16} color="#000" />
             <Text className="text-xs font-bold ml-1.5">Guide List</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <View className="bg-gray-100 rounded-2xl px-3 py-1.5 flex-row items-center">
             <CheckCircle size={14} color="#666" />
@@ -197,22 +197,22 @@ export function AIChatWidget() {
                     <View className="w-64 h-64 border-2 border-white/50 rounded-lg mb-8 items-center justify-center">
                       <Text className="text-white/50">Camera Preview Area</Text>
                     </View>
-                     <TouchableOpacity 
+                     <Pressable 
                         onPress={() => {
                           // Simulate photo taken
                           setActiveInteraction(null);
                           // Suggest next step or show success toast could be added here
                         }}
-                        className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300"
+                        className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300 active:opacity-70"
                     >
                       <View className="w-12 h-12 bg-white rounded-full border border-black/10" />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
+                    </Pressable>
+                    <Pressable 
                         onPress={() => setActiveInteraction(null)}
-                        className="absolute top-12 right-4 bg-black/50 p-2 rounded-full"
+                        className="absolute top-12 right-4 bg-black/50 p-2 rounded-full active:opacity-70"
                     >
                         <Text className="text-white font-bold">Close</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </View>
         )}

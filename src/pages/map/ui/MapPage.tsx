@@ -1,5 +1,5 @@
 import React, {useRef, useMemo, useCallback, useEffect} from 'react';
-import {View, TouchableOpacity, StyleSheet, Keyboard, TextInput} from 'react-native';
+import {View, Pressable, StyleSheet, Keyboard, TextInput} from 'react-native';
 import Animated, {useSharedValue, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
@@ -84,9 +84,9 @@ export function MapPage() {
                 <View className="w-10 h-1 rounded-full bg-gray-300"/>
 
                 {/* Location Button - Absolute positioned within the handle area */}
-                <TouchableOpacity
+                <Pressable
                     onPress={handleLocationButtonPress}
-                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full"
+                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70"
                     style={{
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
@@ -96,7 +96,7 @@ export function MapPage() {
                     }}
                 >
                     <LocateIcon width={48} height={48} />
-                </TouchableOpacity>
+                </Pressable>
             </View>
         ),
         []
@@ -152,16 +152,17 @@ export function MapPage() {
                         onSubmitEditing={handleSend}
                         returnKeyType="send"
                     />
-                    <TouchableOpacity style={styles.iconButton}>
+                    <Pressable style={styles.iconButton} className="active:opacity-70">
                         <Mic size={24} color="#6B7280" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
+                    </Pressable>
+                    <Pressable
                         onPress={handleSend}
                         disabled={!inputText.trim() || isStreaming}
                         style={styles.sendButton}
+                        className="active:opacity-70"
                     >
                         <VoiceIcon width={28} height={28} />
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </Animated.View>
         </GestureHandlerRootView>

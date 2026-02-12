@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, TextInput, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Pressable, TextInput, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { ChevronLeft, Gamepad2, Check, HelpCircle } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Text } from '@shared/ui/Text';
@@ -19,7 +19,7 @@ export function QuestPlay({
   onComplete,
   onClose,
   progressText = '1/1',
-  locationName = 'Unknown Location',
+  locationName = '알 수 없는 위치',
 }: QuestPlayProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
@@ -56,9 +56,9 @@ export function QuestPlay({
     >
       {/* 1. Header Area */}
       <View className="flex-row items-center px-4 py-3 mt-8">
-        <TouchableOpacity onPress={onClose} className="p-2">
+        <Pressable onPress={onClose} className="p-2 active:opacity-70">
           <ChevronLeft size={28} color="#333" />
-        </TouchableOpacity>
+        </Pressable>
         
         <View className="flex-row gap-2 ml-2">
           {/* Location Tag */}
@@ -115,14 +115,14 @@ export function QuestPlay({
               {quest.options.map((option) => {
                 const isSelected = selectedOption === option;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={option}
                     onPress={() => {
                         setSelectedOption(option);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
-                    activeOpacity={0.8}
-                    className={`flex-row items-center p-4 rounded-2xl border-2 bg-white ${
+
+                    className={`flex-row items-center p-4 rounded-2xl border-2 bg-white active:opacity-70 ${
                       isSelected ? 'border-[#FFAB91] shadow-sm' : 'border-transparent'
                     }`}
                   >
@@ -134,7 +134,7 @@ export function QuestPlay({
                     <Text className={`text-base font-bold flex-1 ${isSelected ? 'text-gray-900' : 'text-gray-400'}`}>
                       {option}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -146,14 +146,14 @@ export function QuestPlay({
               {quest.options.map((option) => {
                 const isSelected = selectedOption === option;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={option}
                     onPress={() => {
                         setSelectedOption(option);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
                     style={{ width: '47%' }}
-                    className={`aspect-square rounded-2xl overflow-hidden border-4 bg-white ${
+                    className={`aspect-square rounded-2xl overflow-hidden border-4 bg-white active:opacity-70 ${
                       isSelected ? 'border-[#FFAB91]' : 'border-white shadow-sm'
                     }`}
                   >
@@ -165,7 +165,7 @@ export function QuestPlay({
                             </View>
                         </View>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -174,10 +174,10 @@ export function QuestPlay({
           {/* FILL_BLANKS */}
           {quest.type === 'FILL_BLANKS' && (
             <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-50">
-              <Text className="text-gray-400 font-bold mb-3 text-xs uppercase tracking-widest">Type your answer</Text>
+              <Text className="text-gray-400 font-bold mb-3 text-xs uppercase tracking-widest">정답을 입력해주세요</Text>
               <TextInput
                 className="text-xl font-bold text-gray-800 border-b-2 border-[#FFAB91]/30 pb-2"
-                placeholder="..."
+                placeholder="답변 입력..."
                 placeholderTextColor="#ddd"
                 value={inputText}
                 onChangeText={setInputText}
@@ -198,7 +198,7 @@ export function QuestPlay({
         {isCorrect !== null && (
             <View className={`mt-6 p-4 rounded-2xl items-center ${isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
                 <Text className={`font-bold text-base ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                    {isCorrect ? `✨ Correct! +${quest.rewardMint} Mint` : '❌ Try again! Check carefully.'}
+                    {isCorrect ? `✨ 정답입니다! +${quest.rewardMint} Mint` : '❌ 다시 시도해보세요. 힌트를 확인해보세요!'}
                 </Text>
             </View>
         )}
@@ -209,27 +209,27 @@ export function QuestPlay({
         
         {/* Hint Button */}
         {quest.hint && (
-            <TouchableOpacity 
+            <Pressable 
                 onPress={handleToggleHint}
-                className="w-full py-4 rounded-xl border border-gray-100 items-center mb-3 bg-white"
+                className="w-full py-4 rounded-xl border border-gray-100 items-center mb-3 bg-white active:opacity-70"
             >
                 <Text className="text-gray-400 font-bold text-base">
-                    {showHint ? 'Hide Hint' : 'Stuck? Get Hint!'}
+                {showHint ? '힌트 숨기기' : '힌트가 필요하신가요?'}
                 </Text>
-            </TouchableOpacity>
+            </Pressable>
         )}
 
         {/* Check Answer Button */}
-        <TouchableOpacity 
+        <Pressable 
             onPress={handleCheck}
             disabled={quest.type === 'FILL_BLANKS' ? !inputText.trim() : !selectedOption}
-            className={`w-full py-4 rounded-xl items-center shadow-md ${
+            className={`w-full py-4 rounded-xl items-center shadow-md active:opacity-70 ${
                 (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption) 
                 ? 'bg-[#FFAB91]' : 'bg-gray-200'
             }`}
         >
-            <Text className="text-white font-extrabold text-base">Check Answer</Text>
-        </TouchableOpacity>
+            <Text className="text-white font-extrabold text-base">정답 확인</Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );

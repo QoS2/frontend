@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
 import { Text } from '@shared/ui/Text';
 import { QuestPlay } from '@features/quest-play';
 import { Quest } from '@shared/api/contracts';
 import { useUserProgress } from '@entities/user';
 
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { View, Pressable, ScrollView } from 'react-native';
 import { X } from 'lucide-react-native';
-import { TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 interface QuestBoardProps {
   quests: Quest[];
@@ -16,7 +14,7 @@ interface QuestBoardProps {
 }
 
 export function QuestBoard({ quests, onComplete }: QuestBoardProps) {
-  const navigation = useNavigation();
+  const router = useRouter();
   const { completeQuest, completedQuestIds } = useUserProgress();
   const [activeQuestIndex] = useState(0);
 
@@ -36,12 +34,12 @@ export function QuestBoard({ quests, onComplete }: QuestBoardProps) {
       {/* Header with Close Button */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
         <Text className="text-lg font-bold">Mission Board</Text>
-        <TouchableOpacity onPress={onComplete ? onComplete : () => navigation.goBack()} className="p-2">
+        <Pressable onPress={onComplete ? onComplete : () => router.back()} className="p-2 active:opacity-70">
           <X size={24} color="#666" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Text className="text-xl font-bold mb-4">
           Quest {activeQuestIndex + 1}/{quests.length}
         </Text>
@@ -52,7 +50,7 @@ export function QuestBoard({ quests, onComplete }: QuestBoardProps) {
         ) : (
           <QuestPlay quest={currentQuest} onComplete={handleComplete} />
         )}
-      </BottomSheetScrollView>
+      </ScrollView>
     </View>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { View, TouchableOpacity, FlatList } from 'react-native';
+import { View, Pressable, FlatList } from 'react-native';
 import { ChevronLeft, Check, LockKeyhole, LockKeyholeOpen, Radio } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomSheetStackParamList } from '@features/bottom-sheet';
 import { Text } from '@shared/ui';
@@ -36,9 +37,9 @@ export function GuideListWidget() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <View className="flex-row items-center flex-1">
-          <TouchableOpacity onPress={handleBackToChat}>
+          <Pressable onPress={handleBackToChat} className="active:opacity-70">
             <ChevronLeft size={24} color="#000" />
-          </TouchableOpacity>
+          </Pressable>
           <Text className="text-lg font-bold ml-3">Guide List</Text>
         </View>
 
@@ -99,6 +100,7 @@ interface GuideItemProps {
 
 function GuideItem({ item, status }: GuideItemProps) {
   const navigation = useNavigation<NativeStackNavigationProp<BottomSheetStackParamList>>();
+  const router = useRouter();
   const { setTriggeredMarkerId } = useMapNavigationStore();
   const isDone = status === 'done';
   const isLive = status === 'live';
@@ -116,15 +118,14 @@ function GuideItem({ item, status }: GuideItemProps) {
     if (item.contentId) {
       // Direct navigation to StepDetailPage using Expo Router
       // This allows users to access the guide content directly from the list
-      const router = require('expo-router').router;
       router.push(`/step/${item.contentId}`);
     }
   };
 
   return (
-    <TouchableOpacity 
+    <Pressable 
       onPress={handlePress}
-      className={`flex-row items-center py-4 px-4 border-b border-gray-50 ${
+      className={`flex-row items-center py-4 px-4 border-b border-gray-50 active:opacity-70 ${
         isLive ? 'bg-sky-50/50' : 'bg-white'
       }`}
     >
@@ -183,6 +184,6 @@ function GuideItem({ item, status }: GuideItemProps) {
           <Text className="text-white text-xs font-bold">!</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }

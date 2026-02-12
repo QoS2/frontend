@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { Footprints } from 'lucide-react-native';
 import { Text } from '@shared/ui';
 import { useRouter } from 'expo-router';

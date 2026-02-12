@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@shared/ui/Text';
 import { useGuideContent } from '@entities/guide';
@@ -55,12 +55,12 @@ export function StepDetailPage() {
         <Text className="text-xs text-red-400 bg-red-50 p-2 rounded mb-4">
             {JSON.stringify(error, null, 2)}
         </Text>
-        <TouchableOpacity 
+        <Pressable 
           onPress={() => router.back()}
-          className="mt-6 bg-gray-200 px-6 py-3 rounded-xl"
+          className="mt-6 bg-gray-200 px-6 py-3 rounded-xl active:opacity-70"
         >
           <Text className="font-bold text-gray-700">Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -83,12 +83,12 @@ export function StepDetailPage() {
         <Text className="text-xs text-gray-400 bg-gray-100 p-2 rounded">
           Requested ID: {JSON.stringify(id)}
         </Text>
-        <TouchableOpacity 
+        <Pressable 
           onPress={() => router.back()}
-          className="mt-6 bg-gray-200 px-6 py-3 rounded-xl"
+          className="mt-6 bg-gray-200 px-6 py-3 rounded-xl active:opacity-70"
         >
           <Text className="font-bold text-gray-700">Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -97,9 +97,9 @@ export function StepDetailPage() {
     <View className="flex-1 bg-white">
       {/* Header */}
       <View className="p-4 flex-row items-center border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
+        <Pressable onPress={() => router.back()} className="mr-4 active:opacity-70">
           <Text className="text-blue-500 font-bold">Back</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-xl font-bold">Touring Gwanghwamun</Text>
       </View>
 
@@ -110,44 +110,43 @@ export function StepDetailPage() {
 
       {/* Developer Test Controls */}
       <View className="flex-row gap-2 mb-4">
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             const questEvent = content.events.find(e => e.type === 'QUEST');
             if (questEvent) setActiveInteraction(questEvent);
           }}
-          className="bg-purple-100 px-3 py-2 rounded-lg border border-purple-200"
+          className="bg-purple-100 px-3 py-2 rounded-lg border border-purple-200 active:opacity-70"
         >
           <Text className="text-purple-700 font-bold text-xs">🛠️ Test Quest</Text>
-        </TouchableOpacity>
+        </Pressable>
         
-        <TouchableOpacity
+        <Pressable
            onPress={() => {
              const cameraEvent = content.events.find(e => e.type === 'CAMERA');
              if (cameraEvent) setActiveInteraction(cameraEvent);
            }}
-           className="bg-blue-100 px-3 py-2 rounded-lg border border-blue-200"
+           className="bg-blue-100 px-3 py-2 rounded-lg border border-blue-200 active:opacity-70"
         >
            <Text className="text-blue-700 font-bold text-xs">📸 Test Camera</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-        <TouchableOpacity
-          activeOpacity={1}
+        <Pressable
           onPress={skip}
-          className="mt-6 p-4 bg-gray-50 rounded-2xl min-h-[150px]"
+          className="mt-6 p-4 bg-gray-50 rounded-2xl min-h-[150px] active:opacity-70"
         >
           <Text className="text-lg leading-7 text-gray-800">{displayedText}</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         {isComplete && !activeInteraction && (
           <View className="mt-8">
             <Text className="text-lg font-bold mb-4">Tour Completed!</Text>
-            <TouchableOpacity
+            <Pressable
               className="bg-gray-200 p-4 rounded-xl items-center"
               onPress={() => router.back()}
             >
               <Text className="text-gray-600 font-bold text-lg">Back to List</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
@@ -169,22 +168,22 @@ export function StepDetailPage() {
                     <View className="w-64 h-64 border-2 border-white/50 rounded-lg mb-8 items-center justify-center">
                       <Text className="text-white/50">Camera Preview Area</Text>
                     </View>
-                    <TouchableOpacity 
+                    <Pressable 
                         onPress={() => {
                           // Simulate photo taken
                           setActiveInteraction(null);
                           // Suggest next step or show success toast could be added here
                         }}
-                        className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300"
+                        className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300 active:opacity-70"
                     >
                       <View className="w-12 h-12 bg-white rounded-full border border-black/10" />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
+                    </Pressable>
+                    <Pressable 
                         onPress={() => setActiveInteraction(null)}
-                        className="absolute top-12 right-4 bg-black/50 p-2 rounded-full"
+                        className="absolute top-12 right-4 bg-black/50 p-2 rounded-full active:opacity-70"
                     >
                         <Text className="text-white font-bold">Close</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </View>
         )}

@@ -1,6 +1,6 @@
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import {View, TouchableOpacity} from 'react-native';
+import {View, Pressable} from 'react-native';
 import {ChevronLeft} from 'lucide-react-native';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import { Text } from '@shared/ui';
@@ -17,9 +17,9 @@ export function GuideChatWidget() {
     <View className="flex-1 bg-white">
       {/* 헤더 */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Pressable onPress={() => navigation.goBack()} className="active:opacity-70">
           <ChevronLeft size={24} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
         <Text className="ml-3 text-lg font-bold">{title}</Text>
       </View>
 
