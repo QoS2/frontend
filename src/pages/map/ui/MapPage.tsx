@@ -1,14 +1,15 @@
-import React, {useRef, useMemo, useCallback, useEffect} from 'react';
-import {View, Pressable, StyleSheet, Keyboard, TextInput} from 'react-native';
+import React, {useCallback, useMemo, useRef, useEffect} from 'react';
+import {StyleSheet, TextInput, View, Keyboard, Pressable} from 'react-native';
 import Animated, {useSharedValue, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
+import {useNavigationContainerRef} from '@react-navigation/native';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
 import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
 
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
-import {BottomSheetNavigator} from '@features/bottom-sheet';
+import {BottomSheetNavigator, BottomSheetHandle} from '@features/bottom-sheet';
 
 import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
@@ -19,6 +20,7 @@ import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigatio
 export function MapPage() {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
+    const bottomSheetNavigationRef = useNavigationContainerRef<any>();
     const snapPoints = useMemo(() => ['25%', '50%', '85%'], []);
 
     const {data: markers = []} = useLocationMarkers();
@@ -79,15 +81,17 @@ export function MapPage() {
     // Custom Handle Component
     const renderHandle = useCallback(
         (props: BottomSheetHandleProps) => (
-            <View className="relative w-full items-center pb-2 pt-3 bg-white rounded-t-xl z-50">
-                {/* Grey Handle Indicator */}
-                <View className="w-10 h-1 rounded-full bg-gray-300"/>
-
-                {/* Location Button - Absolute positioned within the handle area */}
+             <View className="relative">
+                <BottomSheetHandle 
+                    {...props} 
+                    navigationRef={bottomSheetNavigationRef} 
+                    currentRoute={currentRoute}
+                />
+                
                 <Pressable
                     onPress={handleLocationButtonPress}
-                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70"
-                    style={{
+                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70 bg-white"
+                     style={{
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
                         shadowOpacity: 0.25,
@@ -99,7 +103,7 @@ export function MapPage() {
                 </Pressable>
             </View>
         ),
-        []
+        [currentRoute]
     );
 
     return (
@@ -130,7 +134,10 @@ export function MapPage() {
                 backgroundStyle={{backgroundColor: 'white'}}
                 handleComponent={renderHandle}
             >
-                <BottomSheetNavigator onRouteChange={setCurrentRoute} />
+                <BottomSheetNavigator 
+                    onRouteChange={setCurrentRoute} 
+                    navigationRef={bottomSheetNavigationRef}
+                />
             </BottomSheet>
 
             {/* Animated Floating Input */}

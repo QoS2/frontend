@@ -37,16 +37,19 @@ export function GuideListWidget() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <View className="flex-row items-center flex-1">
-          <Pressable onPress={handleBackToChat} className="active:opacity-70">
-            <ChevronLeft size={24} color="#000" />
-          </Pressable>
-          <Text className="text-lg font-bold ml-3">Guide List</Text>
+          <Text className="text-xl font-extrabold text-gray-900">Guide List</Text>
+          <View className="bg-gray-100 px-2 py-0.5 rounded-full ml-2">
+             <Text className="text-xs font-bold text-gray-500">
+                {completedCount}/{totalGuides}
+             </Text>
+          </View>
         </View>
 
-        <View className="bg-gray-100 px-3 py-1.5 rounded-full">
-          <Text className="text-xs font-bold text-gray-600">
-            {completedCount}/{totalGuides}
-          </Text>
+        <View className="flex-row gap-2">
+            <View className="border border-gray-200 rounded-full px-2 py-1 flex-row items-center">
+                <Text className="text-[10px] text-gray-500 font-medium">All</Text>
+                <ChevronLeft size={10} color="#999" style={{ transform: [{rotate: '-90deg'}], marginLeft: 2 }} />
+            </View>
         </View>
       </View>
 

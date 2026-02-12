@@ -3,7 +3,7 @@ import {View, Pressable, Image, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {BottomSheetStackParamList} from '@features/bottom-sheet';
-import {List, ArrowRight, CheckCircle, Users} from 'lucide-react-native';
+import {ChevronLeft} from 'lucide-react-native';
 import {ChatAvatar} from '@shared/assets/icons';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import { useRouter } from 'expo-router';
@@ -114,42 +114,19 @@ export function AIChatWidget() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <View className="flex-row items-center flex-1">
-          <View className="flex-row items-center ml-2 flex-1">
-            <View className="bg-[#5AC8FA] rounded-full w-7 h-7 items-center justify-center">
-              <Text className="text-white text-xs font-bold">3</Text>
-            </View>
-            <Text className="text-base font-bold ml-2 flex-1">{displayTitle}</Text>
-          </View>
+            <Pressable onPress={() => navigation.navigate('GuideList')} className="mr-2 active:opacity-70">
+                <View className="bg-[#5AC8FA] rounded-full w-7 h-7 items-center justify-center">
+                    <ChevronLeft size={18} color="white" strokeWidth={2.5} />
+                </View>
+            </Pressable>
+            <Text className="text-lg font-bold flex-1" numberOfLines={1}>{displayTitle}</Text>
         </View>
 
         <View className="flex-row items-center gap-2">
-          {/* Test Buttons */}
-          <Pressable 
-            onPress={() => router.push('/step/550e8400-e29b-41d4-a716-446655440011')} 
-            className="bg-indigo-100 p-2 rounded-full border border-indigo-200 active:opacity-70"
-          >
-            <Text className="text-xs">🚀</Text>
-          </Pressable>
-
-          <Pressable onPress={() => router.push('/photo-spot')} className="bg-gray-100 p-2 rounded-full active:opacity-70">
-            <Text className="text-xs">📸</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push('/collection')} className="bg-gray-100 p-2 rounded-full active:opacity-70">
-            <Text className="text-xs">🎒</Text>
-          </Pressable>
-          
-          <Pressable 
-            onPress={handleShowGuideList}
-            className="bg-white rounded-3xl px-3 py-1.5 flex-row items-center border border-gray-200 active:opacity-70"
-          >
-            <List size={16} color="#000" />
-            <Text className="text-xs font-bold ml-1.5">Guide List</Text>
-          </Pressable>
-
-          <View className="bg-gray-100 rounded-2xl px-3 py-1.5 flex-row items-center">
-            <CheckCircle size={14} color="#666" />
-            <Text className="text-xs text-gray-600 ml-1">Done</Text>
-          </View>
+            <View className="bg-green-100 rounded-full px-2 py-1 flex-row items-center">
+                <View className="w-2 h-2 rounded-full bg-green-500 mr-1" />
+                <Text className="text-[10px] text-green-700 font-bold">Live</Text>
+            </View>
         </View>
       </View>
 
