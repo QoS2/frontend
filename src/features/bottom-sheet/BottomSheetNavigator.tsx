@@ -4,11 +4,17 @@ import { NavigationContainer, NavigationIndependentTree } from '@react-navigatio
 import { AIChatWidget } from '@widgets/ai-chat';
 import { GuideListWidget } from '@widgets/guide-list';
 import { GuideChatWidget } from '@widgets/guide-chat';
+import { QuestBoard } from '@widgets/quest-board';
+import { useGuideContent } from '@entities/guide';
+
+import { useMapNavigationStore } from '@features/map-navigation';
+import { useEffect } from 'react';
 
 export type BottomSheetStackParamList = {
   Chat: undefined;
   GuideList: undefined;
   GuideChat: { stepId: string; title: string };
+  QuestBoard: { contentId: string };
 };
 
 const Stack = createNativeStackNavigator<BottomSheetStackParamList>();
@@ -18,9 +24,12 @@ interface BottomSheetNavigatorProps {
 }
 
 export function BottomSheetNavigator({onRouteChange}: BottomSheetNavigatorProps) {
+  const navigationRef = React.useRef<any>(null);
+
   return (
     <NavigationIndependentTree>
       <NavigationContainer
+        ref={navigationRef}
         onStateChange={(state) => {
           const currentRoute = state?.routes[state.index];
           if (currentRoute && onRouteChange) {
@@ -38,8 +47,18 @@ export function BottomSheetNavigator({onRouteChange}: BottomSheetNavigatorProps)
           <Stack.Screen name="Chat" component={AIChatWidget} />
           <Stack.Screen name="GuideList" component={GuideListWidget} />
           <Stack.Screen name="GuideChat" component={GuideChatWidget} />
+          <Stack.Screen name="QuestBoard" component={QuestBoardScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>
   );
+}
+
+function QuestBoardScreen({ route }: any) {
+  const { contentId } = route.params;
+  const { data: guideContent, isLoading } = useGuideContent(contentId);
+
+  if (isLoading || !guideContent) return null;
+
+  return <QuestBoard quests={guideContent.quests} />;
 }

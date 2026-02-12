@@ -11,10 +11,14 @@ interface GuidePlayerProps {
 
 export function GuidePlayer({ content, currentIndex }: GuidePlayerProps) {
   const currentMedia = useMemo(() => {
-    // Sort mediaMap by triggerIndex descending to find the latest triggered one
-    const sortedMedia = [...content.mediaMap].sort((a, b) => b.triggerIndex - a.triggerIndex);
-    return sortedMedia.find((m) => currentIndex >= m.triggerIndex);
-  }, [content.mediaMap, currentIndex]);
+    // Filter for MEDIA events and sort by triggerIndex descending
+    const mediaEvents = content.events
+      .filter((e) => e.type === 'MEDIA')
+      .sort((a, b) => b.triggerIndex - a.triggerIndex);
+    
+    const latestEvent = mediaEvents.find((evt) => currentIndex >= evt.triggerIndex);
+    return latestEvent?.data;
+  }, [content.events, currentIndex]);
 
   if (!currentMedia) {
     return <View className="w-full aspect-video bg-gray-200 rounded-xl" />;

@@ -10,7 +10,7 @@ export const CoordinateSchema = z.object({
 export const QuestTypeSchema = z.enum(['SELECT_IMAGE', 'FILL_BLANKS', 'MULTIPLE_CHOICE']);
 
 export const QuestSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   type: QuestTypeSchema,
   question: z.string(),
   options: z.array(z.string()),
@@ -19,17 +19,40 @@ export const QuestSchema = z.object({
   rewardMint: z.number().nonnegative(),
 });
 
-export const MediaMapSchema = z.object({
-  triggerIndex: z.number().nonnegative(),
-  mediaUrl: z.string().url(),
-  type: z.enum(['IMAGE', 'VIDEO']),
+export const InteractionTypeSchema = z.enum(['MEDIA', 'QUEST', 'CAMERA', 'REWARD']);
+
+export const GuideEventSchema = z.object({
+  id: z.string(),
+  triggerIndex: z.number().nonnegative(), // Character index in the script to trigger this event
+  type: InteractionTypeSchema,
+  data: z.object({
+    // Media
+    mediaUrl: z.string().url().optional(),
+    mediaType: z.enum(['IMAGE', 'VIDEO']).optional(),
+    
+    // Quest
+    questId: z.string().optional(),
+    
+    // Camera
+    targetName: z.string().optional(), // What the user should take a picture of
+    
+    // Reward
+    mintAmount: z.number().optional(),
+  }).passthrough(), // Allow flexibility for future expansions
 });
 
 export const GuideContentSchema = z.object({
   id: z.string().uuid(),
+  title: z.string(),
+  description: z.string(),
   script: z.string(),
-  mediaMap: z.array(MediaMapSchema),
+  events: z.array(GuideEventSchema), // Replaced mediaMap with unified events
   quests: z.array(QuestSchema),
+  steps: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    content: z.string(),
+  })).optional(), // Add steps as optional for now to match mock data structure
 });
 
 export const LocationMarkerTypeSchema = z.enum(['PLACE', 'SUB_PLACE', 'PHOTO', 'TREASURE']);

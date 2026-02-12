@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, TouchableOpacity, FlatList } from 'react-native';
 import { ChevronLeft, Check, LockKeyhole, LockKeyholeOpen, Radio } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,7 +15,7 @@ type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 export function GuideListWidget() {
   const navigation = useNavigation();
   const { data: markers = [] } = useLocationMarkers();
-  const { activeMarkerId } = useMapNavigationStore();
+  const { activeMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
   const { visitedPlaceIds } = useUserProgress();
 
   // Filter and sort markers for guide list
@@ -99,17 +99,25 @@ interface GuideItemProps {
 
 function GuideItem({ item, status }: GuideItemProps) {
   const navigation = useNavigation<NativeStackNavigationProp<BottomSheetStackParamList>>();
+  const { setTriggeredMarkerId } = useMapNavigationStore();
   const isDone = status === 'done';
   const isLive = status === 'live';
   const isUnlock = status === 'unlock';
   const isLock = status === 'lock';
 
   const handlePress = () => {
+    if (isLive) {
+      // Ensure the chat context is immediately updated to this marker
+      setTriggeredMarkerId(item.id);
+      navigation.navigate('Chat');
+      return;
+    }
+    
     if (item.contentId) {
-      navigation.navigate('GuideChat', {
-        stepId: item.contentId,
-        title: item.title
-      });
+      // Direct navigation to StepDetailPage using Expo Router
+      // This allows users to access the guide content directly from the list
+      const router = require('expo-router').router;
+      router.push(`/step/${item.contentId}`);
     }
   };
 

@@ -10,12 +10,11 @@ import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
 import {BottomSheetNavigator} from '@features/bottom-sheet';
 
-import {Send, Mic} from 'lucide-react-native';
+import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
 import {useLocationTracker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
-import {useNavigationContainerRef} from 'expo-router';
 
 export function MapPage() {
     const bottomSheetRef = useRef<BottomSheet>(null);

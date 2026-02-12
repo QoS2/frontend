@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {View, TouchableOpacity, Image, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useUserProgress } from '@entities/user';
+import { QuestBoard } from '@widgets/quest-board';
 
 type NavigationProp = NativeStackNavigationProp<BottomSheetStackParamList, 'Chat'>;
 
@@ -23,6 +24,7 @@ export function AIChatWidget() {
   const {triggeredMarkerId} = useMapNavigationStore();
   const {data: markers} = useLocationMarkers();
   const {setCurrentStep} = useUserProgress();
+  const [activeInteraction, setActiveInteraction] = React.useState<any>(null); // GuideEvent | null
 
   const activeMarker = markers?.find((m) => m.id === triggeredMarkerId);
 
@@ -42,8 +44,11 @@ export function AIChatWidget() {
   const handleAction = (action: ChatAction) => {
     switch (action.actionId) {
       case 'start-game':
-        // TODO: Implement game start logic
-        console.log('Start Game triggered');
+      case 'start-quest':
+        setActiveInteraction({ type: 'QUEST', data: { questId: action.data?.questId || activeMarker?.contentId } });
+        break;
+      case 'open-camera':
+        setActiveInteraction({ type: 'CAMERA', data: { targetName: action.data?.targetName || 'Photo Spot' } });
         break;
       case 'next-guide':
         handleEnterStep();
@@ -118,6 +123,21 @@ export function AIChatWidget() {
         </View>
 
         <View className="flex-row items-center gap-2">
+          {/* Test Buttons */}
+          <TouchableOpacity 
+            onPress={() => router.push('/step/550e8400-e29b-41d4-a716-446655440011')} 
+            className="bg-indigo-100 p-2 rounded-full border border-indigo-200"
+          >
+            <Text className="text-xs">🚀</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/photo-spot')} className="bg-gray-100 p-2 rounded-full">
+            <Text className="text-xs">📸</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/collection')} className="bg-gray-100 p-2 rounded-full">
+            <Text className="text-xs">🎒</Text>
+          </TouchableOpacity>
+          
           <TouchableOpacity 
             onPress={handleShowGuideList}
             className="bg-white rounded-3xl px-3 py-1.5 flex-row items-center border border-gray-200"
@@ -137,7 +157,7 @@ export function AIChatWidget() {
       <BottomSheetScrollView 
         ref={scrollViewRef}
         className="flex-1" 
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {messages.map((msg) => (
@@ -155,9 +175,47 @@ export function AIChatWidget() {
             {renderMessageContent(msg)}
           </View>
         ))}
-
-        {/* Removed Static 'Start Next Guide' Button - Now dynamically rendered via actions */}
       </BottomSheetScrollView>
+
+        {/* Interaction Overlays */}
+        {activeInteraction?.type === 'QUEST' && (
+             <View className="absolute top-0 left-0 right-0 bottom-0 bg-white z-50">
+               <QuestBoard 
+                 quests={[]} // In real app, fetch quests by ID or use activeInteraction.data.quests
+                 onComplete={() => setActiveInteraction(null)}
+               />
+             </View>
+        )}
+        
+        {activeInteraction?.type === 'CAMERA' && (
+            <View className="absolute top-0 left-0 right-0 bottom-0 bg-black z-50">
+                {/* Mock Camera View - In real implementation, use CameraView here */}
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-white text-xl mb-8 font-bold text-center px-4">
+                      📸 Mission: Take a photo of{'\n'}{activeInteraction.data.targetName}
+                    </Text>
+                    <View className="w-64 h-64 border-2 border-white/50 rounded-lg mb-8 items-center justify-center">
+                      <Text className="text-white/50">Camera Preview Area</Text>
+                    </View>
+                     <TouchableOpacity 
+                        onPress={() => {
+                          // Simulate photo taken
+                          setActiveInteraction(null);
+                          // Suggest next step or show success toast could be added here
+                        }}
+                        className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300"
+                    >
+                      <View className="w-12 h-12 bg-white rounded-full border border-black/10" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={() => setActiveInteraction(null)}
+                        className="absolute top-12 right-4 bg-black/50 p-2 rounded-full"
+                    >
+                        <Text className="text-white font-bold">Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        )}
     </View>
   );
 }

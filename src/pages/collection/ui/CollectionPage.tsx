@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, SafeAreaView } from 'react-native';
 import { Text } from '@shared/ui/Text';
 import { useUserProgress } from '@entities/user';
 import { useLocationMarkers } from '@entities/location';
@@ -17,6 +17,7 @@ export function CollectionPage() {
   );
 
   return (
+    <SafeAreaView className="flex-1">
     <View className="flex-1 bg-white p-4">
       <View className="flex-row justify-between items-center mb-6">
         <Text className="text-2xl font-bold">My Collection</Text>
@@ -44,5 +45,6 @@ export function CollectionPage() {
         }
       />
     </View>
+    </SafeAreaView>
   );
 }
