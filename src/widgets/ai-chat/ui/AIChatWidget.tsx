@@ -20,7 +20,7 @@ export function AIChatWidget() {
   const router = useRouter();
   const navigation = useNavigation<NavigationProp>();
   const scrollViewRef = useRef<ScrollView>(null);
-  const {messages, streamReply} = useChatStore();
+  const {messages, streamReply, welcomedMarkerIds, welcomeMarker} = useChatStore();
   const {triggeredMarkerId} = useMapNavigationStore();
   const {data: markers} = useLocationMarkers();
   const {setCurrentStep} = useUserProgress();
@@ -28,11 +28,18 @@ export function AIChatWidget() {
 
   const activeMarker = markers?.find((m) => m.id === triggeredMarkerId);
 
+  const isWelcoming = useRef(false);
+
   useEffect(() => {
-    if (activeMarker && messages.length === 0) {
-      streamReply(`Welcome to ${activeMarker.title}! ${activeMarker.description}`);
+    // 1. Basic guards
+    if (!activeMarker || messages.length > 0 || isWelcoming.current) return;
+    
+    // 2. Business logic guard (already welcomed in this session?)
+    if (!welcomedMarkerIds.includes(activeMarker.id)) {
+      isWelcoming.current = true; // Sync guard to prevent double-triggering in same mount
+      welcomeMarker(activeMarker);
     }
-  }, [activeMarker, messages.length, streamReply]);
+  }, [activeMarker, messages.length, welcomeMarker, welcomedMarkerIds]);
 
   const handleEnterStep = () => {
     if (activeMarker && activeMarker.contentId) {
@@ -56,10 +63,6 @@ export function AIChatWidget() {
       default:
         console.warn('Unknown action:', action.actionId);
     }
-  };
-
-  const handleShowGuideList = () => {
-    navigation.navigate('GuideList');
   };
 
   const displayTitle = activeMarker ? activeMarker.title : 'Quest of Seoul Guide';

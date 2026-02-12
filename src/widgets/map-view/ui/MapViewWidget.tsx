@@ -100,6 +100,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
 
           return (
             <React.Fragment key={marker.id}>
+              {/* Marker Overlay */}
               <NaverMapMarkerOverlay
                 latitude={marker.coordinate.latitude}
                 longitude={marker.coordinate.longitude}
@@ -112,6 +113,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
                   <Icon width={size.width} height={size.height} />
               </NaverMapMarkerOverlay>
               
+              {/* Circle Overlay */}
               {showCircle && (
                 <NaverMapCircleOverlay
                   latitude={marker.coordinate.latitude}

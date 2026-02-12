@@ -7,6 +7,8 @@ import { GuideChatWidget } from '@widgets/guide-chat';
 import { QuestBoard } from '@widgets/quest-board';
 import { useGuideContent } from '@entities/guide';
 import { CollectionPage } from '@pages/collection/ui/CollectionPage';
+import { PhotoSpotPage } from '@pages/photo-spot/ui/PhotoSpotPage';
+import { PlacePage } from '@pages/place/ui/PlacePage';
 
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useEffect } from 'react';
@@ -16,7 +18,9 @@ export type BottomSheetStackParamList = {
   GuideList: undefined;
   GuideChat: { stepId: string; title: string };
   QuestBoard: { contentId: string };
+  Place: undefined;
   Treasure: undefined;
+  Photo: undefined;
 };
 
 const Stack = createNativeStackNavigator<BottomSheetStackParamList>();
@@ -50,7 +54,9 @@ export function BottomSheetNavigator({onRouteChange, navigationRef}: BottomSheet
           <Stack.Screen name="GuideList" component={GuideListWidget} />
           <Stack.Screen name="GuideChat" component={GuideChatWidget} />
           <Stack.Screen name="QuestBoard" component={QuestBoardScreen} />
+          <Stack.Screen name="Place" component={PlacePage} />
           <Stack.Screen name="Treasure" component={CollectionPage} />
+          <Stack.Screen name="Photo" component={PhotoSpotPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>

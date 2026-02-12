@@ -18,36 +18,20 @@ type BottomSheetHandlePropsWithNav = BottomSheetHandleProps & {
 };
 
 export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationRef, currentRoute }: BottomSheetHandlePropsWithNav) => {
-  const [activeTab, setActiveTab] = React.useState('ai-tour-guide');
-
-  // Sync active tab with current route
-  React.useEffect(() => {
-      if (!currentRoute) return;
-      
-      switch (currentRoute) {
-          case 'GuideList':
-              setActiveTab('guide-list');
-              break;
-          case 'Chat':
-              setActiveTab('ai-tour-guide');
-              break;
-          case 'Treasure':
-              setActiveTab('treasure');
-              break;
-          // Add other specific route mappings if needed
-      }
+  // Source of truth for active tab based on current navigation route
+  const activeTabId = useMemo(() => {
+    if (!currentRoute) return 'ai-tour-guide';
+    switch (currentRoute) {
+        case 'GuideList': return 'guide-list';
+        case 'Chat': return 'ai-tour-guide';
+        case 'Treasure': return 'treasure';
+        case 'Photo': return 'photo';
+        case 'Place': return 'place';
+        default: return 'ai-tour-guide';
+    }
   }, [currentRoute]);
 
-  // 핸들 애니메이션 스타일 (필요시 추가)
-  const containerStyle = useMemo(() => ({
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    backgroundColor: 'white',
-  }), []);
-
   const handleTabPress = (id: string, label: string) => {
-      setActiveTab(id);
-      
       if (!navigationRef?.current) return;
 
       switch (id) {
@@ -61,14 +45,19 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
               navigationRef.current.navigate('Treasure');
               break;
           case 'photo':
-              // User requested no action for now
-              // navigationRef.current.navigate('Photo'); 
+              navigationRef.current.navigate('Photo');
               break;
           case 'place':
-              // Not implemented
+              navigationRef.current.navigate('Place');
               break;
       }
   };
+
+  const containerStyle = useMemo(() => ({
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    backgroundColor: 'white',
+  }), []);
 
   return (
     <View style={containerStyle} className="pb-2 pt-3 bg-white rounded-t-xl z-50">
@@ -88,15 +77,15 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
             <Pressable
               key={tab.id}
               onPress={() => handleTabPress(tab.id, tab.label)}
-              className={`px-4 py-1.5 rounded-full border ${
-                activeTab === tab.id
+              className={`px-4 py-1.5 rounded-full border justify-center items-center ${
+                activeTabId === tab.id
                   ? 'bg-[#5AC8FA] border-[#5AC8FA]' 
                   : 'bg-white border-transparent'
               } active:opacity-70`}
             >
               <Text 
                 className={`text-sm font-bold ${
-                  activeTab === tab.id ? 'text-white' : 'text-gray-600'
+                  activeTabId === tab.id ? 'text-white' : 'text-gray-600'
                 }`}
               >
                 {tab.label}

@@ -22,15 +22,19 @@ export interface ChatMessage {
 interface ChatState {
   messages: ChatMessage[];
   isStreaming: boolean;
+  welcomedMarkerIds: string[];
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   setStreaming: (isStreaming: boolean) => void;
   streamReply: (fullText: string) => void;
+  welcomeMarker: (marker: { id: string; title: string; description: string }) => void;
+  markAsWelcomed: (markerId: string) => void;
   clearMessages: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isStreaming: false,
+  welcomedMarkerIds: [],
 
   addMessage: (msg) =>
     set((state) => ({
@@ -50,11 +54,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const id = Math.random().toString(36).substring(7);
     const timestamp = Date.now();
 
-    set({ isStreaming: true });
-
-    // Add empty message first
+    // Batch initial state changes to minimize renders and prevent race conditions
     set((state) => ({
-      messages: [...state.messages, { id, sender: 'ai', type: 'text', text: '', timestamp }],
+      isStreaming: true,
+      messages: [...state.messages, { id, sender: 'ai', type: 'text', text: '', timestamp }]
     }));
 
     let currentText = '';
@@ -72,5 +75,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }, speed);
   },
 
-  clearMessages: () => set({ messages: [] }),
+  welcomeMarker: (marker) => {
+    const { welcomedMarkerIds, messages, streamReply, markAsWelcomed } = get();
+    
+    // Final atomic check before triggering
+    if (messages.length === 0 && !welcomedMarkerIds.includes(marker.id)) {
+      markAsWelcomed(marker.id);
+      streamReply(`Welcome to ${marker.title}! ${marker.description}`);
+    }
+  },
+
+  markAsWelcomed: (markerId) => 
+    set((state) => ({ 
+      welcomedMarkerIds: Array.from(new Set([...state.welcomedMarkerIds, markerId])) 
+    })),
+
+  clearMessages: () => set({ messages: [], welcomedMarkerIds: [] }),
 }));

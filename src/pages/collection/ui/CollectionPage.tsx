@@ -1,50 +1,57 @@
 import React, { useMemo } from 'react';
-import { View, FlatList, SafeAreaView } from 'react-native';
-import { Text } from '@shared/ui/Text';
+import { useNavigationContainerRef } from '@react-navigation/native';
+import { CommonCollectionLayout } from '@shared/ui/CommonCollectionLayout';
 import { useUserProgress } from '@entities/user';
 import { useLocationMarkers } from '@entities/location';
+import { BottomSheetStackParamList } from '@features/bottom-sheet/BottomSheetNavigator';
 
 export function CollectionPage() {
-  const { completedQuestIds, visitedPlaceIds, totalMint } = useUserProgress();
+  const { completedQuestIds, visitedPlaceIds } = useUserProgress();
   const { data: markers } = useLocationMarkers();
+  const customNavigation = useNavigationContainerRef<BottomSheetStackParamList>();
 
-  const collectedItems = useMemo(
-    () =>
-      markers?.filter(
-        (m) => visitedPlaceIds.includes(m.id) || completedQuestIds.includes(m.id),
-      ) ?? [],
-    [markers, visitedPlaceIds, completedQuestIds],
-  );
+  const collectedItems = useMemo(() => {
+    if (!markers) return [];
+    
+    // Filter for collected items (quests or places)
+    const filtered = markers.filter(
+      (m) => visitedPlaceIds.includes(m.id) || completedQuestIds.includes(m.id)
+    );
+
+    // Map to CollectionItem format
+    return filtered.map(item => ({
+      id: item.id,
+      title: item.title,
+      subtitle: item.type === 'TREASURE' ? 'Quest Reward' : 'Visited Place',
+      imageUrl: item.thumbnailUrl || 'https://placehold.co/400x400/png?text=Treasure',
+      audioUrl: undefined // Treasures might not have audio yet
+    }));
+  }, [markers, visitedPlaceIds, completedQuestIds]);
+
+  const handleTabPress = (tabId: string) => {
+    switch (tabId) {
+        case 'guide-list':
+            customNavigation.navigate('GuideList');
+            break;
+        case 'ai-tour-guide':
+            customNavigation.navigate('Chat');
+            break;
+        case 'place':
+            customNavigation.navigate('Place');
+            break;
+        case 'photo':
+            customNavigation.navigate('Photo');
+            break;
+        case 'treasure':
+            // Already here
+            break;
+    }
+  };
 
   return (
-    <SafeAreaView className="flex-1">
-    <View className="flex-1 bg-white p-4">
-      <View className="flex-row justify-between items-center mb-6">
-        <Text className="text-2xl font-bold">My Collection</Text>
-        <View className="bg-yellow-100 px-3 py-1 rounded-full">
-          <Text className="text-yellow-700 font-bold">{totalMint} Mint</Text>
-        </View>
-      </View>
-
-      <FlatList
-        data={collectedItems}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View className="flex-row items-center mb-4 p-3 bg-gray-50 rounded-xl">
-            <View className="w-12 h-12 bg-gray-200 rounded-full mr-4" />
-            <View>
-              <Text className="font-bold">{item.title}</Text>
-              <Text className="text-gray-500 text-sm">{item.type}</Text>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center mt-20">
-            <Text className="text-gray-400">No items collected yet.</Text>
-          </View>
-        }
-      />
-    </View>
-    </SafeAreaView>
+    <CommonCollectionLayout
+      title="My Treasures"
+      items={collectedItems}
+    />
   );
 }

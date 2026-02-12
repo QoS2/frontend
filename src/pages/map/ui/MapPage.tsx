@@ -88,9 +88,10 @@ export function MapPage() {
                     currentRoute={currentRoute}
                 />
                 
+                {/* Location Button */}
                 <Pressable
                     onPress={handleLocationButtonPress}
-                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70 bg-white"
+                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70"
                      style={{
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
