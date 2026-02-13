@@ -1,6 +1,5 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useLocationTracker } from '@shared/lib';
 import { useLocationMarkers } from '@entities/location';
 import { getDistance } from '@shared/lib/geo';
 import { useMapNavigationStore } from './model';
@@ -32,8 +31,7 @@ function useGeofence(
   }, [location, markers]);
 }
 
-export function useGeofenceTrigger() {
-  const { location } = useLocationTracker();
+export function useGeofenceTrigger(location: { latitude: number; longitude: number } | null) {
   const { data: markers } = useLocationMarkers();
   const { activeMarkerId, setActiveMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
 
@@ -43,7 +41,6 @@ export function useGeofenceTrigger() {
   useEffect(() => {
     // Handle state transitions based on calculated currentMarkerId
     if (currentMarkerId !== activeMarkerId) {
-      // Clear existing timer if any
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -69,5 +66,5 @@ export function useGeofenceTrigger() {
         clearTimeout(timerRef.current);
       }
     };
-  }, [currentMarkerId, activeMarkerId, setActiveMarkerId, setTriggeredMarkerId]);
+  }, [currentMarkerId, activeMarkerId, setActiveMarkerId, setTriggeredMarkerId, location, markers]);
 }

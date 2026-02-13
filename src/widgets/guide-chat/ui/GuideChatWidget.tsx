@@ -125,7 +125,7 @@ export function GuideChatWidget() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3">
         <View className="flex-row items-center flex-1">
-            <Pressable onPress={() => navigation.goBack()} className="mr-2 active:opacity-70">
+            <Pressable onPress={() => navigation.navigate('GuideList')} className="mr-2 active:opacity-70">
                 <View className="bg-gray-100 rounded-full w-8 h-8 items-center justify-center">
                     <ChevronLeft size={20} color="#000" />
                 </View>
@@ -146,8 +146,8 @@ export function GuideChatWidget() {
                 <ChatAvatar width={60} height={60} />
                 <Text className="text-gray-400 mt-4 text-center">
                     {activeMarker 
-                        ? `${activeMarker.title}에 대해 무엇이든 물어보세요!` 
-                        : '주변에 가이드 가능한 장소가 없습니다.'}
+                        ? `Ask anything about ${activeMarker.title}!`
+                        : 'No guideable locations nearby.'}
                 </Text>
             </View>
         ) : (

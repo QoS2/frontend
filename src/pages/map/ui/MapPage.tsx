@@ -31,7 +31,7 @@ export function MapPage() {
     const {addMessage, streamReply, isStreaming} = useChatStore();
     const [inputText, setInputText] = React.useState(''); 
 
-    useGeofenceTrigger();
+    useGeofenceTrigger(location);
 
     // Animation for input visibility
     const inputOpacity = useSharedValue(1);
