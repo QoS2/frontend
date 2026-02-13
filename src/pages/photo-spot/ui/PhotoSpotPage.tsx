@@ -1,44 +1,23 @@
 import React from 'react';
-import { CommonCollectionLayout } from '@shared/ui/CommonCollectionLayout';
-
-import { View, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Camera } from 'lucide-react-native';
+import { CollectionViewWidget } from '@widgets/collection-view';
 
 const MOCK_PHOTOS = [
-  {
-    id: 'p1',
-    title: 'Selfie at Place 1',
-    subtitle: '2024.02.12',
-    imageUrl: 'https://placehold.co/400x400/png?text=Photo+1',
-  },
-  {
-    id: 'p2',
-    title: 'Group Photo',
-    subtitle: '2024.02.11',
-    imageUrl: 'https://placehold.co/400x400/png?text=Photo+2',
-  },
+  { id: '1', title: 'Gwanghwamun Gate', subtitle: '2023.10.15', imageUrl: 'https://placehold.co/400x400/png' },
+  { id: '2', title: 'Secret Garden', subtitle: '2023.10.16', imageUrl: 'https://placehold.co/400x400/png' },
 ];
 
 export function PhotoSpotPage() {
-
-
-  const renderCameraLauncher = () => (
-    <Pressable 
-      onPress={() => {
-        // TODO: Navigate to Camera Logic or Open Modal
-        console.log('Open Camera');
-      }}
-      className="bg-black p-2 rounded-full active:opacity-70"
-    >
-      <Camera size={20} color="white" />
-    </Pressable>
-  );
-
   return (
-    <CommonCollectionLayout
-      title="Photo Collection"
+    <CollectionViewWidget
+      title="Photo Gallery"
       items={MOCK_PHOTOS}
-      renderHeaderRight={renderCameraLauncher}
+      renderHeaderRight={() => (
+        <Pressable className="bg-black/5 p-2 rounded-full active:opacity-70">
+           <Camera size={20} color="#333" />
+        </Pressable>
+      )}
     />
   );
 }

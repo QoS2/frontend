@@ -1,43 +1,18 @@
 import React from 'react';
-import { CommonCollectionLayout } from '@shared/ui/CommonCollectionLayout';
+import { CollectionViewWidget } from '@widgets/collection-view';
 
-
-const MOCK_PLACES = [
-  {
-    id: '1',
-    title: 'Gwanghwamun',
-    subtitle: 'Place 001',
-    imageUrl: 'https://placehold.co/400x400/png?text=Gwanghwamun',
-    audioUrl: 'mock_audio.mp3',
-  },
-  {
-    id: '2',
-    title: 'N Seoul Tower',
-    subtitle: 'Place 002',
-    imageUrl: 'https://placehold.co/400x400/png?text=N+Tower',
-    audioUrl: 'mock_audio.mp3',
-  },
-  {
-    id: '3',
-    title: 'Bukchon Hanok',
-    subtitle: 'Place 003',
-    imageUrl: 'https://placehold.co/400x400/png?text=Hanok',
-    audioUrl: 'mock_audio.mp3',
-  },
-  {
-    id: '4',
-    title: 'Dongdaemun DDP',
-    subtitle: 'Place 004',
-    imageUrl: 'https://placehold.co/400x400/png?text=DDP',
-  }
+const MOCK_ITEMS = [
+  { id: '1', title: 'Gwanghwamun', subtitle: 'Historical Landmark', imageUrl: 'https://placehold.co/400x400/png' },
+  { id: '2', title: 'Gyeongbokgung', subtitle: 'Royal Palace', imageUrl: 'https://placehold.co/400x400/png' },
+  { id: '3', title: 'N Seoul Tower', subtitle: 'City View', imageUrl: 'https://placehold.co/400x400/png' },
+  { id: '4', title: 'Bukchon Hanok', subtitle: 'Traditional Village', imageUrl: 'https://placehold.co/400x400/png' },
 ];
 
 export function PlacePage() {
-
   return (
-    <CommonCollectionLayout
+    <CollectionViewWidget
       title="Place Collection"
-      items={MOCK_PLACES}
+      items={MOCK_ITEMS}
     />
   );
 }

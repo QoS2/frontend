@@ -1,37 +1,30 @@
-import React, { useMemo } from 'react';
-
-import { CommonCollectionLayout } from '@shared/ui/CommonCollectionLayout';
-import { useUserProgress } from '@entities/user';
+import React from 'react';
+import { View } from 'react-native';
+import { Text } from '@shared/ui';
+import { CollectionViewWidget } from '@widgets/collection-view';
 import { useLocationMarkers } from '@entities/location';
-
+import { useUserProgress } from '@entities/user';
 
 export function CollectionPage() {
-  const { completedQuestIds, visitedPlaceIds } = useUserProgress();
-  const { data: markers } = useLocationMarkers();
-
-
-  const collectedItems = useMemo(() => {
-    if (!markers) return [];
-    
-    // Filter for collected items (quests or places)
-    const filtered = markers.filter(
-      (m) => visitedPlaceIds.includes(m.id) || completedQuestIds.includes(m.id)
-    );
-
-    // Map to CollectionItem format
-    return filtered.map(item => ({
-      id: item.id,
-      title: item.title,
-      subtitle: item.type === 'TREASURE' ? 'Quest Reward' : 'Visited Place',
-      imageUrl: item.thumbnailUrl || 'https://placehold.co/400x400/png?text=Treasure',
-      audioUrl: undefined // Treasures might not have audio yet
-    }));
+  const { data: markers = [] } = useLocationMarkers();
+  const { visitedPlaceIds, completedQuestIds } = useUserProgress();
+  
+  // Convert activated markers/quests into collection items
+  const collectionItems = React.useMemo(() => {
+    return markers
+      .filter(m => visitedPlaceIds.includes(m.id))
+      .map(m => ({
+        id: m.id,
+        title: m.title,
+        subtitle: m.type, // e.g., 'Historical', 'Cultural'
+        imageUrl: 'https://placehold.co/400x400/png', // Placeholder for now
+      }));
   }, [markers, visitedPlaceIds, completedQuestIds]);
 
   return (
-    <CommonCollectionLayout
+    <CollectionViewWidget
       title="My Treasures"
-      items={collectedItems}
+      items={collectionItems}
     />
   );
 }

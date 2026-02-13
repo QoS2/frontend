@@ -4,7 +4,7 @@ import { ChevronLeft, Volume2 } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { Text } from '@shared/ui';
 
-interface CollectionItem {
+export interface CollectionItem {
   id: string;
   title: string;
   subtitle: string;
@@ -12,17 +12,17 @@ interface CollectionItem {
   audioUrl?: string; // Optional (PhotoSpot에는 없음)
 }
 
-interface CommonCollectionLayoutProps {
+interface CollectionViewWidgetProps {
   title: string;
   items: CollectionItem[];
   renderHeaderRight?: () => React.ReactNode; 
 }
 
-export function CommonCollectionLayout({
+export function CollectionViewWidget({
   title,
   items,
   renderHeaderRight,
-}: Omit<CommonCollectionLayoutProps, 'activeTab' | 'onTabPress'>) {
+}: CollectionViewWidgetProps) {
   const [selectedItem, setSelectedItem] = useState<CollectionItem | null>(null);
 
   const handleBack = () => {

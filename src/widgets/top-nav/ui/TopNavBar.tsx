@@ -2,7 +2,6 @@ import React from 'react';
 import { View } from 'react-native';
 import { Footprints } from 'lucide-react-native';
 import { Text } from '@shared/ui';
-import { useRouter } from 'expo-router';
 
 interface TopNavBarProps {
   destination?: string;
@@ -10,7 +9,6 @@ interface TopNavBarProps {
 }
 
 export function TopNavBar({ destination, distance }: TopNavBarProps) {
-  const router = useRouter();
 
   return (
     <View className="bg-white">
