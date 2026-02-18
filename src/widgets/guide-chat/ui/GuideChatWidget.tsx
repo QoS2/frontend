@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,7 +14,7 @@ import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useUserProgress } from '@entities/user';
-import { QuestBoard } from '@widgets/quest-board';
+import { useGuideContent } from '@entities/guide';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
 
@@ -24,52 +24,168 @@ export function GuideChatWidget() {
   const scrollViewRef = useRef<ScrollView>(null);
   
   // Store Hooks
-  const { messages, welcomedMarkerIds, welcomeMarker } = useChatStore();
+  const { 
+    messages, 
+    isStreaming, 
+    addMessage, 
+    streamReply, 
+    startGuide,
+    guideProgress,
+    updateProgress,
+  } = useChatStore();
   const { triggeredMarkerId, activeMarkerId } = useMapNavigationStore();
   const { data: markers } = useLocationMarkers();
   const { setCurrentStep } = useUserProgress();
   
-  // Local State
-  const [activeInteraction, setActiveInteraction] = React.useState<any>(null);
-  const isWelcoming = useRef(false);
+  // Router
+  const router = useRouter();
 
-  // 1. Determine Context (Explicit from Route Params OR Implicit from Store)
+  // 1. Determine Context
   const contextStepId = route.params?.stepId || triggeredMarkerId || activeMarkerId;
   const activeMarker = markers?.find((m) => m.id === contextStepId);
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
-  // 2. Welcome Logic (Auto-trigger context-aware welcome)
-  useEffect(() => {
-    if (!activeMarker || isWelcoming.current) return;
+  // 2. Fetch Guide Content
+  const { data: guideContent } = useGuideContent(activeMarker?.contentId || null);
 
-    // If entering via tab (no params) or explicitly, check if we need to welcome
-    if (!welcomedMarkerIds.includes(activeMarker.id)) {
-      isWelcoming.current = true;
-      welcomeMarker(activeMarker);
+  // 3. Script Parsing (Memoized)
+  const segments = useMemo(() => {
+    if (!guideContent) return [];
+    
+    const events = [...(guideContent.events || [])].sort((a, b) => a.triggerIndex - b.triggerIndex);
+    const result: ({ type: 'text'; text: string } | { type: 'action'; event: any })[] = [];
+    let lastIndex = 0;
+
+    events.forEach(event => {
+      // Push text before event
+      if (event.triggerIndex > lastIndex) {
+        const textChunk = guideContent.script.substring(lastIndex, event.triggerIndex).trim();
+        if (textChunk) {
+            result.push({ type: 'text', text: textChunk });
+        }
+      }
+      // Push event
+      result.push({ type: 'action', event });
+      lastIndex = event.triggerIndex;
+    });
+
+    // Push remaining text
+    if (lastIndex < guideContent.script.length) {
+      const remainingText = guideContent.script.substring(lastIndex).trim();
+      if (remainingText) {
+        result.push({ type: 'text', text: remainingText });
+      }
     }
-  }, [activeMarker, welcomedMarkerIds, welcomeMarker]);
+    return result;
+  }, [guideContent]);
 
-  // 3. Action Handlers
-  const router = useRouter();
+  // 4. Script Player Logic
+  // Derive current index from store persistence
+  const currentSegmentIndex = guideContent?.id ? (guideProgress[guideContent.id] || 0) : 0;
   
-  const handleEnterStep = () => {
-    if (activeMarker && activeMarker.contentId) {
-      setCurrentStep(activeMarker.contentId);
-      router.push(`/step/${activeMarker.contentId}`);
-    }
-  };
+  const isPlayingRef = useRef(false);
+  const lastPlayedIndexRef = useRef(-1);
 
+  // Reset lastPlayedIndex when guide changes
+  useEffect(() => {
+    if (guideContent?.id) {
+        startGuide(guideContent.id);
+        isPlayingRef.current = true;
+        // If we are resuming, assume we've played everything up to the current index
+        lastPlayedIndexRef.current = currentSegmentIndex - 1;
+    }
+  }, [guideContent?.id, startGuide]);
+
+  // Main Playback Effect
+  useEffect(() => {
+    if (!isPlayingRef.current || !guideContent || currentSegmentIndex >= segments.length) {
+        return;
+    }
+
+    // Crucial: Only play if we haven't initiated this index yet
+    if (currentSegmentIndex <= lastPlayedIndexRef.current) {
+        return;
+    }
+
+    if (isStreaming) return; // Wait for current stream to finish
+
+    const segment = segments[currentSegmentIndex];
+    lastPlayedIndexRef.current = currentSegmentIndex;
+
+    if (segment.type === 'text') {
+        streamReply(segment.text);
+    } else {
+        // It's an action event
+        const event = segment.event;
+        // Map event to ChatAction
+        let actions: ChatAction[] = [];
+        
+        switch (event.type) {
+            case 'QUEST':
+                actions.push({ label: '⚔️ Start Quest', actionId: 'start-quest', data: { questId: event.data.questId } });
+                break;
+            case 'CAMERA':
+                actions.push({ label: '📸 Open Camera', actionId: 'open-camera', data: { targetName: event.data.targetName } });
+                break;
+            case 'REWARD':
+                 actions.push({ label: '🎁 Get Reward', actionId: 'get-reward', data: event.data });
+                 break;
+        }
+
+        if (actions.length > 0) {
+             addMessage({
+                sender: 'ai',
+                type: 'action',
+                actions: actions,
+                text: 'Here is a challenge for you!' 
+            });
+        }
+        
+        // Actions are instant, so move to next segment immediately
+        updateProgress(guideContent.id, currentSegmentIndex + 1);
+    }
+  }, [currentSegmentIndex, segments, guideContent, isStreaming, streamReply, addMessage, updateProgress]);
+
+  // Effect to advance index when streaming finishes
+  const wasStreamingRef = useRef(isStreaming);
+  useEffect(() => {
+      if (wasStreamingRef.current && !isStreaming) {
+          // Stream just finished, advance progress
+          if (guideContent?.id) {
+             updateProgress(guideContent.id, currentSegmentIndex + 1);
+          }
+      }
+      wasStreamingRef.current = isStreaming;
+  }, [isStreaming, guideContent, currentSegmentIndex, updateProgress]);
+
+
+  // 5. Action Handler (Router Navigation)
   const handleAction = (action: ChatAction) => {
+    const contentId = activeMarker?.contentId;
+    if (!contentId) {
+        console.warn('No content ID for action');
+        return;
+    }
+
     switch (action.actionId) {
       case 'start-game':
       case 'start-quest':
-        setActiveInteraction({ type: 'QUEST', data: { questId: action.data?.questId || activeMarker?.contentId } });
+        router.push({
+            pathname: `/action/QUEST/${contentId}`,
+            params: { questId: action.data?.questId }
+        });
         break;
       case 'open-camera':
-        setActiveInteraction({ type: 'CAMERA', data: { targetName: action.data?.targetName || 'Photo Spot' } });
+        router.push({
+            pathname: `/action/CAMERA/${contentId}`,
+            params: { targetName: action.data?.targetName || 'Photo Spot' }
+        });
         break;
-      case 'next-guide':
-        handleEnterStep();
+      case 'get-reward':
+        router.push({
+            pathname: `/action/REWARD/${contentId}`,
+            params: { rewardId: action.data?.rewardId }
+        });
         break;
       default:
         console.warn('Unknown action:', action.actionId);
@@ -91,13 +207,18 @@ export function GuideChatWidget() {
         case 'action':
           return (
             <View className="flex-col gap-2 mt-1 min-w-[200px]">
+                {msg.text && (
+                     <View className="px-4 py-3 rounded-2xl bg-gray-100 border border-gray-200 rounded-tl-none mb-2">
+                        <Text className="text-base text-gray-800">{msg.text}</Text>
+                     </View>
+                )}
               {msg.actions?.map((action, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => handleAction(action)}
-                  className="bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90"
+                  className="bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90 shadow-sm"
                 >
-                  <Text className="text-[#5AC8FA] font-bold text-base">{action.label}</Text>
+                  <Text className="text-[#5AC8FA] font-bold text-base active:text-white">{action.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -146,7 +267,7 @@ export function GuideChatWidget() {
                 <ChatAvatar width={60} height={60} />
                 <Text className="text-gray-400 mt-4 text-center">
                     {activeMarker 
-                        ? `Ask anything about ${activeMarker.title}!`
+                        ? `Connecting to Guide...`
                         : 'No guideable locations nearby.'}
                 </Text>
             </View>
@@ -166,42 +287,6 @@ export function GuideChatWidget() {
             ))
         )}
       </BottomSheetScrollView>
-
-      {/* Interaction Overlays (Quest / Camera) */}
-      {activeInteraction?.type === 'QUEST' && (
-          <View className="absolute top-0 left-0 right-0 bottom-0 bg-white z-50">
-            <QuestBoard 
-                quests={[]} 
-                onComplete={() => setActiveInteraction(null)}
-            />
-          </View>
-      )}
-      
-      {activeInteraction?.type === 'CAMERA' && (
-        <View className="absolute top-0 left-0 right-0 bottom-0 bg-black z-50">
-            {/* Mock Camera View */}
-            <View className="flex-1 justify-center items-center">
-                <Text className="text-white text-xl mb-8 font-bold text-center px-4">
-                    📸 Mission: Take a photo of{'\n'}{activeInteraction.data.targetName}
-                </Text>
-                <View className="w-64 h-64 border-2 border-white/50 rounded-lg mb-8 items-center justify-center">
-                    <Text className="text-white/50">Camera Preview Area</Text>
-                </View>
-                <Pressable 
-                    onPress={() => setActiveInteraction(null)}
-                    className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300 active:opacity-70"
-                >
-                    <View className="w-12 h-12 bg-white rounded-full border border-black/10" />
-                </Pressable>
-                <Pressable 
-                    onPress={() => setActiveInteraction(null)}
-                    className="absolute top-12 right-4 bg-black/50 p-2 rounded-full active:opacity-70"
-                >
-                    <Text className="text-white font-bold">Close</Text>
-                </Pressable>
-            </View>
-        </View>
-      )}
     </View>
   );
 }

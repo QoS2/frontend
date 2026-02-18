@@ -106,17 +106,11 @@ function GuideItem({ item, status }: GuideItemProps) {
   const isLock = status === 'lock';
 
   const handlePress = () => {
-    if (isLive) {
-      // Ensure the chat context is immediately updated to this marker
+    // Navigate to GuideChat for any item with content
+    if (item.contentId) {
       setTriggeredMarkerId(item.id);
       navigation.navigate('GuideChat', { stepId: item.id, title: item.title });
       return;
-    }
-    
-    if (item.contentId) {
-      // Direct navigation to StepDetailPage using Expo Router
-      // This allows users to access the guide content directly from the list
-      router.push(`/step/${item.contentId}`);
     }
   };
 

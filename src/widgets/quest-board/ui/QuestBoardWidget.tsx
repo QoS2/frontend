@@ -11,9 +11,10 @@ import { useRouter } from 'expo-router';
 interface QuestBoardProps {
   quests: Quest[];
   onComplete?: () => void;
+  onClose?: () => void;
 }
 
-export function QuestBoard({ quests, onComplete }: QuestBoardProps) {
+export function QuestBoard({ quests, onComplete, onClose }: QuestBoardProps) {
   const router = useRouter();
   const { completeQuest, completedQuestIds } = useUserProgress();
   const [activeQuestIndex] = useState(0);
@@ -31,24 +32,13 @@ export function QuestBoard({ quests, onComplete }: QuestBoardProps) {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header with Close Button */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
-        <Text className="text-lg font-bold">Mission Board</Text>
-        <Pressable onPress={onComplete ? onComplete : () => router.back()} className="p-2 active:opacity-70">
-          <X size={24} color="#666" />
-        </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text className="text-xl font-bold mb-4">
-          Quest {activeQuestIndex + 1}/{quests.length}
-        </Text>
+      <ScrollView>
         {isCompleted ? (
           <View className="p-8 bg-green-50 rounded-2xl items-center">
             <Text className="text-green-700 font-bold text-lg">Quest Completed!</Text>
           </View>
         ) : (
-          <QuestPlay quest={currentQuest} onComplete={handleComplete} />
+          <QuestPlay quest={currentQuest} onComplete={handleComplete} onClose={onClose} />
         )}
       </ScrollView>
     </View>
