@@ -32,15 +32,13 @@ export function QuestBoard({ quests, onComplete, onClose }: QuestBoardProps) {
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView>
-        {isCompleted ? (
-          <View className="p-8 bg-green-50 rounded-2xl items-center">
-            <Text className="text-green-700 font-bold text-lg">Quest Completed!</Text>
-          </View>
-        ) : (
-          <QuestPlay quest={currentQuest} onComplete={handleComplete} onClose={onClose} />
-        )}
-      </ScrollView>
+      {isCompleted ? (
+        <View className="p-8 bg-green-50 rounded-2xl items-center">
+          <Text className="text-green-700 font-bold text-lg">Quest Completed!</Text>
+        </View>
+      ) : (
+        <QuestPlay quest={currentQuest} onComplete={handleComplete} onClose={onClose} />
+      )}
     </View>
   );
 }

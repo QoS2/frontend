@@ -19,7 +19,7 @@ export function QuestPlay({
   onComplete,
   onClose,
   progressText = '1/1',
-  locationName = '알 수 없는 위치',
+  locationName = 'Unknown Location',
 }: QuestPlayProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
@@ -81,7 +81,7 @@ export function QuestPlay({
       {/* 2. Scrollable Content Area */}
       <ScrollView 
         className="flex-1 px-5" 
-        contentContainerStyle={{ paddingBottom: 160 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Chat Bubble Section */}
@@ -174,10 +174,10 @@ export function QuestPlay({
           {/* FILL_BLANKS */}
           {quest.type === 'FILL_BLANKS' && (
             <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-50">
-              <Text className="text-gray-400 font-bold mb-3 text-xs uppercase tracking-widest">정답을 입력해주세요</Text>
+              <Text className="text-gray-400 font-bold mb-3 text-xs uppercase tracking-widest">Please enter the answer</Text>
               <TextInput
                 className="text-xl font-bold text-gray-800 border-b-2 border-[#FFAB91]/30 pb-2"
-                placeholder="답변 입력..."
+                placeholder="Type your answer..."
                 placeholderTextColor="#ddd"
                 value={inputText}
                 onChangeText={setInputText}
@@ -198,14 +198,14 @@ export function QuestPlay({
         {isCorrect !== null && (
             <View className={`mt-6 p-4 rounded-2xl items-center ${isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
                 <Text className={`font-bold text-base ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                    {isCorrect ? `✨ 정답입니다! +${quest.rewardMint} Mint` : '❌ 다시 시도해보세요. 힌트를 확인해보세요!'}
+                    {isCorrect ? `✨ Correct! +${quest.rewardMint} Mint` : '❌ Try again! Check the hint.'}
                 </Text>
             </View>
         )}
       </ScrollView>
 
       {/* 3. Fixed Bottom Footer */}
-      <View className="absolute bottom-0 w-full bg-white rounded-t-[30px] p-6 shadow-xl border-t border-gray-50">
+      <View className="bg-white rounded-t-[30px] p-6 shadow-xl border-t border-gray-50 pb-8">
         
         {/* Hint Button */}
         {quest.hint && (
@@ -214,7 +214,7 @@ export function QuestPlay({
                 className="w-full py-4 rounded-xl border border-gray-100 items-center mb-3 bg-white active:opacity-70"
             >
                 <Text className="text-gray-400 font-bold text-base">
-                {showHint ? '힌트 숨기기' : '힌트가 필요하신가요?'}
+                {showHint ? 'Hide Hint' : 'Need a hint?'}
                 </Text>
             </Pressable>
         )}
@@ -228,7 +228,7 @@ export function QuestPlay({
                 ? 'bg-[#FFAB91]' : 'bg-gray-200'
             }`}
         >
-            <Text className="text-white font-extrabold text-base">정답 확인</Text>
+            <Text className="text-white font-extrabold text-base">Check Answer</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
