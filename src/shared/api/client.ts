@@ -48,7 +48,7 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
         id: 'evt-2',
         triggerIndex: 60, // Trigger after introducing the history
         type: 'QUEST',
-        data: { questId: 'quest-1' } // Start a quiz about the gate
+        data: { questId: 'quest-3' } // Start a quiz about the gate
       },
       {
         id: 'evt-3',
@@ -72,7 +72,6 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
         options: ['The Silver Dragon', 'The White Tiger', 'The Golden Phoenix'],
         answer: 'The Silver Dragon',
         hint: 'It has scales and can fly!',
-        rewardMint: 100,
       },
       {
         id: 'quest-2',
@@ -86,7 +85,6 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
         ],
         answer: 'https://picsum.photos/id/10/400/400',
         hint: 'Look for the three arched gates.',
-        rewardMint: 150,
       },
       {
         id: 'quest-3',
@@ -95,7 +93,6 @@ const MOCK_CONTENT: Record<string, GuideContent> = {
         options: [],
         answer: 'Haetae',
         hint: 'It looks like a lion with scales and a horn.',
-        rewardMint: 200,
       },
     ],
   },

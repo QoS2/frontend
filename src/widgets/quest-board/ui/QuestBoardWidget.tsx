@@ -1,28 +1,25 @@
 import React, { useState } from 'react';
-import { Text } from '@shared/ui/Text';
 import { QuestPlay } from '@features/quest-play';
 import { Quest } from '@shared/api/contracts';
 import { useUserProgress } from '@entities/user';
 
-import { View, Pressable, ScrollView } from 'react-native';
-import { X } from 'lucide-react-native';
+import { View } from 'react-native';
 
 interface QuestBoardProps {
   quests: Quest[];
-  onComplete?: () => void;
   onClose?: () => void;
 }
 
-export function QuestBoard({ quests, onComplete, onClose }: QuestBoardProps) {
+export function QuestBoard({ quests, onClose }: QuestBoardProps) {
   const { completeQuest, completedQuestIds } = useUserProgress();
   const [activeQuestIndex] = useState(0);
 
   const currentQuest = quests[activeQuestIndex];
   const isCompleted = currentQuest ? completedQuestIds.includes(currentQuest.id) : false;
 
-  const handleComplete = (reward: number) => {
+  const handleComplete = () => {
     if (currentQuest) {
-      completeQuest(currentQuest.id, reward);
+      completeQuest(currentQuest.id);
     }
   };
 
@@ -30,13 +27,12 @@ export function QuestBoard({ quests, onComplete, onClose }: QuestBoardProps) {
 
   return (
     <View className="flex-1 bg-white">
-      {isCompleted ? (
-        <View className="p-8 bg-green-50 rounded-2xl items-center">
-          <Text className="text-green-700 font-bold text-lg">Quest Completed!</Text>
-        </View>
-      ) : (
-        <QuestPlay quest={currentQuest} onComplete={handleComplete} onClose={onClose} />
-      )}
+      <QuestPlay 
+        quest={currentQuest} 
+        onComplete={handleComplete} 
+        onClose={onClose} 
+        isCompleted={isCompleted}
+      />
     </View>
   );
 }

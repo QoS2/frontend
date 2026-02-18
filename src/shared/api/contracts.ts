@@ -16,7 +16,6 @@ export const QuestSchema = z.object({
   options: z.array(z.string()),
   answer: z.string(),
   hint: z.string().optional(),
-  rewardMint: z.number().nonnegative(),
 });
 
 export const InteractionTypeSchema = z.enum(['MEDIA', 'QUEST', 'CAMERA', 'REWARD']);
@@ -35,9 +34,6 @@ export const GuideEventSchema = z.object({
     
     // Camera
     targetName: z.string().optional(), // What the user should take a picture of
-    
-    // Reward
-    mintAmount: z.number().optional(),
   }).passthrough(), // Allow flexibility for future expansions
 });
 

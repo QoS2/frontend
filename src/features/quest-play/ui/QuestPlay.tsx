@@ -4,14 +4,14 @@ import { ChevronLeft, Gamepad2, Check, HelpCircle } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { Text } from '@shared/ui/Text';
 import { Quest } from '@shared/api/contracts';
-import * as Haptics from 'expo-haptics';
 
 interface QuestPlayProps {
   quest: Quest;
-  onComplete: (reward: number) => void;
+  onComplete: () => void;
   onClose?: () => void;
   progressText?: string;
   locationName?: string;
+  isCompleted?: boolean;
 }
 
 export function QuestPlay({
@@ -20,13 +20,14 @@ export function QuestPlay({
   onClose,
   progressText = '1/1',
   locationName = 'Unknown Location',
+  isCompleted = false,
 }: QuestPlayProps) {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [inputText, setInputText] = useState('');
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(isCompleted ? quest.answer : null);
+  const [inputText, setInputText] = useState(isCompleted ? quest.answer : '');
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(isCompleted ? true : null);
   const [showHint, setShowHint] = useState(false);
 
-  const handleCheck = async () => {
+  const handleCheck = () => {
     let correct = false;
     if (quest.type === 'MULTIPLE_CHOICE' || quest.type === 'SELECT_IMAGE') {
       correct = selectedOption === quest.answer;
@@ -37,16 +38,12 @@ export function QuestPlay({
     setIsCorrect(correct);
 
     if (correct) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setTimeout(() => onComplete(quest.rewardMint), 1500);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      onComplete();
     }
   };
 
   const handleToggleHint = () => {
     setShowHint(!showHint);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
@@ -112,16 +109,15 @@ export function QuestPlay({
           {/* MULTIPLE_CHOICE */}
           {quest.type === 'MULTIPLE_CHOICE' && (
             <View className="gap-3">
-              {quest.options.map((option) => {
+              {(quest.options ?? []).map((option) => {
                 const isSelected = selectedOption === option;
                 return (
                   <Pressable
                     key={option}
                     onPress={() => {
+                        if (isCompleted || isCorrect) return;
                         setSelectedOption(option);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
-
                     className={`flex-row items-center p-4 rounded-2xl border-2 bg-white active:opacity-70 ${
                       isSelected ? 'border-[#FFAB91] shadow-sm' : 'border-transparent'
                     }`}
@@ -143,14 +139,14 @@ export function QuestPlay({
           {/* SELECT_IMAGE (1 out of 4) */}
           {quest.type === 'SELECT_IMAGE' && (
             <View className="flex-row flex-wrap gap-3">
-              {quest.options.map((option) => {
+              {(quest.options ?? []).map((option) => {
                 const isSelected = selectedOption === option;
                 return (
                   <Pressable
                     key={option}
                     onPress={() => {
+                        if (isCompleted || isCorrect) return;
                         setSelectedOption(option);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
                     style={{ width: '47%' }}
                     className={`aspect-square rounded-2xl overflow-hidden border-4 bg-white active:opacity-70 ${
@@ -182,6 +178,7 @@ export function QuestPlay({
                 value={inputText}
                 onChangeText={setInputText}
                 autoCapitalize="none"
+                editable={!isCompleted && isCorrect !== true}
               />
               {showHint && quest.hint && (
                 <View className="mt-4 p-3 bg-yellow-50 rounded-xl flex-row items-start">
@@ -198,7 +195,7 @@ export function QuestPlay({
         {isCorrect !== null && (
             <View className={`mt-6 p-4 rounded-2xl items-center ${isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
                 <Text className={`font-bold text-base ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                    {isCorrect ? `✨ Correct! +${quest.rewardMint} Mint` : '❌ Try again! Check the hint.'}
+                    {isCorrect ? '✨ Correct!' : '❌ Try again! Check the hint.'}
                 </Text>
             </View>
         )}
@@ -221,14 +218,18 @@ export function QuestPlay({
 
         {/* Check Answer Button */}
         <Pressable 
-            onPress={handleCheck}
-            disabled={quest.type === 'FILL_BLANKS' ? !inputText.trim() : !selectedOption}
+            onPress={isCorrect || isCompleted ? onClose : handleCheck}
+            disabled={!isCorrect && !isCompleted && (quest.type === 'FILL_BLANKS' ? !inputText.trim() : !selectedOption)}
             className={`w-full py-4 rounded-xl items-center shadow-md active:opacity-70 ${
-                (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption) 
+                isCorrect || isCompleted
+                ? 'bg-gray-800' // 완료 상태 시 검은색/어두운색 버튼으로 변경하여 닫기 유도
+                : (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption) 
                 ? 'bg-[#FFAB91]' : 'bg-gray-200'
             }`}
         >
-            <Text className="text-white font-extrabold text-base">Check Answer</Text>
+            <Text className="text-white font-extrabold text-base">
+                {isCorrect || isCompleted ? 'Close' : 'Check Answer'}
+            </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

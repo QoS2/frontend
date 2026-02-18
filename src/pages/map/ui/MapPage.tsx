@@ -24,10 +24,8 @@ import {useLocationTracker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
 import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
-import {useNavigation} from 'expo-router';
 
 export function MapPage() {
-    const navigation = useNavigation();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const bottomSheetNavigationRef = useNavigationContainerRef<any>();

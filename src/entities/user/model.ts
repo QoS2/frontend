@@ -14,7 +14,7 @@ interface UserProgressState {
   setCurrentStep: (stepId: string | null) => void;
   addVisitedPlace: (placeId: string) => void;
   updateTextProgress: (index: number) => void;
-  completeQuest: (questId: string, reward: number) => void;
+  completeQuest: (questId: string) => void;
 }
 
 export const useUserProgress = create<UserProgressState>()(
@@ -33,10 +33,9 @@ export const useUserProgress = create<UserProgressState>()(
           visitedPlaceIds: [...new Set([...state.visitedPlaceIds, placeId])],
         })),
       updateTextProgress: (index) => set({ textProgressIndex: index }),
-      completeQuest: (questId, reward) =>
+      completeQuest: (questId) =>
         set((state) => ({
           completedQuestIds: [...new Set([...state.completedQuestIds, questId])],
-          totalMint: state.totalMint + reward,
         })),
     }),
     {
