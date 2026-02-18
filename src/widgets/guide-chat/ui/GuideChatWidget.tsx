@@ -15,6 +15,7 @@ import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useUserProgress } from '@entities/user';
 import { useGuideContent } from '@entities/guide';
+import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
 
@@ -36,9 +37,7 @@ export function GuideChatWidget() {
   const { triggeredMarkerId, activeMarkerId } = useMapNavigationStore();
   const { data: markers } = useLocationMarkers();
   const { setCurrentStep } = useUserProgress();
-  
-  // Router
-  const router = useRouter();
+  const { openAction } = useActionOverlayStore();
 
   // 1. Determine Context
   const contextStepId = route.params?.stepId || triggeredMarkerId || activeMarkerId;
@@ -158,8 +157,7 @@ export function GuideChatWidget() {
       wasStreamingRef.current = isStreaming;
   }, [isStreaming, guideContent, currentSegmentIndex, updateProgress]);
 
-
-  // 5. Action Handler (Router Navigation)
+  // 5. Action Handler (Overlay Activation)
   const handleAction = (action: ChatAction) => {
     const contentId = activeMarker?.contentId;
     if (!contentId) {
@@ -170,21 +168,24 @@ export function GuideChatWidget() {
     switch (action.actionId) {
       case 'start-game':
       case 'start-quest':
-        router.push({
-            pathname: `/action/QUEST/${contentId}`,
-            params: { questId: action.data?.questId }
+        openAction({
+            type: 'QUEST',
+            contentId: contentId,
+            questId: action.data?.questId
         });
         break;
       case 'open-camera':
-        router.push({
-            pathname: `/action/CAMERA/${contentId}`,
-            params: { targetName: action.data?.targetName || 'Photo Spot' }
+        openAction({
+            type: 'CAMERA',
+            contentId: contentId,
+            targetName: action.data?.targetName || 'Photo Spot'
         });
         break;
       case 'get-reward':
-        router.push({
-            pathname: `/action/REWARD/${contentId}`,
-            params: { rewardId: action.data?.rewardId }
+        openAction({
+            type: 'REWARD',
+            contentId: contentId,
+            rewardId: action.data?.rewardId
         });
         break;
       default:

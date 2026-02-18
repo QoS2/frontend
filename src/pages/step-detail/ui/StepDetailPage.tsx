@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@shared/ui/Text';
 import { useGuideContent } from '@entities/guide';
 import { useTextStream } from '@shared/lib/hooks/useTextStream';
 import { GuidePlayer } from '@widgets/guide-player';
-import { QuestBoard } from '@widgets/quest-board';
 
-export function StepDetailPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+interface StepDetailPageProps {
+  id: string;
+  onBack: () => void;
+}
+
+export function StepDetailPage({ id, onBack }: StepDetailPageProps) {
   const { data: content, isLoading, isError, error } = useGuideContent(id);
 
   const { displayedText, currentIndex, isComplete, skip } = useTextStream({
@@ -24,7 +25,7 @@ export function StepDetailPage() {
         <Text className="text-red-500 text-lg font-bold mb-2">Error Loading Guide</Text>
         <Text className="text-gray-500 mb-4 text-center">{error?.message}</Text>
         <Pressable 
-          onPress={() => router.back()}
+          onPress={onBack}
           className="mt-6 bg-gray-200 px-6 py-3 rounded-xl active:opacity-70"
         >
           <Text className="font-bold text-gray-700">Go Back</Text>
@@ -47,7 +48,7 @@ export function StepDetailPage() {
       <View className="flex-1 justify-center items-center bg-white p-4">
         <Text className="text-red-500 text-lg font-bold mb-2">Guide Not Found</Text>
         <Pressable 
-          onPress={() => router.back()}
+          onPress={onBack}
           className="mt-6 bg-gray-200 px-6 py-3 rounded-xl active:opacity-70"
         >
           <Text className="font-bold text-gray-700">Go Back</Text>
@@ -60,7 +61,7 @@ export function StepDetailPage() {
     <View className="flex-1 bg-white">
       {/* Header */}
       <View className="p-4 flex-row items-center border-b border-gray-100">
-        <Pressable onPress={() => router.back()} className="mr-4 active:opacity-70">
+        <Pressable onPress={onBack} className="mr-4 active:opacity-70">
           <Text className="text-blue-500 font-bold">Back</Text>
         </Pressable>
         <Text className="text-xl font-bold" numberOfLines={1}>{content.title}</Text>
@@ -83,7 +84,7 @@ export function StepDetailPage() {
             <Text className="text-lg font-bold mb-4">Reading Completed!</Text>
             <Pressable
               className="bg-gray-200 p-4 rounded-xl items-center"
-              onPress={() => router.back()}
+              onPress={onBack}
             >
               <Text className="text-gray-600 font-bold text-lg">Back to List</Text>
             </Pressable>

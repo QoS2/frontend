@@ -6,7 +6,6 @@ import { useUserProgress } from '@entities/user';
 
 import { View, Pressable, ScrollView } from 'react-native';
 import { X } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 
 interface QuestBoardProps {
   quests: Quest[];
@@ -15,7 +14,6 @@ interface QuestBoardProps {
 }
 
 export function QuestBoard({ quests, onComplete, onClose }: QuestBoardProps) {
-  const router = useRouter();
   const { completeQuest, completedQuestIds } = useUserProgress();
   const [activeQuestIndex] = useState(0);
 

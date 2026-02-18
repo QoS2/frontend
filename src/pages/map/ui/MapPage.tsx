@@ -1,6 +1,12 @@
 import React, {useCallback, useMemo, useRef, useEffect} from 'react';
 import {StyleSheet, TextInput, View, Keyboard, Pressable} from 'react-native';
-import Animated, {useSharedValue, useAnimatedStyle, withTiming} from 'react-native-reanimated';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    SlideInDown,
+    SlideOutDown
+} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
 import {useNavigationContainerRef} from '@react-navigation/native';
@@ -16,8 +22,12 @@ import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
 import {useLocationTracker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
+import {ActionPage} from '@pages/action';
+import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
+import {useNavigation} from 'expo-router';
 
 export function MapPage() {
+    const navigation = useNavigation();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const bottomSheetNavigationRef = useNavigationContainerRef<any>();
@@ -27,6 +37,8 @@ export function MapPage() {
     const {location} = useLocationTracker();
     const {activeMarkerId} = useMapNavigationStore();
     const [currentRoute, setCurrentRoute] = React.useState<string>('GuideChat');
+
+    const { activeAction, closeAction } = useActionOverlayStore();
 
     const {addMessage, streamReply, isStreaming} = useChatStore();
     const [inputText, setInputText] = React.useState(''); 
@@ -48,6 +60,16 @@ export function MapPage() {
         transform: [{translateY: inputTranslateY.value}],
     }));
 
+    // Effect to control BottomSheet based on Action Overlay
+    useEffect(() => {
+        if (activeAction) {
+            bottomSheetRef.current?.close();
+        } else {
+            // Restore bottom sheet if it was closed by action
+            bottomSheetRef.current?.snapToIndex(1);
+        }
+    }, [activeAction]);
+
     const handleSend = () => {
         if (!inputText.trim() || isStreaming) return;
         Keyboard.dismiss();
@@ -60,8 +82,6 @@ export function MapPage() {
         }, 500);
     };
 
-
-
     useEffect(() => {
         const timer = setTimeout(() => {
             mapRef.current?.setLocationTrackingMode('Follow');
@@ -70,7 +90,6 @@ export function MapPage() {
     }, []);
 
     const handleMarkerPress = (marker: any) => {
-      // TODO : 클릭 시 어떤 상호작용 할지 
         console.log(`[Marker Click] ${marker.title}: ${marker.coordinate.latitude}, ${marker.coordinate.longitude}`);
     };
 
@@ -140,6 +159,25 @@ export function MapPage() {
                     navigationRef={bottomSheetNavigationRef}
                 />
             </BottomSheet>
+
+            {/* Action Overlay Layer */}
+            {activeAction && (
+                <Animated.View
+                    entering={SlideInDown.duration(300)}
+                    exiting={SlideOutDown.duration(300)}
+                    style={StyleSheet.absoluteFill}
+                    className="z-50"
+                >
+                    <ActionPage 
+                        type={activeAction.type}
+                        contentId={activeAction.contentId}
+                        questId={activeAction.questId}
+                        targetName={activeAction.targetName}
+                        rewardId={activeAction.rewardId}
+                        onComplete={closeAction}
+                    />
+                </Animated.View>
+            )}
 
             {/* Animated Floating Input */}
             <Animated.View
