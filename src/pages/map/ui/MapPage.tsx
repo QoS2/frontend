@@ -98,21 +98,24 @@ export function MapPage({ runId }: MapPageProps) {
 
     useGeofenceTrigger(location);
 
-    const handleDiscoveryAction = (type: 'PHOTO' | 'TREASURE', markerId: string) => {
+    const handleDiscoveryAction = (type: string, markerId: string) => {
         const marker = markers.find(m => m.id === markerId);
         if (!marker || !marker.contentId) return;
 
-        if (type === 'PHOTO') {
+        // Phase 4 Test: Open Spot Detail first
+        if (type === 'PHOTO' || type === 'PLACE' || type === 'SUB_PLACE') {
             openAction({
-                type: 'CAMERA',
+                type: 'SPOT_DETAIL',
                 contentId: marker.contentId,
                 targetName: marker.title,
+                runId: runId
             });
         } else if (type === 'TREASURE') {
              openAction({
                 type: 'REWARD',
                 contentId: marker.contentId,
-                rewardId: 'treasure-reward', // Mock reward ID
+                rewardId: 'treasure-reward',
+                runId: runId
             });
         }
     };
@@ -164,6 +167,9 @@ export function MapPage({ runId }: MapPageProps) {
 
     const handleMarkerPress = (marker: any) => {
         console.log(`[Marker Click] ${marker.title}: ${marker.coordinate.latitude}, ${marker.coordinate.longitude}`);
+        if (marker.type === 'PHOTO' || marker.type === 'TREASURE' || marker.type === 'PLACE' || marker.type === 'SUB_PLACE') {
+             handleDiscoveryAction(marker.type, marker.id);
+        }
     };
 
     const handleLocationButtonPress = () => {
@@ -250,6 +256,7 @@ export function MapPage({ runId }: MapPageProps) {
                         questId={activeAction.questId}
                         targetName={activeAction.targetName}
                         rewardId={activeAction.rewardId}
+                        runId={runId || 0}
                         onComplete={closeAction}
                     />
                 </Animated.View>

@@ -1,8 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
-import { QuestBoard } from '@widgets/quest-board';
-import { useGuideContent } from '@entities/guide';
 import { Text } from '@shared/ui';
+
+// Widgets
+import { QuizWidget } from '@widgets/mission-quiz';
+import { CameraMissionWidget } from '@widgets/mission-camera';
+import { SpotDetailWidget } from '@widgets/spot-detail';
+import { QuestBoard } from '@widgets/quest-board';
+
+// Models
+import { useSpotDetail, useSpotGuide } from '@entities/spot/model';
+import { useMissionStep, useSubmitMission } from '@entities/mission/model';
+import { useGuideContent } from '@entities/guide/model';
 
 interface ActionPageProps {
   type: string;
@@ -10,121 +19,157 @@ interface ActionPageProps {
   questId?: string;
   targetName?: string;
   rewardId?: string;
+  runId?: number;
   onComplete: () => void;
 }
 
 export function ActionPage({
   type,
-  contentId,
-  questId,
+  contentId, // ID used for fetching data (e.g., spotId or stepId)
   targetName,
-  rewardId,
+  questId,
+  runId,
   onComplete,
 }: ActionPageProps) {
-  const { data: content, isLoading, isError } = useGuideContent(contentId);
+    // State to track internal flow (e.g. Spot Detail -> Mission)
+    const [viewState, setViewState] = useState<'DETAIL' | 'MISSION'>('DETAIL');
+    
+    // --- Data Fetching ---
+    // 1. If type is SPOT_DETAIL, we fetch Spot Data
+    const spotId = (type === 'SPOT_DETAIL' || type === 'PHOTO' || type === 'TREASURE') ? contentId : null;
+    const { data: spot, isLoading: isSpotLoading } = useSpotDetail(spotId || 0);
+    const { data: guides } = useSpotGuide(spotId || 0);
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-4 text-gray-500">Loading Action...</Text>
-        </View>
-      );
+    // 2. If type is MISSION (QUIZ), we fetch Mission Step
+    const stepId = (type === 'QUIZ' || (viewState === 'MISSION' && spotId)) ? `step_${contentId}` : undefined;
+    const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
+
+    // 3. If type is QUEST (Legacy), use GuideContent
+    const isQuestType = type === 'QUEST';
+    const { data: content, isLoading: isContentLoading } = useGuideContent(isQuestType ? contentId : null);
+
+    // 3. Submission Mutation
+    const submitMutation = useSubmitMission();
+
+    // --- Handlers ---
+    const handleStartMission = () => {
+        setViewState('MISSION');
+    };
+
+    const handleQuizAnswer = (answer: string) => {
+        if (!mission) return;
+        submitMutation.mutate({
+            runId: runId || 0, // Use passed runId
+            stepId: mission.stepId,
+            data: { type: 'QUIZ', answer }
+        }, {
+            onSuccess: (data) => {
+                if (data.success) {
+                    onComplete(); // Or show reward first
+                } else {
+                    alert(data.message); // Simple alert for MVP
+                }
+            }
+        });
+    };
+
+    const handlePhotoCapture = (photoUrl: string) => {
+        if (!mission) return;
+        submitMutation.mutate({
+            runId: runId || 0, 
+            stepId: mission.stepId,
+            data: { type: 'PHOTO', photoUrl }
+        }, {
+             onSuccess: (data) => {
+                if (data.success) {
+                    onComplete();
+                }
+            }
+        });
+    };
+
+
+    // --- Render Logic ---
+    
+    // Loading State
+    if (isSpotLoading || (viewState === 'MISSION' && isMissionLoading) || isContentLoading) {
+         return (
+            <View className="flex-1 justify-center items-center bg-white">
+                <ActivityIndicator size="large" color="#2563EB" />
+                <Text className="mt-4 text-gray-500">Loading...</Text>
+            </View>
+        );
     }
 
-    if (isError || !content) {
-      return (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-red-500 mb-4">Failed to load content</Text>
-          <Pressable onPress={onComplete} className="p-2 bg-gray-200 rounded">
-            <Text>Go Back</Text>
-          </Pressable>
-        </View>
-      );
-    }
-
-    switch (type) {
-      case 'QUEST': {
+    // A. Legacy QUEST View
+    if (type === 'QUEST' && content) {
+        // Filter quests if questId is provided
         const activeQuests = questId 
           ? content.quests?.filter(q => q.id === questId) 
-          : [];
-            
+          : content.quests;
+
         if (!activeQuests || activeQuests.length === 0) {
-          return (
-            <View className="flex-1 justify-center items-center">
-              <Text>Quest not found: {questId}</Text>
-              <Pressable onPress={onComplete} className="mt-4 p-2 bg-gray-200 rounded">
-                <Text>Go Back</Text>
-              </Pressable>
-            </View>
-          );
+             return (
+                <View className="flex-1 justify-center items-center">
+                    <Text>Quest not found</Text>
+                    <Pressable onPress={onComplete} className="mt-4 p-2 bg-gray-200 rounded">
+                        <Text>Go Back</Text>
+                    </Pressable>
+                </View>
+            );
         }
 
         return (
-          <QuestBoard 
-            quests={activeQuests} 
-            onComplete={onComplete}
-            onClose={onComplete}
-          />
-        );
-      }
-      case 'CAMERA':
-        return (
-          <View className="flex-1 justify-center items-center bg-black">
-            <Text className="text-white text-xl mb-8 font-bold text-center px-4">
-              📸 Mission: Take a photo of{'\n'}{targetName || 'Photo Spot'}
-            </Text>
-            <View className="w-64 h-64 border-2 border-white/50 rounded-lg mb-8 items-center justify-center">
-              <Text className="text-white/50">Camera Preview Area</Text>
-            </View>
-            <Pressable 
-              onPress={onComplete}
-              className="w-16 h-16 bg-white rounded-full items-center justify-center border-4 border-gray-300 active:opacity-70"
-            >
-              <View className="w-12 h-12 bg-white rounded-full border border-black/10" />
-            </Pressable>
-            <Pressable 
-              onPress={onComplete}
-              className="absolute top-12 right-4 bg-black/50 p-2 rounded-full active:opacity-70"
-            >
-              <Text className="text-white font-bold">Close</Text>
-            </Pressable>
-          </View>
-        );
-      case 'REWARD':
-        return (
-          <View className="flex-1 justify-center items-center bg-blue-50/30 p-8">
-            <View className="bg-white p-8 rounded-3xl items-center shadow-xl border border-blue-100 w-full">
-              <Text className="text-6xl mb-6">🎁</Text>
-              <Text className="text-2xl font-bold mb-2">Victory!</Text>
-              <Text className="text-gray-500 text-center mb-8">
-                You have successfully completed the mission and earned a reward.
-              </Text>
-              <Pressable 
-                onPress={onComplete}
-                className="w-full bg-blue-600 p-4 rounded-xl items-center active:opacity-80"
-              >
-                <Text className="text-white font-bold text-lg">Claim Reward</Text>
-              </Pressable>
-            </View>
-          </View>
-        );
-      default:
-        return (
-          <View className="flex-1 justify-center items-center">
-            <Text>Unknown Action Type: {type}</Text>
-            <Pressable onPress={onComplete} className="mt-4 p-2 bg-gray-200 rounded">
-              <Text>Go Back</Text>
-            </Pressable>
-          </View>
+            <QuestBoard 
+                quests={activeQuests} 
+                onClose={onComplete}
+            />
         );
     }
-  };
 
-  return (
-    <View className="flex-1 bg-white">
-      {renderContent()}
-    </View>
-  );
+    // B. Spot Detail View
+    if (viewState === 'DETAIL' && spot) {
+        // If it's just a simple photo spot without mission, maybe just show detail?
+        // Or if type is TREASURE, show detail then claim?
+        return (
+            <SpotDetailWidget 
+                spot={spot} 
+                guides={guides || []} 
+                onStartMission={handleStartMission} 
+                onClose={onComplete}
+            />
+        );
+    }
+
+    // B. Mission View
+    if (viewState === 'MISSION' && mission) {
+        if (mission.type === 'QUIZ') {
+            return (
+                <QuizWidget 
+                    mission={mission} 
+                    onAnswer={handleQuizAnswer} 
+                    isSubmitting={submitMutation.isPending} 
+                />
+            );
+        }
+        if (mission.type === 'PHOTO') {
+            return (
+                <CameraMissionWidget 
+                    mission={mission} 
+                    onCapture={handlePhotoCapture} 
+                    isSubmitting={submitMutation.isPending} 
+                />
+            );
+        }
+    }
+
+    // Fallback / Error
+    return (
+        <View className="flex-1 justify-center items-center bg-white">
+            <Text className="text-red-500 mb-4">Content not found</Text>
+            <Pressable onPress={onComplete} className="p-3 bg-gray-200 rounded-lg">
+                <Text>Go Back</Text>
+            </Pressable>
+        </View>
+    );
 }

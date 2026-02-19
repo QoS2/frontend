@@ -6,6 +6,7 @@ interface ActionInfo {
   questId?: string;
   targetName?: string;
   rewardId?: string;
+  runId?: number;
 }
 
 interface ActionOverlayState {
