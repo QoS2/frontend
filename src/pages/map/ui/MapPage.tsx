@@ -26,7 +26,14 @@ import {ActionPage} from '@pages/action';
 import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 
-export function MapPage() {
+import { useRunState } from '@entities/run/model';
+
+interface MapPageProps {
+    runId?: number | null;
+}
+
+
+export function MapPage({ runId }: MapPageProps) {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const bottomSheetNavigationRef = useNavigationContainerRef<any>();
@@ -41,7 +48,32 @@ export function MapPage() {
     const { showPopup, dismissedMarkerId } = useDiscoveryPopupStore();
 
     const {addMessage, streamReply, isStreaming} = useChatStore();
-    const [inputText, setInputText] = React.useState(''); 
+    const [inputText, setInputText] = React.useState('');
+
+    // --- Run Mode ---
+    const { data: runState } = useRunState(runId ?? 0);
+    const isRunMode = !!runId && !!runState;
+
+    // Derive TopNavBar data from run state
+    const navDestination = isRunMode ? '광화문 (Gwanghwamun)' : 'Gwanghwamun';
+    const navDistance = isRunMode ? '150m away' : '500m away';
+
+    // Inject guide welcome message when entering run mode
+    const hasInjectedRef = useRef(false);
+    useEffect(() => {
+        if (isRunMode && !hasInjectedRef.current) {
+            hasInjectedRef.current = true;
+            addMessage({
+                sender: 'ai',
+                type: 'text',
+                text: '🎉 투어를 시작합니다! 첫 번째 목적지인 광화문으로 이동해주세요.',
+            });
+        }
+        if (!isRunMode) {
+            hasInjectedRef.current = false;
+        }
+    }, [isRunMode, addMessage]);
+
 
     // Trigger Popup for Photo/Treasure markers
     const { triggeredMarkerId } = useMapNavigationStore();
@@ -171,7 +203,7 @@ export function MapPage() {
         <GestureHandlerRootView className="flex-1 relative">
             {/* Top Navigation */}
             <View className="absolute left-0 right-0 top-0 z-10">
-                <TopNavBar destination="Gwanghwamun" distance="500m away"/>
+                <TopNavBar destination={navDestination} distance={navDistance}/>
             </View>
 
             {/* Map */}

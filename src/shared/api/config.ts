@@ -4,6 +4,7 @@ export const API_FLAGS = {
   AUTH: false,
   TOUR: false,
   RUN: false,
+  CHAT: false,
   MISSION: false,
   COLLECTION: false,
 } as const;
