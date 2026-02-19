@@ -1,18 +1,23 @@
 import React from 'react';
 import { CollectionViewWidget } from '@widgets/collection-view';
-
-const MOCK_ITEMS = [
-  { id: '1', title: 'Gwanghwamun', subtitle: 'Historical Landmark', imageUrl: 'https://placehold.co/400x400/png' },
-  { id: '2', title: 'Gyeongbokgung', subtitle: 'Royal Palace', imageUrl: 'https://placehold.co/400x400/png' },
-  { id: '3', title: 'N Seoul Tower', subtitle: 'City View', imageUrl: 'https://placehold.co/400x400/png' },
-  { id: '4', title: 'Bukchon Hanok', subtitle: 'Traditional Village', imageUrl: 'https://placehold.co/400x400/png' },
-];
+import { useLocationMarkers } from '@entities/location';
 
 export function PlacePage() {
+  const { data: markers = [] } = useLocationMarkers();
+  
+  const placeItems = markers
+    .filter((m) => m.type === 'PLACE')
+    .map((m) => ({
+      id: m.id,
+      title: m.title,
+      subtitle: m.description?.substring(0, 30) || 'Historical Place',
+      imageUrl: m.thumbnailUrl || 'https://placehold.co/400x400/png',
+    }));
+
   return (
     <CollectionViewWidget
       title="Place Collection"
-      items={MOCK_ITEMS}
+      items={placeItems}
     />
   );
 }

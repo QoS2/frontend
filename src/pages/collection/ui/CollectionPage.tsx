@@ -12,14 +12,14 @@ export function CollectionPage() {
   // Convert activated markers/quests into collection items
   const collectionItems = React.useMemo(() => {
     return markers
-      .filter(m => visitedPlaceIds.includes(m.id))
+      .filter(m => m.type === 'TREASURE')
       .map(m => ({
         id: m.id,
         title: m.title,
-        subtitle: m.type, // e.g., 'Historical', 'Cultural'
-        imageUrl: 'https://placehold.co/400x400/png', // Placeholder for now
+        subtitle: visitedPlaceIds.includes(m.id) ? 'Collected' : 'Not Collected',
+        imageUrl: m.thumbnailUrl || 'https://placehold.co/400x400/png', 
       }));
-  }, [markers, visitedPlaceIds, completedQuestIds]);
+  }, [markers, visitedPlaceIds]);
 
   return (
     <CollectionViewWidget

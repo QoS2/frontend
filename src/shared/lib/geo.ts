@@ -12,3 +12,10 @@ export const getDistance = (lat1: number, lon1: number, lat2: number, lon2: numb
 
   return R * c;
 };
+
+export const formatDistance = (meters: number): string => {
+  if (meters < 1000) {
+    return `${Math.round(meters)}m away`;
+  }
+  return `${(meters / 1000).toFixed(1)}km away`;
+};

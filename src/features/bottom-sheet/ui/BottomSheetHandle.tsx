@@ -53,14 +53,8 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
       }
   };
 
-  const containerStyle = useMemo(() => ({
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    backgroundColor: 'white',
-  }), []);
-
   return (
-    <View style={containerStyle} className="pb-2 pt-3 bg-white rounded-t-xl z-50">
+    <View className="pb-2 pt-3 bg-white rounded-t-xl z-50">
       {/* 1. Drag Indicator (Grey Bar) */}
       <View className="items-center mb-4">
         <View className="w-10 h-1 rounded-full bg-gray-300" />

@@ -9,7 +9,6 @@ import { SpotDetailWidget } from '@widgets/spot-detail';
 import { QuestBoard } from '@widgets/quest-board';
 
 // Models
-import { useSpotDetail, useSpotGuide } from '@entities/spot/model';
 import { useMissionStep, useSubmitMission } from '@entities/mission/model';
 import { useGuideContent } from '@entities/guide/model';
 
@@ -25,85 +24,70 @@ interface ActionPageProps {
 
 export function ActionPage({
   type,
-  contentId, // ID used for fetching data (e.g., spotId or stepId)
+  contentId, 
   targetName,
   questId,
   runId,
   onComplete,
 }: ActionPageProps) {
-    // State to track internal flow (e.g. Spot Detail -> Mission)
-    const [viewState, setViewState] = useState<'DETAIL' | 'MISSION'>('DETAIL');
+    // Note: 'viewState' is removed as ActionPage now focuses only on MISSION execution
     
     // --- Data Fetching ---
-    // 1. If type is SPOT_DETAIL, we fetch Spot Data
-    const spotId = (type === 'SPOT_DETAIL' || type === 'PHOTO' || type === 'TREASURE') ? contentId : null;
-    const { data: spot, isLoading: isSpotLoading } = useSpotDetail(spotId || 0);
-    const { data: guides } = useSpotGuide(spotId || 0);
-
-    // 2. If type is MISSION (QUIZ), we fetch Mission Step
-    const stepId = (type === 'QUIZ' || (viewState === 'MISSION' && spotId)) ? `step_${contentId}` : undefined;
-    const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
-
-    // 3. If type is QUEST (Legacy), use GuideContent
+    // A. If type is MISSION (QUIZ/PHOTO/REWARD)
+    // We assume contentId IS the stepId or related ID
+    const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD') ? contentId : undefined;
+    
+    // B. Legacy QUEST type
     const isQuestType = type === 'QUEST';
     const { data: content, isLoading: isContentLoading } = useGuideContent(isQuestType ? contentId : null);
 
-    // 3. Submission Mutation
+    // C. Mission Fetching (if needed)
+    // For now, we mock mission fetch or use stepId directly if logic requires
+    // In real implementation, we might fetch specific mission details here
+    const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
+
+    // Submission Mutation
     const submitMutation = useSubmitMission();
 
     // --- Handlers ---
-    const handleStartMission = () => {
-        setViewState('MISSION');
-    };
-
     const handleQuizAnswer = (answer: string) => {
-        if (!mission) return;
+        // ... (Logic remains same)
+        // Note: For now assuming mission object exists or we construct data
         submitMutation.mutate({
-            runId: runId || 0, // Use passed runId
-            stepId: mission.stepId,
+            runId: runId || 0,
+            stepId: contentId, // Using contentId as stepId
             data: { type: 'QUIZ', answer }
         }, {
             onSuccess: (data) => {
-                if (data.success) {
-                    onComplete(); // Or show reward first
-                } else {
-                    alert(data.message); // Simple alert for MVP
-                }
+                if (data.success) onComplete();
+                else alert(data.message);
             }
         });
     };
 
     const handlePhotoCapture = (photoUrl: string) => {
-        if (!mission) return;
         submitMutation.mutate({
             runId: runId || 0, 
-            stepId: mission.stepId,
+            stepId: contentId,
             data: { type: 'PHOTO', photoUrl }
         }, {
              onSuccess: (data) => {
-                if (data.success) {
-                    onComplete();
-                }
+                if (data.success) onComplete();
             }
         });
     };
 
-
     // --- Render Logic ---
-    
-    // Loading State
-    if (isSpotLoading || (viewState === 'MISSION' && isMissionLoading) || isContentLoading) {
+    if (isContentLoading) {
          return (
             <View className="flex-1 justify-center items-center bg-white">
                 <ActivityIndicator size="large" color="#2563EB" />
-                <Text className="mt-4 text-gray-500">Loading...</Text>
             </View>
         );
     }
 
     // A. Legacy QUEST View
     if (type === 'QUEST' && content) {
-        // Filter quests if questId is provided
         const activeQuests = questId 
           ? content.quests?.filter(q => q.id === questId) 
           : content.quests;
@@ -127,43 +111,49 @@ export function ActionPage({
         );
     }
 
-    // B. Spot Detail View
-    if (viewState === 'DETAIL' && spot) {
-        // If it's just a simple photo spot without mission, maybe just show detail?
-        // Or if type is TREASURE, show detail then claim?
-        return (
-            <SpotDetailWidget 
-                spot={spot} 
-                guides={guides || []} 
-                onStartMission={handleStartMission} 
-                onClose={onComplete}
+    // B. Mission View (Directly render Widget based on type)
+    if (type === 'QUIZ') {
+         // Mock mission object for QuizWidget if data not fetched
+         const mockMission = { 
+             id: contentId, 
+             stepId: contentId, 
+             type: 'QUIZ', 
+             title: targetName || 'Quiz', 
+             description: 'Solve this!', 
+             status: 'IN_PROGRESS',
+             quiz: { question: 'Is this real?', options: [{id:'1', text:'Yes'}, {id:'2', text:'No'}] }
+         };
+         
+         return (
+            <QuizWidget 
+                mission={mission || mockMission as any} 
+                onAnswer={handleQuizAnswer} 
+                isSubmitting={submitMutation.isPending} 
             />
         );
     }
 
-    // B. Mission View
-    if (viewState === 'MISSION' && mission) {
-        if (mission.type === 'QUIZ') {
-            return (
-                <QuizWidget 
-                    mission={mission} 
-                    onAnswer={handleQuizAnswer} 
-                    isSubmitting={submitMutation.isPending} 
-                />
-            );
-        }
-        if (mission.type === 'PHOTO') {
-            return (
-                <CameraMissionWidget 
-                    mission={mission} 
-                    onCapture={handlePhotoCapture} 
-                    onClose={onComplete}
-                    onComplete={onComplete}
-                    runId={runId || 1}
-                    stepId={mission.id}
-                />
-            );
-        }
+    if (type === 'CAMERA') {
+         const mockMission = {
+             id: contentId,
+             stepId: contentId,
+             type: 'PHOTO',
+             title: targetName || 'Photo Mission',
+             description: 'Take a photo here!',
+             status: 'IN_PROGRESS',
+             photo: { targetUrl: '' }
+         };
+
+         return (
+            <CameraMissionWidget 
+                mission={mission || mockMission as any} 
+                onCapture={handlePhotoCapture} 
+                onClose={onComplete}
+                onComplete={onComplete}
+                runId={runId || 0}
+                stepId={contentId}
+            />
+        );
     }
 
     // Fallback / Error

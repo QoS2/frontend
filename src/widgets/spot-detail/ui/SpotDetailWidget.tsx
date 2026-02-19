@@ -7,11 +7,10 @@ import { PlayCircle, MapPin, Clock } from 'lucide-react-native';
 interface SpotDetailWidgetProps {
     spot: SpotDetail;
     guides: GuideSegment[];
-    onStartMission: () => void;
     onClose: () => void;
 }
 
-export function SpotDetailWidget({ spot, guides, onStartMission, onClose }: SpotDetailWidgetProps) {
+export function SpotDetailWidget({ spot, guides, onClose }: SpotDetailWidgetProps) {
     return (
         <View className="flex-1 bg-white">
             {/* Header Image */}
@@ -77,16 +76,6 @@ export function SpotDetailWidget({ spot, guides, onStartMission, onClose }: Spot
                 {/* Bottom Spacer */}
                 <View className="h-24" />
             </ScrollView>
-
-            {/* Floating Action Button */}
-            <View className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 blur-sm border-t border-gray-100">
-                <Pressable 
-                    onPress={onStartMission}
-                    className="w-full bg-blue-600 py-4 rounded-xl items-center shadow-lg active:opacity-90 active:scale-98 transition-transform"
-                >
-                    <Text className="text-white text-xl font-bold">Start Mission</Text>
-                </Pressable>
-            </View>
         </View>
     );
 }

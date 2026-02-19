@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo, useRef, useEffect} from 'react';
-import {StyleSheet, TextInput, View, Keyboard, Pressable} from 'react-native';
+import {TextInput, View, Keyboard, Pressable} from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -20,7 +20,7 @@ import {BottomSheetNavigator, BottomSheetHandle} from '@features/bottom-sheet';
 import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
-import {useLocationTracker} from '@shared/lib';
+import {useLocationTracker, useDistanceCalculator} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
 import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
@@ -54,9 +54,23 @@ export function MapPage({ runId }: MapPageProps) {
     const { data: runState } = useRunState(runId ?? 0);
     const isRunMode = !!runId && !!runState;
 
-    // Derive TopNavBar data from run state
-    const navDestination = isRunMode ? '광화문 (Gwanghwamun)' : 'Gwanghwamun';
-    const navDistance = isRunMode ? '150m away' : '500m away';
+    // Target Logic: 
+    // In real app, we get target from RunState -> Current Step -> Target Marker
+    // For MVP, if run mode is active, we pick the first PLACE marker as target
+    const targetMarker = useMemo(() => {
+        if (!isRunMode) return null;
+        return markers.find(m => m.type === 'PLACE') || null;
+    }, [isRunMode, markers]);
+
+    // Calculate Distance
+    const distanceText = useDistanceCalculator(
+        location, 
+        targetMarker ? targetMarker.coordinate : null
+    );
+
+    // Derive TopNavBar data
+    const navDestination = targetMarker ? targetMarker.title : 'Exploring Seoul';
+    const navDistance = distanceText || 'Calculating...';
 
     // Inject guide welcome message when entering run mode
     const hasInjectedRef = useRef(false);
@@ -166,10 +180,18 @@ export function MapPage({ runId }: MapPageProps) {
     }, []);
 
     const handleMarkerPress = (marker: any) => {
-        console.log(`[Marker Click] ${marker.title}: ${marker.coordinate.latitude}, ${marker.coordinate.longitude}`);
-        if (marker.type === 'PHOTO' || marker.type === 'TREASURE' || marker.type === 'PLACE' || marker.type === 'SUB_PLACE') {
-             handleDiscoveryAction(marker.type, marker.id);
-        }
+        console.log(`[Marker Click] ${marker.title}`);
+        
+        let targetTab = 'GuideList';
+        if (marker.type === 'PLACE') targetTab = 'Place';
+        if (marker.type === 'PHOTO') targetTab = 'Photo';
+        if (marker.type === 'TREASURE') targetTab = 'Treasure';
+
+        // 1. BottomSheet 올리기 (85%)
+        bottomSheetRef.current?.snapToIndex(2); 
+        
+        // 2. 해당 탭으로 이동 (TODO: itemId params 전달)
+        bottomSheetNavigationRef.current?.navigate(targetTab as any, { itemId: marker.id });
     };
 
     const handleLocationButtonPress = () => {
@@ -247,8 +269,7 @@ export function MapPage({ runId }: MapPageProps) {
                 <Animated.View
                     entering={SlideInDown.duration(300)}
                     exiting={SlideOutDown.duration(300)}
-                    style={StyleSheet.absoluteFill}
-                    className="z-50"
+                    className="absolute inset-0 z-50"
                 >
                     <ActionPage 
                         type={activeAction.type}
@@ -264,15 +285,24 @@ export function MapPage({ runId }: MapPageProps) {
 
             {/* Animated Floating Input */}
             <Animated.View
+                className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-white border-t border-gray-100"
                 style={[
-                    styles.floatingInput,
                     inputAnimatedStyle,
                     {pointerEvents: currentRoute === 'GuideChat' ? 'auto' : 'none'},
                 ]}
             >
-                <View style={styles.inputContainer}>
+                <View 
+                    className="flex-row items-center bg-white rounded-3xl px-2 h-[45px] shadow-sm"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 5,
+                    }}
+                >
                     <TextInput
-                        style={styles.textInput}
+                        className="flex-1 px-3 text-base"
                         placeholder="Type a message"
                         placeholderTextColor="#9CA3AF"
                         value={inputText}
@@ -281,14 +311,13 @@ export function MapPage({ runId }: MapPageProps) {
                         onSubmitEditing={handleSend}
                         returnKeyType="send"
                     />
-                    <Pressable style={styles.iconButton} className="active:opacity-70">
+                    <Pressable className="p-2 mr-1 active:opacity-70">
                         <Mic size={24} color="#6B7280" />
                     </Pressable>
                     <Pressable
                         onPress={handleSend}
                         disabled={!inputText.trim() || isStreaming}
-                        style={styles.sendButton}
-                        className="active:opacity-70"
+                        className="items-center justify-center active:opacity-70"
                     >
                         <VoiceIcon width={28} height={28} />
                     </Pressable>
@@ -297,44 +326,3 @@ export function MapPage({ runId }: MapPageProps) {
         </GestureHandlerRootView>
     );
 }
-
-const styles = StyleSheet.create({
-    floatingInput: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 20,
-        paddingBottom: 32,
-        paddingTop: 16,
-        backgroundColor: 'white',
-        borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderRadius: 24,
-        paddingHorizontal: 8,
-        height: 45,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    textInput: {
-        flex: 1,
-        paddingHorizontal: 12,
-        fontSize: 16,
-    },
-    iconButton: {
-        padding: 8,
-        marginRight: 4,
-    },
-    sendButton: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-});
