@@ -7,6 +7,9 @@ export const API_FLAGS = {
   CHAT: false,
   MISSION: false,
   COLLECTION: false,
+  GUIDE: false,
+  LOCATION: false,
+  SPOT: false,
 } as const;
 
 export const API_CONFIG = {

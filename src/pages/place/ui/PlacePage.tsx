@@ -6,7 +6,7 @@ export function PlacePage() {
   const { data: markers = [] } = useLocationMarkers();
   
   const placeItems = markers
-    .filter((m) => m.type === 'PLACE')
+    .filter((m) => m.type === 'PLACE' || m.type === 'SUB_PLACE')
     .map((m) => ({
       id: m.id,
       title: m.title,
