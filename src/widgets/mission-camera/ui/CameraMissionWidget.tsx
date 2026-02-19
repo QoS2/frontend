@@ -3,19 +3,28 @@ import { View, Pressable, Image, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Text } from '@shared/ui';
 import { MissionStep } from '@shared/api/mission.contracts';
-import { Camera, SwitchCamera, RefreshCw, Check } from 'lucide-react-native';
+import { Camera, SwitchCamera, RefreshCw, Check, X } from 'lucide-react-native';
+import { useSubmitMission } from '@entities/mission/model';
+import { useUploadFile } from '@entities/upload/model';
+import { Alert, TouchableOpacity } from 'react-native';
 
 interface CameraMissionWidgetProps {
     mission: MissionStep;
     onCapture: (photoUrl: string) => void;
-    isSubmitting: boolean;
+    onClose: () => void;
+    onComplete: () => void;
+    runId: number;
+    stepId: string;
 }
 
-export function CameraMissionWidget({ mission, onCapture, isSubmitting }: CameraMissionWidgetProps) {
+export function CameraMissionWidget({ mission, onCapture, onClose, onComplete, runId, stepId }: CameraMissionWidgetProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [facing, setFacing] = useState<'back' | 'front'>('back');
     const [photo, setPhoto] = useState<string | null>(null);
     const cameraRef = useRef<CameraView>(null);
+
+    const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
+    const { mutate: submitMission, isPending: isSubmitting } = useSubmitMission();
 
     // Permission handling
     if (!permission) {
@@ -63,9 +72,38 @@ export function CameraMissionWidget({ mission, onCapture, isSubmitting }: Camera
     };
 
     const handleSubmit = () => {
-        if (photo) {
-            onCapture(photo);
-        }
+        if (!photo) return;
+        
+        // 1. Upload
+        uploadFile(photo, {
+            onSuccess: (uploadData) => {
+                console.log('Upload success', uploadData);
+                // 2. Submit Mission
+                submitMission({
+                    runId,
+                    stepId,
+                    data: { type: 'PHOTO', photoUrl: uploadData.url }
+                }, {
+                    onSuccess: (result) => {
+                        if (result.success) {
+                            Alert.alert('Mission Complete!', result.message, [
+                                { text: 'OK', onPress: onComplete }
+                            ]);
+                        } else {
+                            Alert.alert('Try Again', result.message);
+                        }
+                    },
+                    onError: () => {
+                        Alert.alert('Error', 'Failed to submit mission');
+                    }
+                });
+            },
+            onError: () => {
+                Alert.alert('Upload Failed', 'Could not upload photo');
+                // Fallback for mock/test if upload fails
+                // onCapture(photo); 
+            }
+        });
     };
 
     if (photo) {
@@ -93,7 +131,7 @@ export function CameraMissionWidget({ mission, onCapture, isSubmitting }: Camera
                         disabled={isSubmitting}
                         className="bg-blue-600 w-16 h-16 rounded-full items-center justify-center shadow-lg active:opacity-80"
                     >
-                         {isSubmitting ? (
+                         {(isSubmitting || isUploading) ? (
                             <ActivityIndicator color="white" />
                          ) : (
                             <Check size={32} color="white" />
@@ -110,13 +148,19 @@ export function CameraMissionWidget({ mission, onCapture, isSubmitting }: Camera
     return (
         <View className="flex-1 bg-black">
              {/* Header Info */}
-             <View className="absolute top-0 left-0 right-0 z-10 pt-12 pb-4 px-6 bg-gradient-to-b from-black/70 to-transparent">
-                <Text className="text-white text-xl font-bold text-center mb-1">
-                    {mission.title}
-                </Text>
-                <Text className="text-white/80 text-sm text-center">
-                    {mission.photo?.targetDescription || mission.description}
-                </Text>
+             <View className="absolute top-0 left-0 right-0 z-10 pt-12 pb-4 px-6 bg-gradient-to-b from-black/70 to-transparent flex-row justify-between items-start">
+                <TouchableOpacity onPress={onClose} className="p-2 bg-black/30 rounded-full mr-4">
+                    <X color="white" size={24} />
+                </TouchableOpacity>
+                <View className="flex-1">
+                    <Text className="text-white text-xl font-bold text-center mb-1">
+                        {mission.title}
+                    </Text>
+                    <Text className="text-white/80 text-sm text-center">
+                        {mission.photo?.targetDescription || mission.description}
+                    </Text>
+                </View>
+                <View className="w-10" />
             </View>
 
             <CameraView 

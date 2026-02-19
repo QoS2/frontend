@@ -157,7 +157,10 @@ export function ActionPage({
                 <CameraMissionWidget 
                     mission={mission} 
                     onCapture={handlePhotoCapture} 
-                    isSubmitting={submitMutation.isPending} 
+                    onClose={onComplete}
+                    onComplete={onComplete}
+                    runId={runId || 1}
+                    stepId={mission.id}
                 />
             );
         }
