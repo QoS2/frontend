@@ -29,9 +29,45 @@ const MOCK_MARKERS: LocationMarker[] = [
     contentId: null,
     thumbnailUrl: 'https://placehold.co/100x100.png',
   },
+  {
+    id: '550e8400-e29b-41d4-a716-446655440020',
+    type: 'PHOTO',
+    coordinate: { latitude: 37.5765, longitude: 126.9770 }, // Slightly north of Gwanghwamun
+    radius: 30,
+    title: 'Hidden Photo Spot',
+    description: 'Best angle for Gwanghwamun.',
+    contentId: '550e8400-e29b-41d4-a716-446655440022',
+    thumbnailUrl: 'https://placehold.co/100x100.png',
+  },
+  {
+    id: '550e8400-e29b-41d4-a716-446655440021',
+    type: 'TREASURE',
+    coordinate: { latitude: 37.5755, longitude: 126.9760 }, // Slightly west
+    radius: 30,
+    title: 'Secret Treasure',
+    description: 'Find the hidden gem!',
+    contentId: '550e8400-e29b-41d4-a716-446655440023',
+    thumbnailUrl: 'https://placehold.co/100x100.png',
+  },
 ];
 
 const MOCK_CONTENT: Record<string, GuideContent> = {
+  '550e8400-e29b-41d4-a716-446655440022': {
+    id: '550e8400-e29b-41d4-a716-446655440022',
+    title: 'Hidden Photo Spot',
+    description: 'Take a picture here!',
+    script: 'You found a great photo spot!',
+    events: [],
+    quests: [],
+  },
+  '550e8400-e29b-41d4-a716-446655440023': {
+    id: '550e8400-e29b-41d4-a716-446655440023',
+    title: 'Secret Treasure',
+    description: 'You found a treasure!',
+    script: 'Wow, a hidden treasure!',
+    events: [],
+    quests: [],
+  },
   '550e8400-e29b-41d4-a716-446655440011': {
     id: '550e8400-e29b-41d4-a716-446655440011',
     title: 'Gwanghwamun Story',

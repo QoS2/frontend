@@ -24,6 +24,7 @@ import {useLocationTracker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
 import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
+import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 
 export function MapPage() {
     const bottomSheetRef = useRef<BottomSheet>(null);
@@ -36,12 +37,54 @@ export function MapPage() {
     const {activeMarkerId} = useMapNavigationStore();
     const [currentRoute, setCurrentRoute] = React.useState<string>('GuideChat');
 
-    const { activeAction, closeAction } = useActionOverlayStore();
+    const { activeAction, closeAction, openAction } = useActionOverlayStore();
+    const { showPopup, dismissedMarkerId } = useDiscoveryPopupStore();
 
     const {addMessage, streamReply, isStreaming} = useChatStore();
     const [inputText, setInputText] = React.useState(''); 
 
+    // Trigger Popup for Photo/Treasure markers
+    const { triggeredMarkerId } = useMapNavigationStore();
+    
+    useEffect(() => {
+        if (!triggeredMarkerId) return;
+
+        const marker = markers.find(m => m.id === triggeredMarkerId);
+        if (!marker) return;
+
+        // Check if user already dismissed this marker popup in this session
+        if (dismissedMarkerId === marker.id) return;
+
+        if (marker.type === 'PHOTO' || marker.type === 'TREASURE') {
+            showPopup({
+                type: marker.type as 'PHOTO' | 'TREASURE',
+                markerId: marker.id,
+                markerTitle: marker.title,
+            });
+        }
+    }, [triggeredMarkerId, markers, dismissedMarkerId, showPopup]);
+
     useGeofenceTrigger(location);
+
+    const handleDiscoveryAction = (type: 'PHOTO' | 'TREASURE', markerId: string) => {
+        const marker = markers.find(m => m.id === markerId);
+        if (!marker || !marker.contentId) return;
+
+        if (type === 'PHOTO') {
+            openAction({
+                type: 'CAMERA',
+                contentId: marker.contentId,
+                targetName: marker.title,
+            });
+        } else if (type === 'TREASURE') {
+             openAction({
+                type: 'REWARD',
+                contentId: marker.contentId,
+                rewardId: 'treasure-reward', // Mock reward ID
+            });
+        }
+    };
+
 
     // Animation for input visibility
     const inputOpacity = useSharedValue(1);
@@ -157,6 +200,9 @@ export function MapPage() {
                     navigationRef={bottomSheetNavigationRef}
                 />
             </BottomSheet>
+
+            {/* Discovery Popup */}
+            <DiscoveryPopup onAction={handleDiscoveryAction} />
 
             {/* Action Overlay Layer */}
             {activeAction && (

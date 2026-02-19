@@ -29,7 +29,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
       if (zoomLevel < 15) {
         return marker.type === 'PLACE';
       } else if (zoomLevel < 17) {
-        return marker.type === 'PLACE' || marker.type === 'SUB_PLACE' || marker.type === 'PHOTO';
+        return marker.type === 'PLACE' || marker.type === 'SUB_PLACE' || marker.type === 'PHOTO' || marker.type === 'TREASURE';
       } else {
         return true; // Show all
       }

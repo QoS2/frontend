@@ -108,7 +108,6 @@ function GuideItem({ item, status }: GuideItemProps) {
   const handlePress = () => {
     // Navigate to GuideChat for any item with content
     if (item.contentId) {
-      setTriggeredMarkerId(item.id);
       navigation.navigate('GuideChat', { stepId: item.id, title: item.title });
       return;
     }
