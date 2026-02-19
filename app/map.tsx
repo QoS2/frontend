@@ -1,9 +1,11 @@
 import { MapPage } from '@pages/map';
 import { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Button } from 'react-native';
+import { View, StyleSheet, Button } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AuthDebugWidget } from '../src/features/auth/ui/AuthDebugWidget';
 
 export default function MapScreen() {
+  const router = useRouter();
   const [isAuthDebugVisible, setIsAuthDebugVisible] = useState(true);
 
   return (
@@ -16,6 +18,8 @@ export default function MapScreen() {
       ) : (
         <View style={styles.openDebugButton}>
           <Button title="🔧 Auth Debug" onPress={() => setIsAuthDebugVisible(true)} color="#666" />
+          <View style={{ height: 8 }} />
+          <Button title="🗺️ Tours" onPress={() => router.push('/tours')} color="#007AFF" />
         </View>
       )}
     </View>
