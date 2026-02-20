@@ -1,7 +1,7 @@
 export const API_FLAGS = {
   // false = Use Mock Data
   // true = Use Real API
-  AUTH: false,
+  AUTH: true,
   TOUR: true,
   RUN: true,
   CHAT: true,

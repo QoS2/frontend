@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_FLAGS } from '../../shared/api/config';
-import { httpClient } from '../../shared/api/httpClient';
+import { API_FLAGS } from '@shared/api/config';
+import { httpClient } from '@shared/api/httpClient';
 import {
   TourListResponseSchema,
   TourDetailSchema,
@@ -11,16 +11,11 @@ import {
   RunActionSchema,
 } from '../../shared/api/tour.contracts';
 import { ApiError, ApiErrorSchema } from '../../shared/api/auth.contracts';
-import { MOCK_TOUR_DETAIL, MOCK_TOUR_LIST, MOCK_RUN_RESPONSE } from './mockData';
+import { MOCK_RUN_RESPONSE } from './mockData';
 
 // --- API Functions ---
 
 const fetchTours = async (): Promise<TourListItem[]> => {
-  if (!API_FLAGS.TOUR) {
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return TourListResponseSchema.parse(MOCK_TOUR_LIST);
-  }
   // [REAL]
   const response = await httpClient.get<unknown>('/api/v1/tours', { isPublic: true });
   try {
@@ -32,13 +27,6 @@ const fetchTours = async (): Promise<TourListItem[]> => {
 };
 
 const fetchTourDetail = async (tourId: number): Promise<TourDetail> => {
-  if (!API_FLAGS.TOUR) {
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Simulate finding the tour or returning default mock
-    const detail = { ...MOCK_TOUR_DETAIL, tourId }; 
-    return TourDetailSchema.parse(detail);
-  }
   // [REAL]
   const response = await httpClient.get<unknown>(`/api/v1/tours/${tourId}`);
   try {

@@ -45,17 +45,24 @@ class HttpClient {
 
     // 3. Execute Request
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Log Request
+    console.log(`[API_REQ] ${method} ${endpoint}`, json ? JSON.stringify(json).slice(0, 500) : '');
+    
     let response: Response;
     try {
       response = await fetch(url, config);
     } catch (error) {
       // Network Error
-      console.error('[API] Network Error:', error);
+      console.error('[API_ERR] Network Error:', error);
       throw new Error('Network request failed. Please check your connection.');
     }
 
     // 4. Response Handling
     const responseBody = await response.json().catch(() => null);
+
+    // Log Response
+    console.log(`[API_RES] ${method} ${endpoint} ${response.status}`, responseBody ? JSON.stringify(responseBody).slice(0, 500) + (JSON.stringify(responseBody).length > 500 ? '...' : '') : '');
 
     if (!response.ok) {
       // Try to parse structured API error

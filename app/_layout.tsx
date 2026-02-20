@@ -3,28 +3,27 @@ import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAuthStore } from '@entities/auth/authStore';
 import '../global.css';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <QueryClientProvider client={queryClient}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="tours/index" options={{ headerShown: false }} />
-            <Stack.Screen name="tours/[id]" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="map"
-              options={{
-                headerShown: true,
-                title: 'Gwanghwamun',
-                headerStyle: { backgroundColor: '#fff' },
-                headerShadowVisible: false,
-              }}
-            />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Protected guard={!!accessToken}>
+              <Stack.Screen name="(app)" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={!accessToken}>
+              <Stack.Screen name="sign-in" />
+              <Stack.Screen name="sign-up" />
+            </Stack.Protected>
           </Stack>
         </QueryClientProvider>
       </GestureHandlerRootView>

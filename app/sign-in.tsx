@@ -1,0 +1,124 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { useLogin } from '@entities/auth/model';
+
+export default function SignInPage() {
+  const router = useRouter();
+  const { mutate: login, isPending, error } = useLogin();
+  
+  const [email, setEmail] = useState('test@example.com');
+  const [password, setPassword] = useState('password123');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Focus states for modern UI feel
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+  const handleSignIn = () => {
+    login({ email, password }, {
+      onSuccess: () => {
+        // Stack.Protected will automatically handle the redirection upon token set
+      }
+    });
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-white px-6">
+      <View className="flex-1 justify-center">
+        
+        {/* Header Section */}
+        <View className="mb-10 items-center">
+          <Text className="text-4xl font-extrabold text-slate-900 tracking-tight">
+            Quest of Seoul
+          </Text>
+          <Text className="text-lg text-slate-500 mt-2">
+            서울의 숨겨진 이야기 속으로
+          </Text>
+        </View>
+
+        {/* Form Section */}
+        <View className="gap-4">
+          {/* Email Input */}
+          <View 
+            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
+              isEmailFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
+            }`}
+          >
+            <Mail size={20} color={isEmailFocused ? '#3b82f6' : '#94a3b8'} />
+            <TextInput
+              className="flex-1 ml-3 text-base text-slate-900"
+              placeholder="이메일 주소"
+              placeholderTextColor="#94a3b8"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setIsEmailFocused(true)}
+              onBlur={() => setIsEmailFocused(false)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          {/* Password Input */}
+          <View 
+            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
+              isPasswordFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
+            }`}
+          >
+            <Lock size={20} color={isPasswordFocused ? '#3b82f6' : '#94a3b8'} />
+            <TextInput
+              className="flex-1 mx-3 text-base text-slate-900"
+              placeholder="비밀번호"
+              placeholderTextColor="#94a3b8"
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={10}>
+              {showPassword ? (
+                <EyeOff size={20} color="#94a3b8" />
+              ) : (
+                <Eye size={20} color="#94a3b8" />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Error Message */}
+          {error && (
+            <Text className="text-red-500 text-sm mt-1 px-1">
+              {error.message || '로그인에 실패했습니다.'}
+            </Text>
+          )}
+
+          {/* Login Button */}
+          <TouchableOpacity
+            className="bg-blue-600 rounded-2xl py-4 mt-2 items-center justify-center flex-row shadow-sm shadow-blue-200"
+            activeOpacity={0.8}
+            onPress={handleSignIn}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-bold text-base">로그인</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+      </View>
+
+      {/* Footer Section */}
+      <View className="mb-8 items-center justify-center flex-row">
+        <Text className="text-slate-500 text-base">계정이 없으신가요? </Text>
+        <TouchableOpacity onPress={() => router.push('/sign-up')} hitSlop={10}>
+          <Text className="text-blue-600 font-bold text-base">회원가입</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}

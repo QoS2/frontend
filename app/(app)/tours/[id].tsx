@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TourDetailWidget } from '../../src/widgets/tour-detail/ui/TourDetailWidget';
+import { TourDetailWidget } from '@widgets/tour-detail/ui/TourDetailWidget';
 
 export default function TourDetailPage() {
   const { id } = useLocalSearchParams();
