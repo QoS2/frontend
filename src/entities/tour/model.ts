@@ -23,7 +23,12 @@ const fetchTours = async (): Promise<TourListItem[]> => {
   }
   // [REAL]
   const response = await httpClient.get<unknown>('/api/v1/tours', { isPublic: true });
-  return TourListResponseSchema.parse(response);
+  try {
+    return TourListResponseSchema.parse(response);
+  } catch (err) {
+    console.error('API Response Schema Validation Error (fetchTours):', err);
+    throw err; // React Query will still catch this and fail/retry, but now we'll see it in console
+  }
 };
 
 const fetchTourDetail = async (tourId: number): Promise<TourDetail> => {
@@ -36,7 +41,12 @@ const fetchTourDetail = async (tourId: number): Promise<TourDetail> => {
   }
   // [REAL]
   const response = await httpClient.get<unknown>(`/api/v1/tours/${tourId}`);
-  return TourDetailSchema.parse(response);
+  try {
+    return TourDetailSchema.parse(response);
+  } catch (err) {
+    console.error(`API Response Schema Validation Error (fetchTourDetail ${tourId}):`, err);
+    throw err;
+  }
 };
 
 const unlockTourApi = async (tourId: number): Promise<void> => {

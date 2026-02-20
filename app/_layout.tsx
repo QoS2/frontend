@@ -14,7 +14,8 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="tours" options={{ headerShown: false }} />
+            <Stack.Screen name="tours/index" options={{ headerShown: false }} />
+            <Stack.Screen name="tours/[id]" options={{ headerShown: false }} />
             <Stack.Screen
               name="map"
               options={{

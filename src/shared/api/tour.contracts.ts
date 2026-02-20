@@ -37,14 +37,14 @@ export const SpotSchema = z.object({
 // 4.1 Tour List Item
 export const TourListItemSchema = z.object({
   id: z.number(),
-  externalKey: z.string(),
+  externalKey: z.string().optional(),
   title: z.string(),
-  description: z.string(),
-  thumbnailUrl: z.string().url(),
-  estimatedDurationMin: z.number(),
-  accessStatus: AccessStatusSchema,
-  tags: z.array(TagSchema),
-  counts: TourCountsSchema,
+  description: z.string().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  estimatedDurationMin: z.number().optional(),
+  accessStatus: AccessStatusSchema.optional().default('UNLOCKED'),
+  tags: z.array(TagSchema).optional().default([]),
+  counts: TourCountsSchema.optional().default({ main: 0, sub: 0, photo: 0, treasure: 0, missions: 0 }),
 });
 export const TourListResponseSchema = z.array(TourListItemSchema);
 
@@ -52,26 +52,26 @@ export const TourListResponseSchema = z.array(TourListItemSchema);
 export const TourDetailSchema = z.object({
   tourId: z.number(),
   title: z.string(),
-  description: z.string(),
-  tags: z.array(TagSchema),
-  counts: TourCountsSchema,
+  description: z.string().nullable().optional().default(''),
+  tags: z.array(TagSchema).optional().default([]),
+  counts: TourCountsSchema.optional().default({ main: 0, sub: 0, photo: 0, treasure: 0, missions: 0 }),
   info: z.object({
-    entrance_fee: z.record(z.string(), z.number()).optional(), // adult: 3000 etc.
+    entrance_fee: z.record(z.string(), z.number()).nullable().optional(), // adult: 3000 etc.
     available_hours: z.array(z.object({
       day: z.string(),
       open: z.string(),
       close: z.string(),
-    })).optional(),
-    estimated_duration_min: z.number(),
-  }),
-  goodToKnow: z.array(z.string()).optional(),
+    })).nullable().optional(),
+    estimated_duration_min: z.number().nullable().optional().default(0),
+  }).nullable().optional().default({ estimated_duration_min: 0 }),
+  goodToKnow: z.array(z.string()).nullable().optional().default([]),
   startSpot: SpotSchema,
-  mapSpots: z.array(SpotSchema),
+  mapSpots: z.array(SpotSchema).optional().default([]),
   access: z.object({
     status: AccessStatusSchema,
     hasAccess: z.boolean(),
-  }),
-  thumbnails: z.array(z.string().url()),
+  }).optional().default({ status: 'UNLOCKED', hasAccess: true }),
+  thumbnails: z.array(z.string()).nullable().optional().default([]),
   currentRun: z.object({
     runId: z.number(),
     status: RunStatusSchema,
@@ -84,9 +84,9 @@ export const TourDetailSchema = z.object({
   }).nullable().optional(), // Nullable if no run exists
   actions: z.object({
     primaryButton: z.string(), // CONSTANT check needed?
-    secondaryButton: z.string().optional(),
-    moreActions: z.array(z.string()).optional(),
-  }).optional(),
+    secondaryButton: z.string().nullable().optional(),
+    moreActions: z.array(z.string()).nullable().optional().default([]),
+  }).nullable().optional(),
 });
 
 // 4.4 Run Response
