@@ -56,11 +56,11 @@ export function ActionPage({
         submitMutation.mutate({
             runId: runId || 0,
             stepId: contentId,
-            data: { type: 'QUIZ', answer }
+            data: { missionType: 'QUIZ', selectedOptionId: answer }
         }, {
             onSuccess: (data) => {
-                if (data.success) onComplete();
-                else alert(data.message);
+                if (data.isCorrect) onComplete();
+                else alert(data.feedback || 'Try again!');
             }
         });
     };
@@ -69,10 +69,10 @@ export function ActionPage({
         submitMutation.mutate({
             runId: runId || 0, 
             stepId: contentId,
-            data: { type: 'PHOTO', photoUrl }
+            data: { missionType: 'PHOTO', photoUrl }
         }, {
              onSuccess: (data) => {
-                if (data.success) onComplete();
+                if (data.isCorrect) onComplete();
             }
         });
     };
@@ -92,7 +92,7 @@ export function ActionPage({
         return (
             <SpotDetailWidget 
                 spot={spotDetail}
-                guides={spotGuides || []}
+                guides={spotGuides?.segments || []}
                 onClose={onComplete}
             />
         );

@@ -46,8 +46,14 @@ const checkProximity = async ({ runId, data }: { runId: number; data: ProximityR
       event: undefined,
     });
   }
-  const response = await httpClient.post<unknown>(`/api/v1/runs/${runId}/proximity`, { json: data });
-  return ProximityResponseSchema.parse(response);
+  return httpClient.post<ProximityResponse>(
+        `/api/v1/runs/${runId}/proximity`,
+        {
+          latitude: data.lat,
+          longitude: data.lng,
+          targetSpotId: data.targetSpotId
+        }
+    );
 };
 
 const fetchChatHistory = async (runId: number): Promise<ChatMessage[]> => {
@@ -72,7 +78,7 @@ const sendMessage = async ({ runId, data }: { runId: number; data: SendMessageRe
     };
     return ChatMessageSchema.parse(newMessage);
   }
-  const response = await httpClient.post<unknown>(`/api/v1/runs/${runId}/chat`, { json: data });
+  const response = await httpClient.post<unknown>(`/api/v1/runs/${runId}/chat`, data);
   return ChatMessageSchema.parse(response);
 };
 

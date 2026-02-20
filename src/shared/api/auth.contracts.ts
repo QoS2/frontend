@@ -26,9 +26,9 @@ export const LoginResponseSchema = z.object({
 });
 
 export const RegisterRequestSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  nickname: z.string().min(1, 'Nickname is required'),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  nickname: z.string().min(1, 'Nickname cannot be empty').optional(),
 });
 
 export const RegisterResponseSchema = LoginResponseSchema; // Same response structure

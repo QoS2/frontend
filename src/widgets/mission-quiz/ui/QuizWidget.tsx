@@ -23,24 +23,23 @@ export function QuizWidget({ mission, onAnswer, isSubmitting }: QuizWidgetProps)
         }
     };
 
-    if (!mission.quiz) return null;
+    if (!mission.optionsJson?.choices) return null;
 
     return (
         <View className="flex-1 bg-white p-6">
             <View className="mb-8">
                 <Text className="text-2xl font-bold mb-2 text-gray-900">{mission.title}</Text>
-                <Text className="text-gray-500 text-lg mb-6">{mission.description}</Text>
                 
                 <View className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                      <Text className="text-lg font-medium text-blue-900 leading-7">
-                        Q. {mission.quiz.question}
+                        Q. {mission.prompt}
                      </Text>
                 </View>
             </View>
 
             <ScrollView className="flex-1 mb-8" showsVerticalScrollIndicator={false}>
                 <View className="gap-3">
-                    {mission.quiz.options.map((option) => {
+                    {mission.optionsJson.choices.map((option) => {
                         const isSelected = selectedOption === option.id;
                         return (
                             <Pressable

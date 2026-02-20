@@ -82,15 +82,15 @@ export function CameraMissionWidget({ mission, onCapture, onClose, onComplete, r
                 submitMission({
                     runId,
                     stepId,
-                    data: { type: 'PHOTO', photoUrl: uploadData.url }
+                    data: { missionType: 'PHOTO', photoUrl: uploadData.url }
                 }, {
                     onSuccess: (result) => {
-                        if (result.success) {
-                            Alert.alert('Mission Complete!', result.message, [
+                        if (result.isCorrect) {
+                            Alert.alert('Mission Complete!', result.feedback || 'Great shot!', [
                                 { text: 'OK', onPress: onComplete }
                             ]);
                         } else {
-                            Alert.alert('Try Again', result.message);
+                            Alert.alert('Try Again', result.feedback || 'Keep trying!');
                         }
                     },
                     onError: () => {
@@ -157,7 +157,7 @@ export function CameraMissionWidget({ mission, onCapture, onClose, onComplete, r
                         {mission.title}
                     </Text>
                     <Text className="text-white/80 text-sm text-center">
-                        {mission.photo?.targetDescription || mission.description}
+                        {mission.optionsJson?.instruction || mission.prompt}
                     </Text>
                 </View>
                 <View className="w-10" />

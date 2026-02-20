@@ -5,56 +5,75 @@ import {
 } from '../../shared/api/collection.contracts';
 
 export const MOCK_PLACES: PlaceCollectionResponse = {
+  totalCollected: 2,
+  totalAvailable: 20,
   items: [
     {
-      id: 'place-1',
-      name: 'Gwanghwamun Gate',
+      spotId: 1,
+      tourId: 101,
+      tourTitle: 'Gyeongbokgung Tour',
+      type: 'MAIN',
+      title: 'Gwanghwamun Gate',
       description: 'Acquired on 2023-10-01',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Gwanghwamun_Gate_2022.jpg/1200px-Gwanghwamun_Gate_2022.jpg',
-      acquiredAt: '2023-10-01T10:00:00Z',
+      thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Gwanghwamun_Gate_2022.jpg/1200px-Gwanghwamun_Gate_2022.jpg',
+      collectedAt: '2023-10-01T10:00:00Z',
+      orderIndex: 1,
+      collected: true,
     },
     {
-      id: 'place-2',
-      name: 'N Seoul Tower',
+      spotId: 2,
+      tourId: 101,
+      tourTitle: 'Gyeongbokgung Tour',
+      type: 'MAIN',
+      title: 'Geunjeongjeon Hall',
       description: 'Acquired on 2023-10-02',
-      imageUrl: 'https://english.visitseoul.net/comm/getImage?srvcId=POST&parentSn=5087&fileTy=POSTTHUMB&fileNo=1',
-      acquiredAt: '2023-10-02T14:30:00Z',
+      thumbnailUrl: 'https://english.visitseoul.net/comm/getImage?srvcId=POST&parentSn=5087&fileTy=POSTTHUMB&fileNo=1',
+      collectedAt: '2023-10-02T14:30:00Z',
+      orderIndex: 2,
+      collected: true,
     },
   ],
-  totalCount: 2,
 };
 
 export const MOCK_TREASURES: TreasureCollectionResponse = {
+  totalCollected: 1,
+  totalAvailable: 5,
   items: [
     {
-      id: 'treasure-1',
+      treasureId: 10,
+      tourId: 101,
+      tourTitle: 'Gyeongbokgung Tour',
       name: 'Golden Key',
       description: 'Found hidden in the palace.',
       imageUrl: 'https://cdn-icons-png.flaticon.com/512/2534/2534882.png',
-      acquiredAt: '2023-10-01T11:00:00Z',
+      grade: 'RARE',
+      collectedAt: '2023-10-01T11:00:00Z',
+      collected: true,
     },
   ],
-  totalCount: 1,
 };
 
-export const MOCK_PHOTO_SPOTS: PhotoSpotsResponse = {
-  items: [
-    {
-      id: 'photo-1',
-      spotId: 1,
-      title: 'Gwanghwamun Signboard',
-      description: 'Take a photo of the signboard.',
-      exampleImageUrl: 'https://placehold.co/400x300/png',
-      isCompleted: true,
-      mySubmissionUrl: 'https://placehold.co/400x300/png?text=My+Photo',
-    },
-    {
-      id: 'photo-2',
-      spotId: 2,
-      title: 'Sejong Statue',
-      description: 'Pose with King Sejong.',
-      exampleImageUrl: 'https://placehold.co/400x300/png',
-      isCompleted: false,
-    },
-  ],
-};
+export const MOCK_PHOTO_SPOTS: PhotoSpotsResponse = [
+  {
+    spotId: 1,
+    title: 'Gwanghwamun Signboard',
+    description: 'Take a photo of the signboard.',
+    latitude: 37.576,
+    longitude: 126.977,
+    imageUrl: 'https://placehold.co/400x300/png',
+    userPhotoCount: 1,
+    samplePhotos: ['https://placehold.co/400x300/png?text=Sample'],
+    collected: true,
+  },
+  {
+    spotId: 2,
+    title: 'Sejong Statue',
+    description: 'Pose with King Sejong.',
+    latitude: 37.576,
+    longitude: 126.977,
+    imageUrl: 'https://placehold.co/400x300/png',
+    userPhotoCount: 0,
+    samplePhotos: [],
+    collected: false,
+  },
+];

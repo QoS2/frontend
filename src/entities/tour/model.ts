@@ -49,7 +49,7 @@ const unlockTourApi = async (tourId: number): Promise<void> => {
   await httpClient.post(`/api/v1/tours/${tourId}/access/unlock`);
 };
 
-const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 'RESUME' }): Promise<RunResponse> => {
+const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 'CONTINUE' }): Promise<RunResponse> => {
   if (!API_FLAGS.RUN) { // Use RUN flag for execution logic
     // [MOCK]
     await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -60,8 +60,9 @@ const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 
     });
   }
   // [REAL]
-  const response = await httpClient.post<unknown>(`/api/v1/tours/${tourId}/runs`, {
-    json: { mode },
+  const response = await httpClient.post<unknown>('/api/v1/tour-runs', {
+    tourId,
+    mode: 'CONTINUE'
   });
   return RunResponseSchema.parse(response);
 };
@@ -96,7 +97,7 @@ export const useUnlockTour = () => {
 
 export const useStartTour = () => {
   const queryClient = useQueryClient();
-  return useMutation<RunResponse, ApiError, { tourId: number; mode: 'START' | 'RESUME' }>({
+  return useMutation<RunResponse, ApiError, { tourId: number; mode: 'START' | 'CONTINUE' }>({
     mutationFn: startTourApi,
     onSuccess: (data, variables) => {
       // Invalidate tour detail to reflect new 'currentRun' state if backend updates it

@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const AccessStatusSchema = z.enum(['LOCKED', 'UNLOCKED']);
 export const SpotTypeSchema = z.enum(['MAIN', 'SUB', 'PHOTO', 'TREASURE']);
 export const RunStatusSchema = z.enum(['IN_PROGRESS', 'COMPLETED', 'ABANDONED']); // Add verified values
-export const RunModeSchema = z.enum(['START', 'RESUME']);
+export const RunModeSchema = z.enum(['START', 'CONTINUE']);
 
 // --- Common Sub-schemas ---
 export const TagSchema = z.object({
@@ -94,7 +94,7 @@ export const RunResponseSchema = z.object({
   runId: z.number(),
   tourId: z.number(),
   status: RunStatusSchema,
-  mode: z.enum(['START', 'RESUME']).optional(), // Optional in response?
+  mode: z.enum(['START', 'CONTINUE']).optional(), // Optional in response?
   progress: z.object({
     completedCount: z.number(),
     totalCount: z.number(),

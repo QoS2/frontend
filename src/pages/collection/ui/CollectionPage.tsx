@@ -12,7 +12,7 @@ export function CollectionPage() {
   // Convert treasures into collection items
   const collectionItems = React.useMemo(() => {
     return (treasureData?.items || []).map(item => ({
-        id: item.id,
+        id: item.treasureId,
         title: item.name,
         subtitle: item.description,
         imageUrl: item.imageUrl,

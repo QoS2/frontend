@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { Text } from '@shared/ui';
 
 export interface CollectionItem {
-  id: string;
+  id: number | string;
   title: string;
   subtitle: string;
   imageUrl: string;

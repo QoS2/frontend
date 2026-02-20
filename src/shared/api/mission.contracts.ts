@@ -1,50 +1,46 @@
 import { z } from 'zod';
-import { MissionTypeSchema } from './spot.contracts';
 
 // --- Enums ---
+export const MissionTypeSchema = z.enum(['QUIZ', 'OX', 'PHOTO', 'TEXT_INPUT']);
 export const MissionStatusSchema = z.enum(['LOCKED', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'FAILED']);
 
 // --- Mission Step ---
-// A mission can have multiple steps or just one.
 export const QuizOptionSchema = z.object({
   id: z.string(),
   text: z.string(),
-  isCorrect: z.boolean().optional(), // Frontend shouldn't ideally see this, but for Mock/MVP
+  imageUrl: z.string().url().optional(),
+});
+
+export const OptionsJsonSchema = z.object({
+  choices: z.array(QuizOptionSchema).optional(),
+  questionImageUrl: z.string().url().optional(),
+  instruction: z.string().optional(), // Used for PHOTO/TEXT_INPUT potentially
 });
 
 export const MissionStepSchema = z.object({
-  stepId: z.string(),
+  stepId: z.number().or(z.string()), // Accept string for mock compatibility
+  missionId: z.number(),
+  missionType: MissionTypeSchema,
+  prompt: z.string(),
+  optionsJson: OptionsJsonSchema.optional(),
   title: z.string(),
-  description: z.string(),
-  type: MissionTypeSchema,
-  status: MissionStatusSchema,
-  // Type specific fields
-  quiz: z.object({
-    question: z.string(),
-    options: z.array(QuizOptionSchema),
-  }).optional(),
-  photo: z.object({
-    targetDescription: z.string(),
-    exampleImageUrl: z.string().url().optional(),
-  }).optional(),
-  rewardId: z.string().optional(),
+  status: MissionStatusSchema.optional().default('OPEN'),
 });
 
 // --- Submission ---
 export const MissionSubmitRequestSchema = z.object({
-  type: MissionTypeSchema,
-  answer: z.string().optional(), // For QUIZ/TEXT
-  photoUrl: z.string().optional(), // For PHOTO
+  missionType: MissionTypeSchema,
+  userInput: z.string().optional(), // For TEXT_INPUT
+  photoUrl: z.string().url().optional(), // For PHOTO
+  selectedOptionId: z.string().optional(), // For QUIZ/OX
 });
 
 export const MissionSubmitResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  reward: z.object({
-    xp: z.number(),
-    badgeUrl: z.string().optional(),
-  }).optional(),
-  nextStepId: z.string().nullable().optional(),
+  attemptId: z.number(),
+  isCorrect: z.boolean(),
+  score: z.number(),
+  feedback: z.string().optional(),
+  nextStepApi: z.string().nullable().optional(),
 });
 
 

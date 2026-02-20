@@ -4,7 +4,7 @@ import { httpClient } from '../../shared/api/httpClient';
 import {
   SpotDetail,
   SpotDetailSchema,
-  GuideSegment,
+  SpotGuideResponse,
   SpotGuideResponseSchema,
 } from '../../shared/api/spot.contracts';
 import { ApiError } from '../../shared/api/auth.contracts';
@@ -17,13 +17,13 @@ const fetchSpotDetail = async (spotId: number | string): Promise<SpotDetail> => 
     await new Promise((resolve) => setTimeout(resolve, 300));
     // Mock always returns data, id is just for confirmation
     const numericId = typeof spotId === 'string' ? parseInt(spotId.replace(/\D/g, '').slice(0, 5)) || 1 : spotId;
-    return SpotDetailSchema.parse({ ...MOCK_SPOT_DETAIL, id: numericId });
+    return SpotDetailSchema.parse({ ...MOCK_SPOT_DETAIL, spotId: numericId });
   }
   const response = await httpClient.get<unknown>(`/api/v1/spots/${spotId}`);
   return SpotDetailSchema.parse(response);
 };
 
-const fetchSpotGuide = async (spotId: number | string): Promise<GuideSegment[]> => {
+const fetchSpotGuide = async (spotId: number | string): Promise<SpotGuideResponse> => {
   if (!API_FLAGS.SPOT) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return SpotGuideResponseSchema.parse(MOCK_SPOT_GUIDE);
@@ -42,7 +42,7 @@ export const useSpotDetail = (spotId: number | string) => {
 };
 
 export const useSpotGuide = (spotId: number | string) => {
-  return useQuery<GuideSegment[], ApiError>({
+  return useQuery<SpotGuideResponse, ApiError>({
     queryKey: ['spot', spotId, 'guide'],
     queryFn: () => fetchSpotGuide(spotId),
     enabled: !!spotId,

@@ -2,40 +2,48 @@ import { z } from 'zod';
 import { ApiErrorSchema } from './auth.contracts';
 
 // --- Enums ---
-export const SpotTypeSchema = z.enum(['HISTORICAL', 'CULTURAL', 'NATURE', 'MODERN']);
-export const MissionTypeSchema = z.enum(['QUIZ', 'PHOTO', 'TEXT', 'QR']);
+export const SpotTypeSchema = z.enum(['MAIN', 'SUB', 'PHOTO', 'TREASURE']);
+export const MissionTypeSchema = z.enum(['QUIZ', 'OX', 'PHOTO', 'TEXT_INPUT']);
 
 // --- Spot Detail ---
 export const SpotDetailSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string(),
-  imageUrl: z.string().url(),
+  spotId: z.number(),
   type: SpotTypeSchema,
-  location: z.object({
-    lat: z.number(),
-    lng: z.number(),
-  }),
-  // Additional info for guide
-  audioguideUrl: z.string().url().nullable().optional(),
-  estimatedTimeMinutes: z.number().optional(),
+  title: z.string(),
+  titleKr: z.string().optional(),
+  description: z.string(),
+  pronunciationUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().url(),
+  lat: z.number(),
+  lng: z.number(),
+  address: z.string().optional(),
 });
 
 // --- Spot Guide Segment ---
-// When user arrives, they might get a specific guide segment (e.g. "Look at this statue...")
-export const GuideSegmentSchema = z.object({
-  segmentId: z.string(),
-  spotId: z.number(),
-  title: z.string(),
-  content: z.string(), // Text description
-  audioUrl: z.string().url().optional(),
-  imageUrl: z.string().url().optional(),
-  order: z.number(),
+export const GuideStepAssetSchema = z.object({
+  id: z.number(),
+  type: z.enum(['IMAGE', 'AUDIO', 'VIDEO']),
+  url: z.string().url(),
+  meta: z.any().nullable().optional(),
 });
 
-export const SpotGuideResponseSchema = z.array(GuideSegmentSchema);
+export const GuideSegmentSchema = z.object({
+  id: z.number(),
+  segIdx: z.number(),
+  text: z.string(),
+  triggerKey: z.string().nullable().optional(),
+  assets: z.array(GuideStepAssetSchema).optional(),
+  delayMs: z.number().optional(),
+});
 
+export const SpotGuideResponseSchema = z.object({
+  stepId: z.number(),
+  stepTitle: z.string(),
+  nextAction: z.enum(['NEXT', 'MISSION_CHOICE']).nullable().optional(),
+  segments: z.array(GuideSegmentSchema),
+});
 
 // --- Types ---
 export type SpotDetail = z.infer<typeof SpotDetailSchema>;
 export type GuideSegment = z.infer<typeof GuideSegmentSchema>;
+export type SpotGuideResponse = z.infer<typeof SpotGuideResponseSchema>;

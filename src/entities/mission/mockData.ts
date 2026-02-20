@@ -2,13 +2,13 @@ import { MissionStep } from '../../shared/api/mission.contracts';
 
 export const MOCK_MISSION_QUIZ: MissionStep = {
   stepId: 'step_quiz_1',
+  missionId: 101,
   title: 'History Quiz',
-  description: 'What year was Gwanghwamun originally built?',
-  type: 'QUIZ',
+  missionType: 'QUIZ',
   status: 'OPEN',
-  quiz: {
-    question: 'Select the correct year:',
-    options: [
+  prompt: 'What year was Gwanghwamun originally built?',
+  optionsJson: {
+    choices: [
       { id: 'opt_1', text: '1395' }, // Correct
       { id: 'opt_2', text: '1446' },
       { id: 'opt_3', text: '1592' },
@@ -19,11 +19,12 @@ export const MOCK_MISSION_QUIZ: MissionStep = {
 
 export const MOCK_MISSION_PHOTO: MissionStep = {
   stepId: 'step_photo_1',
+  missionId: 102,
   title: 'Statue Photo',
-  description: 'Take a photo of the Haitai statue with the gate in the background.',
-  type: 'PHOTO',
+  missionType: 'PHOTO',
   status: 'OPEN',
-  photo: {
-    targetDescription: 'Haitai Statue',
+  prompt: 'Find the mythical creature.',
+  optionsJson: {
+    instruction: 'Take a photo of the Haitai statue with the gate in the background.',
   },
 };

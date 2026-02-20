@@ -22,45 +22,40 @@ export const InteractionTypeSchema = z.enum(['MEDIA', 'QUEST', 'CAMERA', 'REWARD
 
 export const GuideEventSchema = z.object({
   id: z.string(),
-  triggerIndex: z.number().nonnegative(), // Character index in the script to trigger this event
+  triggerIndex: z.number().nonnegative(),
   type: InteractionTypeSchema,
   data: z.object({
-    // Media
     mediaUrl: z.string().url().optional(),
     mediaType: z.enum(['IMAGE', 'VIDEO']).optional(),
-    
-    // Quest
     questId: z.string().optional(),
-    
-    // Camera
-    targetName: z.string().optional(), // What the user should take a picture of
-  }).passthrough(), // Allow flexibility for future expansions
+    targetName: z.string().optional(),
+  }).passthrough(),
 });
 
 export const GuideContentSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   title: z.string(),
   description: z.string(),
   script: z.string(),
-  events: z.array(GuideEventSchema), // Replaced mediaMap with unified events
+  events: z.array(GuideEventSchema),
   quests: z.array(QuestSchema),
   steps: z.array(z.object({
     id: z.string(),
     title: z.string(),
     content: z.string(),
-  })).optional(), // Add steps as optional for now to match mock data structure
+  })).optional(),
 });
 
 export const LocationMarkerTypeSchema = z.enum(['PLACE', 'SUB_PLACE', 'PHOTO', 'TREASURE']);
 
 export const LocationMarkerSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   type: LocationMarkerTypeSchema,
   coordinate: CoordinateSchema,
   radius: z.number().positive(),
   title: z.string(),
   description: z.string(),
-  contentId: z.string().uuid().nullable(),
+  contentId: z.string().nullable(),
   thumbnailUrl: z.string().url(),
 });
 

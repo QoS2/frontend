@@ -31,16 +31,20 @@ const submitMission = async ({ runId, stepId, data }: { runId: number; stepId: s
      await new Promise((resolve) => setTimeout(resolve, 800));
      
      // Mock logic check
-     const isSuccess = data.type === 'QUIZ' ? (data.answer === 'opt_1') : true;
+     const isCorrect = data.missionType === 'QUIZ' ? (data.selectedOptionId === 'opt_1') : true;
 
      return MissionSubmitResponseSchema.parse({
-       success: isSuccess,
-       message: isSuccess ? 'Correct Answer!' : 'Try Again...',
-       reward: isSuccess ? { xp: 50, badgeUrl: 'badge_gwanghwamun.png' } : undefined,
-       nextStepId: isSuccess ? null : stepId, // Retry if failed
+       attemptId: Math.floor(Math.random() * 100),
+       isCorrect: isCorrect,
+       score: isCorrect ? 10 : 0,
+       feedback: isCorrect ? 'Correct Answer!' : 'Try Again...',
+       nextStepApi: isCorrect ? null : stepId, // Retry if failed
      });
    }
-   const response = await httpClient.post<unknown>(`/api/v1/tour-runs/${runId}/steps/${stepId}/missions/submit`, { json: data });
+   const response = await httpClient.post<unknown>(
+        `/api/v1/runs/${runId}/missions/${stepId}/submit`,
+        data
+    );
    return MissionSubmitResponseSchema.parse(response);
 };
 
@@ -60,7 +64,7 @@ export const useSubmitMission = () => {
     onSuccess: (data, variables) => {
       // Invalidate mission state or run progress
       // queryClient.invalidateQueries({ queryKey: ['run', variables.runId] });
-      if (data.success) {
+      if (data.isCorrect) {
           // Maybe refetch mission step to show completed state
           queryClient.invalidateQueries({ queryKey: ['mission', variables.stepId] });
       }

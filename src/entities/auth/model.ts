@@ -29,7 +29,11 @@ const loginApi = async (data: LoginRequest): Promise<LoginResponse> => {
   }
   
   // [REAL]
-  const response = await httpClient.post<unknown>('/api/v1/auth/login', { json: data, isPublic: true });
+  const response = await httpClient.post<LoginResponse>(
+      '/api/v1/auth/login',
+      data,
+      { isPublic: true }
+    );
   return LoginResponseSchema.parse(response);
 };
 
@@ -45,7 +49,11 @@ const registerApi = async (data: RegisterRequest): Promise<LoginResponse> => {
   }
 
   // [REAL]
-  const response = await httpClient.post<unknown>('/api/v1/auth/register', { json: data, isPublic: true });
+  const response = await httpClient.post<LoginResponse>(
+        '/api/v1/auth/register',
+        data,
+        { isPublic: true }
+    );
   return RegisterResponseSchema.parse(response);
 };
 
