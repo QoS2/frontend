@@ -1,18 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { httpClient } from '../../shared/api/httpClient'; // Import httpClient
+import { httpClient } from '../../shared/api/httpClient';
 import { API_FLAGS } from '../../shared/api/config';
-import { MOCK_CONTENT } from './mockData';
-import { GetContentResponseSchema, GuideContent } from '../../shared/api/contracts';
+import { MOCK_SPOT_GUIDE } from '../spot/mockData';
+import { SpotGuideResponse, SpotGuideResponseSchema } from '../../shared/api/spot.contracts';
 
-const fetchGuideContent = async (contentId: string): Promise<GuideContent> => {
+const fetchGuideContent = async (contentId: string): Promise<SpotGuideResponse> => {
   if (!API_FLAGS.GUIDE) {
      await new Promise((resolve) => setTimeout(resolve, 500));
-     const content = MOCK_CONTENT[contentId];
-     if (!content) throw new Error('Content not found');
-     return GetContentResponseSchema.parse(content);
+     return SpotGuideResponseSchema.parse(MOCK_SPOT_GUIDE);
   }
-  const response = await httpClient.get<unknown>(`/api/content/${contentId}`);
-  return GetContentResponseSchema.parse(response);
+  const response = await httpClient.get<unknown>(`/api/v1/spots/${contentId}/guide`);
+  return SpotGuideResponseSchema.parse(response);
 };
 
 export const useGuideContent = (contentId: string | null) => {

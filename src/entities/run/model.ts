@@ -7,13 +7,26 @@ import {
   ProximityRequest,
   ProximityResponse,
   ProximityResponseSchema,
-  ChatMessage,
+  ChatSessionResponse,
+  ChatSessionResponseSchema,
+  ChatHistoryResponse,
   ChatHistoryResponseSchema,
-  SendMessageRequest,
-  ChatMessageSchema,
+  ChatMessageRequest,
+  ChatMessageResponse,
+  ChatMessageResponseSchema,
+  NextSpotResponse,
+  NextSpotResponseSchema,
+  ChatTurn,
 } from '../../shared/api/run.contracts';
 import { ApiError } from '../../shared/api/auth.contracts';
-import { MOCK_RUN_STATE, MOCK_CHAT_HISTORY } from './mockData';
+import { 
+  MOCK_RUN_STATE, 
+  MOCK_PROXIMITY_RESPONSE, 
+  MOCK_CHAT_SESSION, 
+  MOCK_CHAT_HISTORY, 
+  MOCK_CHAT_RESPONSE, 
+  MOCK_NEXT_SPOT 
+} from './mockData';
 
 // --- API Functions ---
 
@@ -22,117 +35,121 @@ const fetchRunState = async (runId: number): Promise<RunState> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return RunStateSchema.parse({ ...MOCK_RUN_STATE, runId });
   }
-  const response = await httpClient.get<unknown>(`/api/v1/runs/${runId}`);
+  const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}`);
   return RunStateSchema.parse(response);
 };
 
-const checkProximity = async ({ runId, data }: { runId: number; data: ProximityRequest }): Promise<ProximityResponse> => {
+const checkProximity = async ({ runId, data }: { runId: number; data: ProximityRequest }): Promise<ProximityResponse | null> => {
   if (!API_FLAGS.RUN) {
-    // [MOCK] Simulate distance calculation
     await new Promise((resolve) => setTimeout(resolve, 300));
-    
-    // Simple mock logic: if lat/lng matches target roughly, return ARRIVED
-    // For now, let's assume if lat > 37.5, it's close (just for testing trigger)
-    const isClose = data.lat > 0; // Always true for now unless we need specific logit
-    
-    // In real app, we would calculate distance here or server does it
-    // Let's toggle status based on a random factor or state for testing?
-    // Actually, let's make it always return FAR unless we trigger 'Arrive' action manually
-    // But for polling, maybe just return calculated distance.
-    
-    return ProximityResponseSchema.parse({
-      status: 'FAR',
-      distanceMeters: 150,
-      event: undefined,
-    });
+    if (!MOCK_PROXIMITY_RESPONSE) return null;
+    return ProximityResponseSchema.parse(MOCK_PROXIMITY_RESPONSE);
   }
-  return httpClient.post<ProximityResponse>(
-        `/api/v1/runs/${runId}/proximity`,
-        {
-          latitude: data.lat,
-          longitude: data.lng,
-          targetSpotId: data.targetSpotId
-        }
-    );
+  const response = await httpClient.post<unknown>(
+    `/api/v1/tour-runs/${runId}/proximity`,
+    data
+  );
+  if (!response) return null; // 204 No Content
+  return ProximityResponseSchema.parse(response);
 };
 
-const fetchChatHistory = async (runId: number): Promise<ChatMessage[]> => {
+const fetchChatSession = async ({ runId, spotId }: { runId: number; spotId: number }): Promise<ChatSessionResponse> => {
+  if (!API_FLAGS.CHAT) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return ChatSessionResponseSchema.parse(MOCK_CHAT_SESSION);
+  }
+  const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/spots/${spotId}/chat-session`);
+  return ChatSessionResponseSchema.parse(response);
+};
+
+const fetchChatHistory = async (sessionId: number): Promise<ChatHistoryResponse> => {
   if (!API_FLAGS.CHAT) {
     await new Promise((resolve) => setTimeout(resolve, 600));
     return ChatHistoryResponseSchema.parse(MOCK_CHAT_HISTORY);
   }
-  const response = await httpClient.get<unknown>(`/api/v1/runs/${runId}/chat`);
+  const response = await httpClient.get<unknown>(`/api/v1/chat-sessions/${sessionId}/turns`);
   return ChatHistoryResponseSchema.parse(response);
 };
 
-const sendMessage = async ({ runId, data }: { runId: number; data: SendMessageRequest }): Promise<ChatMessage> => {
+const fetchNextTurn = async ({ sessionId, turnId }: { sessionId: number; turnId: number }): Promise<ChatTurn> => {
+  if (!API_FLAGS.CHAT) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return MOCK_CHAT_HISTORY.turns[0] as ChatTurn; // Mock
+  }
+  const response = await httpClient.get<unknown>(`/api/v1/chat-sessions/${sessionId}/turns/${turnId}`);
+  return response as ChatTurn;
+};
+
+const sendMessage = async ({ sessionId, data }: { sessionId: number; data: ChatMessageRequest }): Promise<ChatMessageResponse> => {
   if (!API_FLAGS.CHAT) {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    const newMessage: ChatMessage = {
-      messageId: `msg_${Date.now()}`,
-      runId,
-      sender: 'USER',
-      type: 'TEXT',
-      content: data.content,
-      timestamp: new Date().toISOString(),
-    };
-    return ChatMessageSchema.parse(newMessage);
+    return ChatMessageResponseSchema.parse({
+      ...MOCK_CHAT_RESPONSE,
+      userText: data.text,
+    });
   }
-  const response = await httpClient.post<unknown>(`/api/v1/runs/${runId}/chat`, data);
-  return ChatMessageSchema.parse(response);
+  const response = await httpClient.post<unknown>(`/api/v1/chat-sessions/${sessionId}/messages`, data);
+  return ChatMessageResponseSchema.parse(response);
+};
+
+const fetchNextSpot = async (runId: number): Promise<NextSpotResponse> => {
+  if (!API_FLAGS.RUN) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    return NextSpotResponseSchema.parse(MOCK_NEXT_SPOT);
+  }
+  const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/next-spot`);
+  return NextSpotResponseSchema.parse(response);
 };
 
 // --- Hooks ---
 
-export const useRunState = (runId: number) => {
+export const useRunState = (runId?: number) => {
   return useQuery<RunState, ApiError>({
     queryKey: ['run', runId],
-    queryFn: () => fetchRunState(runId),
+    queryFn: () => fetchRunState(runId!),
     enabled: !!runId,
-    refetchInterval: 5000, // Poll every 5s for status updates
+    refetchInterval: 5000,
   });
 };
 
 export const useProximityCheck = () => {
-  return useMutation<ProximityResponse, ApiError, { runId: number; data: ProximityRequest }>({
+  return useMutation<ProximityResponse | null, ApiError, { runId: number; data: ProximityRequest }>({
     mutationFn: checkProximity,
   });
 };
 
-export const useChatHistory = (runId: number) => {
-  return useQuery<ChatMessage[], ApiError>({
-    queryKey: ['run', runId, 'chat'],
-    queryFn: () => fetchChatHistory(runId),
-    enabled: !!runId,
+export const useChatSession = (runId?: number, spotId?: number) => {
+  return useQuery<ChatSessionResponse, ApiError>({
+    queryKey: ['chat-session', runId, spotId],
+    queryFn: () => fetchChatSession({ runId: runId!, spotId: spotId! }),
+    enabled: !!runId && !!spotId,
+  });
+};
+
+export const useChatHistory = (sessionId?: number) => {
+  return useQuery<ChatHistoryResponse, ApiError>({
+    queryKey: ['chat-history', sessionId],
+    queryFn: () => fetchChatHistory(sessionId!),
+    enabled: !!sessionId,
   });
 };
 
 export const useSendMessage = () => {
-  const queryClient = useQueryClient();
-  return useMutation<ChatMessage, ApiError, { runId: number; data: SendMessageRequest }>({
+  return useMutation<ChatMessageResponse, ApiError, { sessionId: number; data: ChatMessageRequest }>({
     mutationFn: sendMessage,
-    onSuccess: (newMessage, variables) => {
-      // Optimistic update or just invalidate
-      queryClient.setQueryData(['run', variables.runId, 'chat'], (old: ChatMessage[] | undefined) => {
-        return old ? [...old, newMessage] : [newMessage];
-      });
-      
-      // If mock, simulate guide reply
-      if (!API_FLAGS.CHAT) {
-        setTimeout(() => {
-          const reply: ChatMessage = {
-             messageId: `msg_reply_${Date.now()}`,
-             runId: variables.runId,
-             sender: 'GUIDE',
-             type: 'TEXT',
-             content: '네, 알겠습니다. (Mock Reply)',
-             timestamp: new Date().toISOString(),
-          };
-           queryClient.setQueryData(['run', variables.runId, 'chat'], (old: ChatMessage[] | undefined) => {
-            return old ? [...old, reply] : [reply];
-          });
-        }, 1000);
-      }
-    },
+  });
+};
+
+export const useNextTurn = () => {
+  return useMutation<ChatTurn, ApiError, { sessionId: number; turnId: number }>({
+    mutationFn: fetchNextTurn,
+  });
+};
+
+export const useNextSpot = (runId?: number) => {
+  return useQuery<NextSpotResponse, ApiError>({
+    queryKey: ['next-spot', runId],
+    queryFn: () => fetchNextSpot(runId!),
+    enabled: !!runId,
   });
 };

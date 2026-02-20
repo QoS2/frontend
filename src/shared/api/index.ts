@@ -5,3 +5,6 @@ export * from './config';
 export * from './auth.contracts';
 export * from './tour.contracts';
 export * from './run.contracts';
+export * from './spot.contracts';
+export * from './mission.contracts';
+export * from './collection.contracts';

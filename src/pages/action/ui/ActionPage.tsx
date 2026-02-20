@@ -102,8 +102,8 @@ export function ActionPage({
     if (type === 'QUEST' && content) {
         // ... (existing Quest logic)
         const activeQuests = questId 
-          ? content.quests?.filter(q => q.id === questId) 
-          : content.quests;
+          ? (content as any).quests?.filter((q: any) => q.id === questId) 
+          : (content as any).quests;
 
         if (!activeQuests || activeQuests.length === 0) {
              return (

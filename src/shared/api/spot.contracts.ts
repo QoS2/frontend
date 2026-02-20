@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { ApiErrorSchema } from './auth.contracts';
 
-// --- Enums ---
-export const SpotTypeSchema = z.enum(['MAIN', 'SUB', 'PHOTO', 'TREASURE']);
-export const MissionTypeSchema = z.enum(['QUIZ', 'OX', 'PHOTO', 'TEXT_INPUT']);
+import { SpotTypeSchema } from './tour.contracts';
+import { MissionTypeSchema } from './mission.contracts';
 
+// --- Enums ---
 // --- Spot Detail ---
 export const SpotDetailSchema = z.object({
   spotId: z.number(),

@@ -64,5 +64,5 @@ function QuestBoardScreen({ route }: any) {
 
   if (isLoading || !guideContent) return null;
 
-  return <QuestBoard quests={guideContent.quests} />;
+  return <QuestBoard quests={(guideContent as any).quests} />;
 }

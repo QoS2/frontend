@@ -2,14 +2,14 @@ export const API_FLAGS = {
   // false = Use Mock Data
   // true = Use Real API
   AUTH: false,
-  TOUR: false,
-  RUN: false,
-  CHAT: false,
-  MISSION: false,
-  COLLECTION: false,
-  GUIDE: false,
-  LOCATION: false,
-  SPOT: false,
+  TOUR: true,
+  RUN: true,
+  CHAT: true,
+  MISSION: true,
+  COLLECTION: true,
+  GUIDE: true,
+  LOCATION: true,
+  SPOT: true,
 } as const;
 
 export const API_CONFIG = {

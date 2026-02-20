@@ -51,57 +51,53 @@ export function GuideChatWidget() {
   const segments = useMemo(() => {
     if (!guideContent) return [];
     
-    const events = [...(guideContent.events || [])].sort((a, b) => a.triggerIndex - b.triggerIndex);
-    const result: ({ type: 'text'; text: string } | { type: 'action'; event: any })[] = [];
-    let lastIndex = 0;
-
-    events.forEach(event => {
-      // Push text before event
-      if (event.triggerIndex > lastIndex) {
-        const textChunk = guideContent.script.substring(lastIndex, event.triggerIndex).trim();
-        if (textChunk) {
-            result.push({ type: 'text', text: textChunk });
+    type InternalSegment = 
+        | { type: 'text'; text: string; delayMs?: number }
+        | { type: 'action'; triggerKey: string; delayMs?: number }
+        | { type: 'image'; url: string; delayMs?: number };
+        
+    const result: InternalSegment[] = [];
+    
+    guideContent.segments.forEach(seg => {
+        if (seg.text) {
+            result.push({ type: 'text', text: seg.text, delayMs: seg.delayMs });
         }
-      }
-      // Push event
-      result.push({ type: 'action', event });
-      lastIndex = event.triggerIndex;
+        if (seg.assets?.length) {
+            seg.assets.forEach(asset => {
+                if (asset.type === 'IMAGE') {
+                    result.push({ type: 'image', url: asset.url, delayMs: 0 });
+                }
+            });
+        }
+        if (seg.triggerKey) {
+            result.push({ type: 'action', triggerKey: seg.triggerKey, delayMs: 0 });
+        }
     });
 
-    // Push remaining text
-    if (lastIndex < guideContent.script.length) {
-      const remainingText = guideContent.script.substring(lastIndex).trim();
-      if (remainingText) {
-        result.push({ type: 'text', text: remainingText });
-      }
-    }
     return result;
   }, [guideContent]);
 
   // 4. Script Player Logic
-  // Derive current index from store persistence
-  const currentSegmentIndex = guideContent?.id ? (guideProgress[guideContent.id] || 0) : 0;
+  const guideIdStr = guideContent?.stepId?.toString();
+  const currentSegmentIndex = guideIdStr ? (guideProgress[guideIdStr] || 0) : 0;
   
   const isPlayingRef = useRef(false);
   const lastPlayedIndexRef = useRef(-1);
 
-  // Reset lastPlayedIndex when guide changes
   useEffect(() => {
-    if (guideContent?.id) {
-        startGuide(guideContent.id);
+    if (guideIdStr) {
+        startGuide(guideIdStr);
         isPlayingRef.current = true;
-        // If we are resuming, assume we've played everything up to the current index
         lastPlayedIndexRef.current = currentSegmentIndex - 1;
     }
-  }, [guideContent?.id, startGuide]);
+  }, [guideIdStr, startGuide]);
 
   // Main Playback Effect
   useEffect(() => {
-    if (!isPlayingRef.current || !guideContent || currentSegmentIndex >= segments.length) {
+    if (!isPlayingRef.current || !guideIdStr || currentSegmentIndex >= segments.length) {
         return;
     }
 
-    // Crucial: Only play if we haven't initiated this index yet
     if (currentSegmentIndex <= lastPlayedIndexRef.current) {
         return;
     }
@@ -113,22 +109,18 @@ export function GuideChatWidget() {
 
     if (segment.type === 'text') {
         streamReply(segment.text);
-    } else {
-        // It's an action event
-        const event = segment.event;
-        // Map event to ChatAction
+    } else if (segment.type === 'action') {
         let actions: ChatAction[] = [];
+        const triggerKey = segment.triggerKey;
         
-        switch (event.type) {
-            case 'QUEST':
-                actions.push({ label: '⚔️ Start Quest', actionId: 'start-quest', data: { questId: event.data.questId } });
-                break;
-            case 'CAMERA':
-                actions.push({ label: '📸 Open Camera', actionId: 'open-camera', data: { targetName: event.data.targetName } });
-                break;
-            case 'REWARD':
-                 actions.push({ label: '🎁 Get Reward', actionId: 'get-reward', data: event.data });
-                 break;
+        if (triggerKey.includes('QUEST') || triggerKey.includes('QUIZ')) {
+            actions.push({ label: '⚔️ Start Quest', actionId: 'start-quest', data: { questId: triggerKey } });
+        } else if (triggerKey.includes('CAMERA') || triggerKey.includes('PHOTO')) {
+            actions.push({ label: '📸 Open Camera', actionId: 'open-camera', data: { targetName: 'Photo Spot' } });
+        } else if (triggerKey.includes('REWARD')) {
+             actions.push({ label: '🎁 Get Reward', actionId: 'get-reward', data: {} });
+        } else {
+             actions.push({ label: '👉 Next Step', actionId: 'next-step', data: {} });
         }
 
         if (actions.length > 0) {
@@ -139,23 +131,27 @@ export function GuideChatWidget() {
                 text: 'Here is a challenge for you!' 
             });
         }
-        
-        // Actions are instant, so move to next segment immediately
-        updateProgress(guideContent.id, currentSegmentIndex + 1);
+        updateProgress(guideIdStr, currentSegmentIndex + 1);
+    } else if (segment.type === 'image') {
+        addMessage({
+            sender: 'ai',
+            type: 'image',
+            imageUrl: segment.url as any,
+        });
+        updateProgress(guideIdStr, currentSegmentIndex + 1);
     }
-  }, [currentSegmentIndex, segments, guideContent, isStreaming, streamReply, addMessage, updateProgress]);
+  }, [currentSegmentIndex, segments, guideIdStr, isStreaming, streamReply, addMessage, updateProgress]);
 
   // Effect to advance index when streaming finishes
   const wasStreamingRef = useRef(isStreaming);
   useEffect(() => {
       if (wasStreamingRef.current && !isStreaming) {
-          // Stream just finished, advance progress
-          if (guideContent?.id) {
-             updateProgress(guideContent.id, currentSegmentIndex + 1);
+          if (guideIdStr) {
+             updateProgress(guideIdStr, currentSegmentIndex + 1);
           }
       }
       wasStreamingRef.current = isStreaming;
-  }, [isStreaming, guideContent, currentSegmentIndex, updateProgress]);
+  }, [isStreaming, guideIdStr, currentSegmentIndex, updateProgress]);
 
   // 5. Action Handler (Overlay Activation)
   const handleAction = (action: ChatAction) => {

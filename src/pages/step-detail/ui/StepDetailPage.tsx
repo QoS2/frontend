@@ -14,7 +14,7 @@ export function StepDetailPage({ id, onBack }: StepDetailPageProps) {
   const { data: content, isLoading, isError, error } = useGuideContent(id);
 
   const { displayedText, currentIndex, isComplete, skip } = useTextStream({
-    text: content?.script ?? '',
+    text: (content as any)?.script ?? '',
     speed: 30,
     autoStart: !!content,
   });
@@ -64,12 +64,12 @@ export function StepDetailPage({ id, onBack }: StepDetailPageProps) {
         <Pressable onPress={onBack} className="mr-4 active:opacity-70">
           <Text className="text-blue-500 font-bold">Back</Text>
         </Pressable>
-        <Text className="text-xl font-bold" numberOfLines={1}>{content.title}</Text>
+        <Text className="text-xl font-bold" numberOfLines={1}>{content.stepTitle}</Text>
       </View>
 
       <ScrollView className="flex-1 p-4" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="mb-4">
-          <GuidePlayer content={content} currentIndex={currentIndex} />
+          <GuidePlayer content={content as any} currentIndex={currentIndex} />
         </View>
 
         <Pressable
