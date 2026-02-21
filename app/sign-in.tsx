@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Redirect } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
@@ -9,30 +9,27 @@ export default function SignInPage() {
   const accessToken = useAuthToken();
   const { mutate: login, isPending, error } = useLogin();
 
-  if (accessToken) {
-    return <Redirect href="/(app)/tours" />;
-  }
-  
   const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('test@example.com');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Focus states for modern UI feel
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
+  if (accessToken) {
+    return <Redirect href="/(app)/tours" />;
+  }
+
   const handleSignIn = () => {
     login({ email, password }, {
-      onSuccess: () => {
-        // Stack.Protected 또는 layout의 Redirect가 토큰 설정 직후 처리를 담당함
-      }
+      onSuccess: () => {}
     });
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white px-6">
       <View className="flex-1 justify-center">
-        
+
         {/* Header Section */}
         <View className="mb-10 items-center">
           <Text className="text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -45,11 +42,10 @@ export default function SignInPage() {
 
         {/* Form Section */}
         <View className="gap-4">
-          {/* Email Input */}
-          <View 
-            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
-              isEmailFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
-            }`}
+          {/* Email Input - 동적 className 대신 style prop 사용 (NativeWind CssInterop 충돌 방지) */}
+          <View
+            className="flex-row items-center border rounded-2xl px-4 py-3.5"
+            style={isEmailFocused ? styles.inputFocused : styles.inputDefault}
           >
             <Mail size={20} color={isEmailFocused ? '#3b82f6' : '#94a3b8'} />
             <TextInput
@@ -67,10 +63,9 @@ export default function SignInPage() {
           </View>
 
           {/* Password Input */}
-          <View 
-            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
-              isPasswordFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
-            }`}
+          <View
+            className="flex-row items-center border rounded-2xl px-4 py-3.5"
+            style={isPasswordFocused ? styles.inputFocused : styles.inputDefault}
           >
             <Lock size={20} color={isPasswordFocused ? '#3b82f6' : '#94a3b8'} />
             <TextInput
@@ -126,3 +121,14 @@ export default function SignInPage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  inputDefault: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+  },
+  inputFocused: {
+    backgroundColor: '#ffffff',
+    borderColor: '#3b82f6',
+  },
+});

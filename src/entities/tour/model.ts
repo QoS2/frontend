@@ -58,9 +58,8 @@ const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 
     });
   }
   // [REAL]
-  const response = await httpClient.post<unknown>('/api/v1/tour-runs', {
-    tourId,
-    mode: 'CONTINUE'
+  const response = await httpClient.post<unknown>(`/api/v1/tours/${tourId}/runs`, {
+    mode
   });
   return RunResponseSchema.parse(response);
 };

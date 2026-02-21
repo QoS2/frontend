@@ -19,8 +19,10 @@ const secureStorage: StateStorage = {
 // --- Auth Store Interface ---
 interface AuthState {
   accessToken: string | null;
+  _hasHydrated: boolean;
   // Actions
   setAccessToken: (token: string | null) => void;
+  setHasHydrated: (state: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
 }
@@ -30,18 +32,25 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,
+      _hasHydrated: false,
 
       setAccessToken: (token) => set({ accessToken: token }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
       login: (token) => set({ accessToken: token }),
       logout: () => {
         set({ accessToken: null });
-        // Optional: Clear other auth-related state if needed
       },
     }),
     {
-      name: 'auth-storage-v1', // Unique name for storage key
+      name: 'auth-storage-v1',
       storage: createJSONStorage(() => secureStorage),
-      partialize: (state) => ({ accessToken: state.accessToken }), // Only persist accessToken
+      partialize: (state) => ({ accessToken: state.accessToken }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
+
+// hydration 완료 여부를 구독하는 셀렉터
+export const useHasHydrated = () => useAuthStore((state) => state._hasHydrated);

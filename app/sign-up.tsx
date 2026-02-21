@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Redirect } from 'expo-router';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
@@ -9,32 +9,28 @@ export default function SignUpPage() {
   const accessToken = useAuthToken();
   const { mutate: register, isPending, error } = useRegister();
 
-  if (accessToken) {
-    return <Redirect href="/(app)/tours" />;
-  }
-
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Focus states
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isNicknameFocused, setIsNicknameFocused] = useState(false);
 
+  if (accessToken) {
+    return <Redirect href="/(app)/tours" />;
+  }
+
   const handleSignUp = () => {
     register({ email, password, nickname }, {
-      onSuccess: () => {
-        // Automatically redirects through Stack.Protected after setting token
-      }
+      onSuccess: () => {}
     });
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white px-6">
-      
+
       {/* Top Navigation */}
       <View className="mt-4 mb-6">
         <TouchableOpacity onPress={() => router.back()} hitSlop={15} className="w-10 h-10 justify-center">
@@ -43,7 +39,7 @@ export default function SignUpPage() {
       </View>
 
       <View className="flex-1">
-        
+
         {/* Header Section */}
         <View className="mb-10">
           <Text className="text-3xl font-bold text-slate-900">
@@ -56,12 +52,11 @@ export default function SignUpPage() {
 
         {/* Form Section */}
         <View className="gap-4">
-          
-          {/* Email Input */}
-          <View 
-            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
-              isEmailFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
-            }`}
+
+          {/* Email Input - 동적 className 대신 style prop 사용 (NativeWind CssInterop 충돌 방지) */}
+          <View
+            className="flex-row items-center border rounded-2xl px-4 py-3.5"
+            style={isEmailFocused ? styles.inputFocused : styles.inputDefault}
           >
             <Mail size={20} color={isEmailFocused ? '#3b82f6' : '#94a3b8'} />
             <TextInput
@@ -79,10 +74,9 @@ export default function SignUpPage() {
           </View>
 
           {/* Password Input */}
-          <View 
-            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
-              isPasswordFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
-            }`}
+          <View
+            className="flex-row items-center border rounded-2xl px-4 py-3.5"
+            style={isPasswordFocused ? styles.inputFocused : styles.inputDefault}
           >
             <Lock size={20} color={isPasswordFocused ? '#3b82f6' : '#94a3b8'} />
             <TextInput
@@ -105,10 +99,9 @@ export default function SignUpPage() {
           </View>
 
           {/* Nickname Input */}
-          <View 
-            className={`flex-row items-center border rounded-2xl px-4 py-3.5 ${
-              isNicknameFocused ? 'bg-white border-blue-500 shadow-sm' : 'bg-slate-50 border-slate-200'
-            }`}
+          <View
+            className="flex-row items-center border rounded-2xl px-4 py-3.5"
+            style={isNicknameFocused ? styles.inputFocused : styles.inputDefault}
           >
             <User size={20} color={isNicknameFocused ? '#3b82f6' : '#94a3b8'} />
             <TextInput
@@ -156,3 +149,14 @@ export default function SignUpPage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  inputDefault: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+  },
+  inputFocused: {
+    backgroundColor: '#ffffff',
+    borderColor: '#3b82f6',
+  },
+});

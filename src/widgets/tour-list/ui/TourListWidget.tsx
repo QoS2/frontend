@@ -53,7 +53,6 @@ export const TourListWidget = ({ onTourPress }: TourListWidgetProps) => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      <Text className="text-xl font-bold p-4 bg-white">Available Tours</Text>
       <FlatList
         data={tours}
         keyExtractor={(item) => item.id.toString()}

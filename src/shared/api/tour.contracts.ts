@@ -75,7 +75,7 @@ export const TourDetailSchema = z.object({
   currentRun: z.object({
     runId: z.number(),
     status: RunStatusSchema,
-    startedAt: z.string().datetime().optional(), // ISO string
+    startedAt: z.string().nullable().optional(), // Server format might not include 'Z' (e.g. 2026-02-21T16:35:47.715984)
     progress: z.object({
       completedCount: z.number(),
       totalCount: z.number(),

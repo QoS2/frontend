@@ -42,7 +42,7 @@ const submitMission = async ({ runId, stepId, data }: { runId: number; stepId: s
      });
    }
    const response = await httpClient.post<unknown>(
-        `/api/v1/runs/${runId}/missions/${stepId}/submit`,
+        `/api/v1/tour-runs/${runId}/missions/${stepId}/submit`,
         data
     );
    return MissionSubmitResponseSchema.parse(response);
