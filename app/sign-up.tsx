@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
-import { useRegister } from '@entities/auth/model';
+import { useRegister, useAuthToken } from '@entities/auth/model';
 
 export default function SignUpPage() {
-  const router = useRouter();
+  const accessToken = useAuthToken();
   const { mutate: register, isPending, error } = useRegister();
+
+  if (accessToken) {
+    return <Redirect href="/(app)/tours" />;
+  }
+
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

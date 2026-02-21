@@ -10,13 +10,13 @@ export const SpotDetailSchema = z.object({
   spotId: z.number(),
   type: SpotTypeSchema,
   title: z.string(),
-  titleKr: z.string().optional(),
+  titleKr: z.string().nullable().optional(),
   description: z.string(),
-  pronunciationUrl: z.string().url().optional(),
-  thumbnailUrl: z.string().url(),
+  pronunciationUrl: z.string().url().nullable().optional(),
+  thumbnailUrl: z.string().url().nullable(),
   lat: z.number(),
   lng: z.number(),
-  address: z.string().optional(),
+  address: z.string().nullable().optional(),
 });
 
 // --- Spot Guide Segment ---

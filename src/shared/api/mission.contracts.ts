@@ -39,7 +39,7 @@ export const MissionSubmitResponseSchema = z.object({
   attemptId: z.number(),
   isCorrect: z.boolean(),
   score: z.number(),
-  feedback: z.string().optional(),
+  feedback: z.string(),
   nextStepApi: z.string().nullable().optional(),
 });
 

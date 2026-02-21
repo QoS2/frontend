@@ -47,7 +47,7 @@ export const ChatTurnSchema = z.object({
   turnId: z.number(),
   role: ChatRoleSchema,
   source: ChatSourceSchema,
-  text: z.string(),
+  text: z.string().nullable(),
   assets: z.array(AssetSchema).optional(),
   delayMs: z.number().nullable().optional(),
   action: ActionSchema.nullable().optional(),
@@ -79,7 +79,7 @@ export const ProximityResponseSchema = z.object({
 export const ChatSessionResponseSchema = z.object({
   sessionId: z.number(),
   status: z.enum(['ACTIVE', 'COMPLETED']),
-  lastTurnId: z.number().optional(),
+  lastTurnId: z.number().nullable().optional(),
 });
 
 export const ChatHistoryResponseSchema = z.object({
@@ -98,7 +98,7 @@ export const ChatMessageResponseSchema = z.object({
   userTurnId: z.number(),
   userText: z.string(),
   aiTurnId: z.number(),
-  aiText: z.string(),
+  aiText: z.string().nullable(),
   nextScriptApi: z.string().nullable().optional(),
   hasNextScript: z.boolean(),
 });

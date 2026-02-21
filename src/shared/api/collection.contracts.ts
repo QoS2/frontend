@@ -9,9 +9,9 @@ export const PlaceCollectionItemSchema = z.object({
   tourTitle: z.string(),
   type: z.enum(['MAIN', 'SUB']),
   title: z.string(),
-  description: z.string().optional(),
-  thumbnailUrl: z.string().url().optional(),
-  collectedAt: z.string().datetime().optional(), // ISO string if collected
+  description: z.string().nullable().optional(),
+  thumbnailUrl: z.string().url().nullable().optional(),
+  collectedAt: z.string().datetime().nullable().optional(),
   orderIndex: z.number(),
   collected: z.boolean(),
 });
@@ -28,14 +28,14 @@ export type PlaceCollectionResponse = z.infer<typeof PlaceCollectionResponseSche
 // --- Treasure Collection ---
 
 export const TreasureCollectionItemSchema = z.object({
-  treasureId: z.number(),
+  spotId: z.number(),
   tourId: z.number(),
   tourTitle: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  imageUrl: z.string().url().optional(),
-  grade: z.string(), // e.g. "RARE", "COMMON" - or use enum if defined
-  collectedAt: z.string().datetime().optional(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  thumbnailUrl: z.string().url().nullable().optional(),
+  gotAt: z.string().datetime().nullable().optional(),
+  orderIndex: z.number(),
   collected: z.boolean(),
 });
 export type TreasureCollectionItem = z.infer<typeof TreasureCollectionItemSchema>;
@@ -50,15 +50,24 @@ export type TreasureCollectionResponse = z.infer<typeof TreasureCollectionRespon
 
 // --- Photo Spots ---
 
+export const SamplePhotoSchema = z.object({
+  id: z.number(),
+  url: z.string().url(),
+  submittedBy: z.string().nullable().optional(),
+  mintedAt: z.string().nullable().optional(),
+});
+
 export const PhotoSpotItemSchema = z.object({
   spotId: z.number(),
+  tourId: z.number(),
+  tourTitle: z.string(),
   title: z.string(),
   description: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
-  imageUrl: z.string().url(),
+  thumbnailUrl: z.string().url().nullable().optional(),
   userPhotoCount: z.number(),
-  samplePhotos: z.array(z.string().url()),
+  samplePhotos: z.array(SamplePhotoSchema).optional().default([]),
   collected: z.boolean(),
 });
 export type PhotoSpotItem = z.infer<typeof PhotoSpotItemSchema>;

@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
-import { useLogin } from '@entities/auth/model';
+import { useLogin, useAuthToken } from '@entities/auth/model';
 
 export default function SignInPage() {
-  const router = useRouter();
+  const accessToken = useAuthToken();
   const { mutate: login, isPending, error } = useLogin();
+
+  if (accessToken) {
+    return <Redirect href="/(app)/tours" />;
+  }
   
   const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password123');
@@ -20,7 +24,7 @@ export default function SignInPage() {
   const handleSignIn = () => {
     login({ email, password }, {
       onSuccess: () => {
-        // Stack.Protected will automatically handle the redirection upon token set
+        // Stack.Protected 또는 layout의 Redirect가 토큰 설정 직후 처리를 담당함
       }
     });
   };

@@ -35,6 +35,7 @@ export const RegisterResponseSchema = LoginResponseSchema; // Same response stru
 
 export const MeResponseSchema = z.object({
   userId: z.string().uuid(),
+  role: z.enum(['ADMIN', 'USER']),
   // Add other user fields as needed in the future
 });
 

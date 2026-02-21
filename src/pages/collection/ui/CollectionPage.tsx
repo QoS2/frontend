@@ -12,10 +12,10 @@ export function CollectionPage() {
   // Convert treasures into collection items
   const collectionItems = React.useMemo(() => {
     return (treasureData?.items || []).map(item => ({
-        id: item.treasureId,
-        title: item.name,
+        id: item.spotId,
+        title: item.title,
         subtitle: item.description,
-        imageUrl: item.imageUrl,
+        imageUrl: item.thumbnailUrl || undefined,
         // Since mock data IDs might not match visitedPlaceIds perfectly in this refactor, 
         // we might strictly need ID alignment. For now, we just map basic fields.
         // In real app, we check if item.id is in visitedPlaceIds or if 'acquiredAt' is present.
