@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_FLAGS } from '@shared/api/config';
 import { httpClient } from '@shared/api/httpClient';
 import {
   TourListResponseSchema,
@@ -11,7 +10,6 @@ import {
   RunActionSchema,
 } from '../../shared/api/tour.contracts';
 import { ApiError, ApiErrorSchema } from '../../shared/api/auth.contracts';
-import { MOCK_RUN_RESPONSE } from './mockData';
 
 // --- API Functions ---
 
@@ -38,25 +36,11 @@ const fetchTourDetail = async (tourId: number): Promise<TourDetail> => {
 };
 
 const unlockTourApi = async (tourId: number): Promise<void> => {
-  if (!API_FLAGS.TOUR) {
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return;
-  }
   // [REAL]
   await httpClient.post(`/api/v1/tours/${tourId}/access/unlock`);
 };
 
 const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 'CONTINUE' }): Promise<RunResponse> => {
-  if (!API_FLAGS.RUN) { // Use RUN flag for execution logic
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    return RunResponseSchema.parse({
-      ...MOCK_RUN_RESPONSE,
-      tourId,
-      mode,
-    });
-  }
   // [REAL]
   const response = await httpClient.post<unknown>(`/api/v1/tours/${tourId}/runs`, {
     mode

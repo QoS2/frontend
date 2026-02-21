@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from './authStore';
-import { API_FLAGS } from '../../shared/api/config';
 import { httpClient } from '../../shared/api/httpClient';
 import {
   LoginRequest,
@@ -16,19 +15,6 @@ import {
 // --- API Functions (Internal) ---
 
 const loginApi = async (data: LoginRequest): Promise<LoginResponse> => {
-  if (!API_FLAGS.AUTH) {
-    // [MOCK] Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Validate mock response against schema
-    return LoginResponseSchema.parse({
-      accessToken: 'mock-jwt-token-xyz-123',
-      expiresIn: 86400,
-      tokenType: 'Bearer',
-    });
-  }
-  
-  // [REAL]
   const response = await httpClient.post<LoginResponse>(
       '/api/v1/auth/login',
       data,
@@ -38,17 +24,6 @@ const loginApi = async (data: LoginRequest): Promise<LoginResponse> => {
 };
 
 const registerApi = async (data: RegisterRequest): Promise<LoginResponse> => {
-  if (!API_FLAGS.AUTH) {
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return RegisterResponseSchema.parse({
-      accessToken: 'mock-jwt-token-register-abc',
-      expiresIn: 86400,
-      tokenType: 'Bearer',
-    });
-  }
-
-  // [REAL]
   const response = await httpClient.post<LoginResponse>(
         '/api/v1/auth/register',
         data,
@@ -58,15 +33,6 @@ const registerApi = async (data: RegisterRequest): Promise<LoginResponse> => {
 };
 
 const meApi = async (): Promise<MeResponse> => {
-  if (!API_FLAGS.AUTH) {
-    // [MOCK]
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return MeResponseSchema.parse({
-      userId: '550e8400-e29b-41d4-a716-446655440000', // Mock UUID
-    });
-  }
-
-  // [REAL]
   const response = await httpClient.get<unknown>('/api/v1/auth/me');
   return MeResponseSchema.parse(response);
 };

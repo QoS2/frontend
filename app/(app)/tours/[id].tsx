@@ -24,8 +24,8 @@ export default function TourDetailPage() {
   const handleRunStart = (runId: number) => {
     // Navigate to map or specialized run mode
     // For now, go back to map with run params? or just alert
-    console.log('Run Started:', runId);
-    router.push({ pathname: '/map', params: { runId } });
+    console.log('Run Started:', runId, 'Tour:', tourId);
+    router.push({ pathname: '/map', params: { runId, tourId } });
   };
 
   return (

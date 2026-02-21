@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { API_FLAGS } from '../../shared/api/config';
 import { httpClient } from '../../shared/api/httpClient';
 import {
   FileUploadResponse,
@@ -8,15 +7,8 @@ import {
 } from '../../shared/api/collection.contracts';
 import { ApiError } from '../../shared/api/auth.contracts';
 
-import { MOCK_UPLOAD_RESPONSE } from './mockData';
-
 // --- API Functions ---
 const uploadFile = async (fileUri: string): Promise<FileUploadResponse> => {
-  if (!API_FLAGS.COLLECTION) {
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate upload time
-    return FileUploadResponseSchema.parse(MOCK_UPLOAD_RESPONSE);
-  }
-
   // Real implementation for React Native file upload
   const formData = new FormData();
   formData.append('file', {

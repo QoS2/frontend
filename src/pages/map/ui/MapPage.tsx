@@ -26,14 +26,15 @@ import {ActionPage} from '@pages/action';
 import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 
-import { useRunState } from '@entities/run/model';
+import { useTourDetail } from '@entities/tour/model';
 
 interface MapPageProps {
     runId?: number | null;
+    tourId?: number | null;
 }
 
 
-export function MapPage({ runId }: MapPageProps) {
+export function MapPage({ runId, tourId }: MapPageProps) {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const bottomSheetNavigationRef = useNavigationContainerRef<any>();
@@ -51,8 +52,9 @@ export function MapPage({ runId }: MapPageProps) {
     const [inputText, setInputText] = React.useState('');
 
     // --- Run Mode ---
-    const { data: runState } = useRunState(runId ?? 0);
-    const isRunMode = !!runId && !!runState;
+    const { data: tourDetail } = useTourDetail(tourId ?? 0);
+    const currentRun = tourDetail?.currentRun;
+    const isRunMode = !!runId && !!currentRun;
 
     // Target Logic: 
     // In real app, we get target from RunState -> Current Step -> Target Marker
