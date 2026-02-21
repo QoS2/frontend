@@ -1,5 +1,4 @@
 import {
-  GetMarkersResponseSchema,
   GetContentResponseSchema,
   ChatResponseSchema,
   ChatRequest,

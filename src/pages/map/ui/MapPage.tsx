@@ -27,6 +27,7 @@ import {useActionOverlayStore} from '@features/action-overlay/useActionOverlaySt
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 
 import { useTourDetail } from '@entities/tour/model';
+import { useTourStore } from '@entities/tour/store';
 
 interface MapPageProps {
     runId?: number | null;
@@ -39,6 +40,11 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
     const bottomSheetNavigationRef = useNavigationContainerRef<any>();
     const snapPoints = useMemo(() => ['25%', '50%', '85%'], []);
+
+    const setActiveTourId = useTourStore((state) => state.setActiveTourId);
+    useEffect(() => {
+        setActiveTourId(tourId ?? null);
+    }, [tourId, setActiveTourId]);
 
     const {data: markers = []} = useLocationMarkers();
     const {location} = useLocationTracker();

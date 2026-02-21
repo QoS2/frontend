@@ -61,9 +61,6 @@ export const LocationMarkerSchema = z.object({
 
 // --- API Request/Response Schemas ---
 
-// GET /api/markers
-export const GetMarkersResponseSchema = z.array(LocationMarkerSchema);
-
 // GET /api/content/:id
 export const GetContentResponseSchema = GuideContentSchema;
 
