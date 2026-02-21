@@ -11,11 +11,16 @@ const DWELL_TIME_MS = 3000;
 function useGeofence(
   location: { latitude: number; longitude: number } | null,
   markers: LocationMarker[] | undefined,
+  excludeTypes?: string[]
 ) {
   return useMemo(() => {
     if (!location || !markers) return null;
 
-    for (const marker of markers) {
+    const filteredMarkers = excludeTypes 
+      ? markers.filter(m => !excludeTypes.includes(m.type))
+      : markers;
+
+    for (const marker of filteredMarkers) {
       const distance = getDistance(
         location.latitude,
         location.longitude,
@@ -28,14 +33,17 @@ function useGeofence(
       }
     }
     return null;
-  }, [location, markers]);
+  }, [location, markers, excludeTypes]);
 }
 
-export function useGeofenceTrigger(location: { latitude: number; longitude: number } | null) {
+export function useGeofenceTrigger(
+  location: { latitude: number; longitude: number } | null,
+  excludeTypes?: string[]
+) {
   const { data: markers } = useLocationMarkers();
   const { setActiveMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
 
-  const currentMarkerId = useGeofence(location, markers);
+  const currentMarkerId = useGeofence(location, markers, excludeTypes);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {

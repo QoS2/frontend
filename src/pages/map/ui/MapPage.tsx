@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo, useRef, useEffect} from 'react';
-import {TextInput, View, Keyboard, Pressable} from 'react-native';
+import {TextInput, View, Keyboard, Pressable, Text} from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -23,8 +23,9 @@ import {useLocationMarkers} from '@entities/location';
 import {useLocationTracker, useDistanceCalculator} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
-import {useActionOverlayStore} from '@features/action-overlay/useActionOverlayStore';
+import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
+import { useRunProgressStore, useRunGeofence } from '@features/run-progress';
 
 import { useTourDetail } from '@entities/tour/model';
 import { useTourStore } from '@entities/tour/store';
@@ -62,22 +63,46 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const currentRun = tourDetail?.currentRun;
     const isRunMode = !!runId && !!currentRun;
 
+    const { currentTarget, setCurrentTarget, isAtTarget } = useRunProgressStore();
+    const { setTriggeredMarkerId } = useMapNavigationStore();
+
+    // Sync RunState to RunProgressStore
+    useEffect(() => {
+        if (!isRunMode || !tourDetail || !currentRun) {
+            setCurrentTarget(null);
+            return;
+        }
+        const completedIds = currentRun.progress.completedSpotIds;
+        const nextSpot = tourDetail.mapSpots.find(spot => !completedIds.includes(spot.spotId));
+        if (nextSpot) {
+            setCurrentTarget({
+                spotId: nextSpot.spotId,
+                title: nextSpot.title,
+                lat: nextSpot.lat,
+                lng: nextSpot.lng,
+                radiusM: nextSpot.radiusM ?? 50,
+            });
+        } else {
+            setCurrentTarget(null);
+        }
+    }, [isRunMode, tourDetail, currentRun, setCurrentTarget]);
+
     // Target Logic: 
-    // In real app, we get target from RunState -> Current Step -> Target Marker
-    // For MVP, if run mode is active, we pick the first PLACE marker as target
     const targetMarker = useMemo(() => {
-        if (!isRunMode) return null;
-        return markers.find(m => m.type === 'PLACE') || null;
-    }, [isRunMode, markers]);
+        if (!isRunMode || !currentTarget) return null;
+        return markers.find(m => m.type === 'PLACE' && m.title === currentTarget.title) || null;
+    }, [isRunMode, currentTarget, markers]);
 
     // Calculate Distance
     const distanceText = useDistanceCalculator(
         location, 
-        targetMarker ? targetMarker.coordinate : null
+        currentTarget 
+            ? { latitude: currentTarget.lat, longitude: currentTarget.lng } 
+            : (targetMarker ? targetMarker.coordinate : null)
     );
 
     // Derive TopNavBar data
-    const navDestination = targetMarker ? targetMarker.title : 'Exploring Seoul';
+    const navDestination = currentTarget ? currentTarget.title : (targetMarker ? targetMarker.title : 'Exploring Seoul');
     const navDistance = distanceText || 'Calculating...';
 
     // Inject guide welcome message when entering run mode
@@ -100,6 +125,13 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     // Trigger Popup for Photo/Treasure markers
     const { triggeredMarkerId } = useMapNavigationStore();
     
+    // Auto-trigger GuideChat when entering Target Geofence
+    useEffect(() => {
+        if (isRunMode && isAtTarget && targetMarker) {
+            setTriggeredMarkerId(targetMarker.id);
+        }
+    }, [isRunMode, isAtTarget, targetMarker, setTriggeredMarkerId]);
+
     useEffect(() => {
         if (!triggeredMarkerId) return;
 
@@ -118,7 +150,9 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         }
     }, [triggeredMarkerId, markers, dismissedMarkerId, showPopup]);
 
-    useGeofenceTrigger(location);
+    // 순서 모드일 때 메인 장소(PLACE)는 제외시키고 자동 타겟 설정으로 위임
+    useGeofenceTrigger(location, isRunMode ? ['PLACE', 'SUB_PLACE'] : undefined);
+    useRunGeofence(location);
 
     const handleDiscoveryAction = (type: string, markerId: string) => {
         const marker = markers.find(m => m.id === markerId);
