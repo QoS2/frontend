@@ -11,40 +11,43 @@ import {
 import { ApiError } from '../../shared/api/auth.contracts';
 
 // --- API Functions ---
-const fetchPlaceCollection = async (): Promise<PlaceCollectionResponse> => {
-  const response = await httpClient.get<unknown>('/api/v1/collections/places');
+const fetchPlaceCollection = async (tourId?: number): Promise<PlaceCollectionResponse> => {
+  const endpoint = tourId ? `/api/v1/collections/places?tourId=${tourId}` : '/api/v1/collections/places';
+  const response = await httpClient.get<unknown>(endpoint);
   return PlaceCollectionResponseSchema.parse(response);
 };
 
-const fetchTreasureCollection = async (): Promise<TreasureCollectionResponse> => {
-  const response = await httpClient.get<unknown>('/api/v1/collections/treasures');
+const fetchTreasureCollection = async (tourId?: number): Promise<TreasureCollectionResponse> => {
+  const endpoint = tourId ? `/api/v1/collections/treasures?tourId=${tourId}` : '/api/v1/collections/treasures';
+  const response = await httpClient.get<unknown>(endpoint);
   return TreasureCollectionResponseSchema.parse(response);
 };
 
-const fetchPhotoSpots = async (): Promise<PhotoSpotsResponse> => {
-  const response = await httpClient.get<unknown>('/api/v1/photo-spots');
+const fetchPhotoSpots = async (tourId?: number): Promise<PhotoSpotsResponse> => {
+  const endpoint = tourId ? `/api/v1/photo-spots?tourId=${tourId}` : '/api/v1/photo-spots';
+  const response = await httpClient.get<unknown>(endpoint);
   return PhotoSpotsResponseSchema.parse(response);
 };
 
 
 // --- Hooks ---
-export const usePlaceCollection = () => {
+export const usePlaceCollection = (tourId?: number) => {
   return useQuery<PlaceCollectionResponse, ApiError>({
-    queryKey: ['collection', 'places'],
-    queryFn: fetchPlaceCollection,
+    queryKey: ['collection', 'places', tourId],
+    queryFn: () => fetchPlaceCollection(tourId),
   });
 };
 
-export const useTreasureCollection = () => {
+export const useTreasureCollection = (tourId?: number) => {
     return useQuery<TreasureCollectionResponse, ApiError>({
-      queryKey: ['collection', 'treasures'],
-      queryFn: fetchTreasureCollection,
+      queryKey: ['collection', 'treasures', tourId],
+      queryFn: () => fetchTreasureCollection(tourId),
     });
 };
 
-export const usePhotoSpots = () => {
+export const usePhotoSpots = (tourId?: number) => {
     return useQuery<PhotoSpotsResponse, ApiError>({
-      queryKey: ['collection', 'photo-spots'],
-      queryFn: fetchPhotoSpots,
+      queryKey: ['collection', 'photo-spots', tourId],
+      queryFn: () => fetchPhotoSpots(tourId),
     });
 };

@@ -30,6 +30,9 @@ export function GuideListWidget() {
 
   // Filter and sort items based on mainMissionPath to ensure correct order according to API
   const guideItems = React.useMemo(() => {
+    // Create a lookup for marker types
+    const markerMap = new Map(markers.map(m => [m.id, m]));
+
     if (!tourDetail?.mainMissionPath || tourDetail.mainMissionPath.length === 0) {
       // Fallback to markers if mainMissionPath is empty
       return markers
@@ -43,20 +46,28 @@ export function GuideListWidget() {
         }));
     }
 
-    return tourDetail.mainMissionPath.map(p => ({
-      id: p.spotId.toString(),
-      title: p.spotTitle,
-      type: 'PLACE', // mainMissionPath items are usually PLACE/SUB
-      contentId: p.spotId.toString(), // Simplified mapping
-      orderIndex: p.orderIndex,
-    })).sort((a, b) => a.orderIndex - b.orderIndex);
+    // Map mainMissionPath and filter only PLACE and SUB_PLACE
+    return tourDetail.mainMissionPath
+      .map(p => {
+        const marker = markerMap.get(p.spotId.toString());
+        return {
+          id: p.spotId.toString(),
+          title: p.spotTitle,
+          type: marker?.type || 'PLACE',
+          contentId: p.spotId.toString(),
+          orderIndex: p.orderIndex,
+        };
+      })
+      .filter(item => item.type === 'PLACE' || item.type === 'SUB_PLACE')
+      .sort((a, b) => a.orderIndex - b.orderIndex);
   }, [tourDetail, markers]);
 
-  // Use progress data from currentRun as per API spec
-  const progress = tourDetail?.currentRun?.progress || nextSpotData?.progress;
-  const totalGuides = progress?.totalCount || guideItems.length;
-  const completedCount = progress?.completedCount || 0;
-  const completedSpotIds = progress?.completedSpotIds?.map(id => id.toString()) || [];
+  // Use progress data if available, but filter by guideItems to ensure count only includes PLACE/SUB_PLACE
+  const completedSpotIds = tourDetail?.currentRun?.progress?.completedSpotIds?.map(id => id.toString()) || 
+                          nextSpotData?.progress?.completedSpotIds?.map(id => id.toString()) || [];
+  
+  const totalGuides = guideItems.length;
+  const completedCount = guideItems.filter(item => completedSpotIds.includes(item.id)).length;
   const nextSpotId = nextSpotData?.nextSpot?.spotId.toString();
 
   return (
@@ -170,10 +181,9 @@ function GuideItem({ item, status, runId }: GuideItemProps) {
     <Pressable 
       onPress={handlePress}
       onPressIn={prefetchChatSession}
-      disabled={isLock}
-      className={`flex-row items-center py-4 px-4 border-b border-gray-50 ${
+      className={`flex-row items-center py-4 px-4 border-b border-gray-50 active:opacity-70 ${
         isLive ? 'bg-sky-50/50' : 'bg-white'
-      } ${isLock ? 'opacity-40' : 'active:opacity-70'}`}
+      }`}
     >
       {/* Left Icon Status Area */}
       <View className="w-12 items-center justify-center mr-3">

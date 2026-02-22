@@ -10,8 +10,8 @@ export const PlaceCollectionItemSchema = z.object({
   type: z.enum(['MAIN', 'SUB']),
   title: z.string(),
   description: z.string().nullable().optional(),
-  thumbnailUrl: z.string().url().nullable().optional(),
-  collectedAt: z.string().datetime().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  collectedAt: z.string().nullable().optional(),
   orderIndex: z.number(),
   collected: z.boolean(),
 });
@@ -33,8 +33,8 @@ export const TreasureCollectionItemSchema = z.object({
   tourTitle: z.string(),
   title: z.string(),
   description: z.string().nullable().optional(),
-  thumbnailUrl: z.string().url().nullable().optional(),
-  gotAt: z.string().datetime().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  gotAt: z.string().nullable().optional(),
   orderIndex: z.number(),
   collected: z.boolean(),
 });
@@ -62,13 +62,13 @@ export const PhotoSpotItemSchema = z.object({
   tourId: z.number(),
   tourTitle: z.string(),
   title: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   latitude: z.number(),
   longitude: z.number(),
-  thumbnailUrl: z.string().url().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
   userPhotoCount: z.number(),
   samplePhotos: z.array(SamplePhotoSchema).optional().default([]),
-  collected: z.boolean(),
+  collected: z.boolean().optional(),
 });
 export type PhotoSpotItem = z.infer<typeof PhotoSpotItemSchema>;
 

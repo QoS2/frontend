@@ -160,6 +160,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         if (!marker) return;
 
         let targetTab = 'GuideList';
+        if (marker.type === 'PLACE' || marker.type === 'SUB_PLACE') targetTab = 'Place';
         if (marker.type === 'PHOTO') targetTab = 'Photo';
         if (marker.type === 'TREASURE') targetTab = 'Treasure';
 
@@ -220,7 +221,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         console.log(`[Marker Click] ${marker.title}`);
         
         let targetTab = 'GuideList';
-        if (marker.type === 'PLACE') targetTab = 'Place';
+        if (marker.type === 'PLACE' || marker.type === 'SUB_PLACE') targetTab = 'Place';
         if (marker.type === 'PHOTO') targetTab = 'Photo';
         if (marker.type === 'TREASURE') targetTab = 'Treasure';
 
