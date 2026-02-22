@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { View, Pressable, Image, ScrollView } from 'react-native';
+import { View, Pressable, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useRouter } from 'expo-router';
 
 import { Text } from '@shared/ui';
 import { ChatAvatar } from '@shared/assets/icons';
@@ -13,9 +12,9 @@ import type { BottomSheetStackParamList } from '@features/bottom-sheet';
 import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
-import { useUserProgress } from '@entities/user';
-import { useGuideContent } from '@entities/guide';
 import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
+import { useRunProgressStore } from '@features/run-progress/runProgressStore';
+import { useNextTurnByUrl } from '@entities/run/model';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
 
@@ -29,14 +28,10 @@ export function GuideChatWidget() {
     messages, 
     isStreaming, 
     addMessage, 
-    streamReply, 
-    startGuide,
-    guideProgress,
-    updateProgress,
+    streamReply 
   } = useChatStore();
   const { triggeredMarkerId, activeMarkerId } = useMapNavigationStore();
   const { data: markers } = useLocationMarkers();
-  const { setCurrentStep } = useUserProgress();
   const { openAction } = useActionOverlayStore();
 
   // 1. Determine Context
@@ -44,120 +39,123 @@ export function GuideChatWidget() {
   const activeMarker = markers?.find((m) => m.id === contextStepId);
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
-  // 2. Fetch Guide Content
-  const { data: guideContent } = useGuideContent(activeMarker?.contentId || null);
+  // 2. Turn-by-Turn Hooks (For Run Mode)
+  const { activeSessionId, currentTurn, setCurrentTurn } = useRunProgressStore();
+  const { mutate: fetchNextTurn } = useNextTurnByUrl();
 
-  // 3. Script Parsing (Memoized)
-  const segments = useMemo(() => {
-    if (!guideContent) return [];
-    
-    type InternalSegment = 
-        | { type: 'text'; text: string; delayMs?: number }
-        | { type: 'action'; triggerKey: string; delayMs?: number }
-        | { type: 'image'; url: string; delayMs?: number };
-        
-    const result: InternalSegment[] = [];
-    
-    guideContent.segments.forEach(seg => {
-        if (seg.text) {
-            result.push({ type: 'text', text: seg.text, delayMs: seg.delayMs });
-        }
-        if (seg.assets?.length) {
-            seg.assets.forEach(asset => {
-                if (asset.type === 'IMAGE') {
-                    result.push({ type: 'image', url: asset.url, delayMs: 0 });
-                }
-            });
-        }
-        if (seg.triggerKey) {
-            result.push({ type: 'action', triggerKey: seg.triggerKey, delayMs: 0 });
-        }
-    });
+  // 3. New Turn-by-Turn Run Mode Logic
+  const playedTurnIds = useRef<Set<number>>(new Set());
+  const previousStreamingTurnRef = useRef(isStreaming);
+  const [isTurnFetching, setIsTurnFetching] = useState(false);
 
-    return result;
-  }, [guideContent]);
-
-  // 4. Script Player Logic
-  const guideIdStr = guideContent?.stepId?.toString();
-  const currentSegmentIndex = guideIdStr ? (guideProgress[guideIdStr] || 0) : 0;
-  
-  const isPlayingRef = useRef(false);
-  const lastPlayedIndexRef = useRef(-1);
-
-  useEffect(() => {
-    if (guideIdStr) {
-        startGuide(guideIdStr);
-        isPlayingRef.current = true;
-        lastPlayedIndexRef.current = currentSegmentIndex - 1;
-    }
-  }, [guideIdStr, startGuide]);
-
-  // Main Playback Effect
-  useEffect(() => {
-    if (!isPlayingRef.current || !guideIdStr || currentSegmentIndex >= segments.length) {
-        return;
-    }
-
-    if (currentSegmentIndex <= lastPlayedIndexRef.current) {
-        return;
-    }
-
-    if (isStreaming) return; // Wait for current stream to finish
-
-    const segment = segments[currentSegmentIndex];
-    lastPlayedIndexRef.current = currentSegmentIndex;
-
-    if (segment.type === 'text') {
-        streamReply(segment.text);
-    } else if (segment.type === 'action') {
-        let actions: ChatAction[] = [];
-        const triggerKey = segment.triggerKey;
-        
-        if (triggerKey.includes('QUEST') || triggerKey.includes('QUIZ')) {
-            actions.push({ label: '⚔️ Start Quest', actionId: 'start-quest', data: { questId: triggerKey } });
-        } else if (triggerKey.includes('CAMERA') || triggerKey.includes('PHOTO')) {
-            actions.push({ label: '📸 Open Camera', actionId: 'open-camera', data: { targetName: 'Photo Spot' } });
-        } else if (triggerKey.includes('REWARD')) {
-             actions.push({ label: '🎁 Get Reward', actionId: 'get-reward', data: {} });
-        } else {
-             actions.push({ label: '👉 Next Step', actionId: 'next-step', data: {} });
-        }
-
-        if (actions.length > 0) {
+  // Function to process action
+  const processTurnAction = (action: any, delayMs?: number | null) => {
+     if (!action) return;
+     
+     if (action.type === 'AUTO_NEXT' && action.nextApi) {
+         setIsTurnFetching(true);
+         setTimeout(() => {
+             fetchNextTurn(action.nextApi, {
+                 onSuccess: (nextTurn) => {
+                     setCurrentTurn(nextTurn);
+                     setIsTurnFetching(false);
+                 },
+                 onError: (e) => {
+                     console.error("fetchNextTurn Error", e);
+                     setIsTurnFetching(false);
+                 }
+             });
+         }, delayMs || 0);
+     } else if (action.type === 'MISSION_CHOICE' || action.type === 'NEXT') {
+         let chatActions: ChatAction[] = [];
+         if (action.type === 'MISSION_CHOICE') {
+             chatActions.push({ label: '시작하기', actionId: 'start-mission', data: { stepId: action.stepId || currentTurn?.turnId } });
+             if (action.nextApi) {
+                 chatActions.push({ label: '스킵하기', actionId: 'skip-mission', data: { nextApi: action.nextApi } });
+             }
+         } else if (action.type === 'NEXT') {
+             chatActions.push({ label: '다음 장소로', actionId: 'next-step', data: {} });
+         }
+         if (chatActions.length > 0) {
              addMessage({
-                sender: 'ai',
-                type: 'action',
-                actions: actions,
-                text: 'Here is a challenge for you!' 
-            });
-        }
-        updateProgress(guideIdStr, currentSegmentIndex + 1);
-    } else if (segment.type === 'image') {
-        addMessage({
-            sender: 'ai',
-            type: 'image',
-            imageUrl: segment.url as any,
-        });
-        updateProgress(guideIdStr, currentSegmentIndex + 1);
-    }
-  }, [currentSegmentIndex, segments, guideIdStr, isStreaming, streamReply, addMessage, updateProgress]);
+                 sender: 'ai',
+                 type: 'action',
+                 actions: chatActions,
+             });
+         }
+     }
+  };
 
-  // Effect to advance index when streaming finishes
-  const wasStreamingRef = useRef(isStreaming);
+  // Play currentTurn
   useEffect(() => {
-      if (wasStreamingRef.current && !isStreaming) {
-          if (guideIdStr) {
-             updateProgress(guideIdStr, currentSegmentIndex + 1);
-          }
-      }
-      wasStreamingRef.current = isStreaming;
-  }, [isStreaming, guideIdStr, currentSegmentIndex, updateProgress]);
+     if (!activeSessionId || !currentTurn) return;
+     if (playedTurnIds.current.has(currentTurn.turnId)) return;
+     if (isStreaming || isTurnFetching) return;
 
-  // 5. Action Handler (Overlay Activation)
+     playedTurnIds.current.add(currentTurn.turnId);
+
+     // Show assets if any
+     if (currentTurn.assets && currentTurn.assets.length > 0) {
+         currentTurn.assets.forEach(asset => {
+             if (asset.type === 'IMAGE') {
+                 addMessage({ sender: 'ai', type: 'image', imageUrl: asset.url as any });
+             }
+         });
+     }
+
+     if (currentTurn.text) {
+         streamReply(currentTurn.text);
+     } else {
+         // Process Action Immediately if no text streaming is needed
+         processTurnAction(currentTurn.action, currentTurn.delayMs);
+     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, addMessage, streamReply]);
+
+  // When text streaming ends, process action (delayMs => fetch next)
+  useEffect(() => {
+     if (!activeSessionId || !currentTurn) return;
+     
+     if (previousStreamingTurnRef.current && !isStreaming && currentTurn && currentTurn.text) {
+         processTurnAction(currentTurn.action, currentTurn.delayMs);
+     }
+     previousStreamingTurnRef.current = isStreaming;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming, activeSessionId, currentTurn]);
+
+  // 4. Action Handler (Overlay Activation)
   const handleAction = (action: ChatAction) => {
     const contentId = activeMarker?.contentId;
     if (!contentId) {
         console.warn('No content ID for action');
+        return;
+    }
+
+    if (action.actionId === 'start-mission') {
+        const stepId = action.data?.stepId || contextStepId;
+        openAction({
+            type: 'QUIZ',  // QUEST was removed, directly route to QUIZ
+            contentId: stepId?.toString() || contentId,
+        });
+        return;
+    } else if (action.actionId === 'skip-mission') {
+        const nextApi = action.data?.nextApi;
+        if (nextApi) {
+             setIsTurnFetching(true);
+             fetchNextTurn(nextApi, {
+                 onSuccess: (nextTurn) => {
+                     setCurrentTurn(nextTurn);
+                     setIsTurnFetching(false);
+                 },
+                 onError: (e) => {
+                     console.error("fetchNextTurn Error", e);
+                     setIsTurnFetching(false);
+                 }
+             });
+        }
+        return;
+    } else if (action.actionId === 'next-step') {
+        navigation.goBack();
         return;
     }
 
@@ -188,6 +186,7 @@ export function GuideChatWidget() {
         console.warn('Unknown action:', action.actionId);
     }
   };
+
 
   const renderMessageContent = (msg: ChatMessage) => {
       switch (msg.type) {
@@ -267,21 +266,34 @@ export function GuideChatWidget() {
                         ? `Connecting to Guide...`
                         : 'No guideable locations nearby.'}
                 </Text>
+                {isTurnFetching && <ActivityIndicator size="small" color="#9CA3AF" className="mt-4" />}
             </View>
         ) : (
-            messages.map((msg) => (
-            <View
-                key={msg.id}
-                className={`flex-row mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-                {msg.sender === 'ai' && (
-                <View className="w-10 h-10 mr-4">
-                    <ChatAvatar width={40} height={40} />
+            <>
+                {messages.map((msg) => (
+                <View
+                    key={msg.id}
+                    className={`flex-row mb-4 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                    {msg.sender === 'ai' && (
+                    <View className="w-10 h-10 mr-4">
+                        <ChatAvatar width={40} height={40} />
+                    </View>
+                    )}
+                    {renderMessageContent(msg)}
                 </View>
+                ))}
+                {isTurnFetching && (
+                    <View className="flex-row mb-4 justify-start items-center">
+                        <View className="w-10 h-10 mr-4">
+                            <ChatAvatar width={40} height={40} />
+                        </View>
+                        <View className="px-4 py-3 rounded-2xl bg-gray-100 border border-gray-200 rounded-tl-none">
+                            <ActivityIndicator size="small" color="#9CA3AF" />
+                        </View>
+                    </View>
                 )}
-                {renderMessageContent(msg)}
-            </View>
-            ))
+            </>
         )}
       </BottomSheetScrollView>
     </View>

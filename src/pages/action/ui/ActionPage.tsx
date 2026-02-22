@@ -3,14 +3,13 @@ import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@shared/ui';
 
 // Widgets
-import { QuizWidget } from '@widgets/mission-quiz';
+import { QuestPlay } from '@features/quest-play';
 import { CameraMissionWidget } from '@widgets/mission-camera';
 import { SpotDetailWidget } from '@widgets/spot-detail';
 import { QuestBoard } from '@widgets/quest-board';
 
 // Models
 import { useMissionStep, useSubmitMission } from '@entities/mission/model';
-import { useGuideContent } from '@entities/guide/model';
 import { useSpotDetail, useSpotGuide } from '@entities/spot/model';
 
 interface ActionPageProps {
@@ -39,9 +38,10 @@ export function ActionPage({
     const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD') ? contentId : undefined;
     const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
 
-    // 2. Legacy QUEST Type
+    // 2. Legacy QUEST Type (Removed API Dependency)
     const isQuestType = type === 'QUEST';
-    const { data: content, isLoading: isContentLoading } = useGuideContent(isQuestType ? contentId : null);
+    const content = null;
+    const isContentLoading = false;
 
     // 3. Spot Detail Type
     const isSpotDetailType = type === 'SPOT_DETAIL';
@@ -52,16 +52,15 @@ export function ActionPage({
     const submitMutation = useSubmitMission();
 
     // --- Handlers ---
-    const handleQuizAnswer = (answer: string) => {
+    const handleCheckAnswer = (answerText: string, callback: (isCorrect: boolean, feedback: string) => void) => {
+        const choice = mission?.optionsJson?.choices?.find(c => c.text === answerText);
+        const optionId = choice?.id || answerText;
         submitMutation.mutate({
             runId: runId || 0,
             stepId: contentId,
-            data: { missionType: 'QUIZ', selectedOptionId: answer }
+            data: { missionType: 'QUIZ', selectedOptionId: optionId }
         }, {
-            onSuccess: (data) => {
-                if (data.isCorrect) onComplete();
-                else alert(data.feedback || 'Try again!');
-            }
+            onSuccess: (data) => callback(data.isCorrect, data.feedback)
         });
     };
 
@@ -128,11 +127,23 @@ export function ActionPage({
     if (type === 'QUIZ') {
          if (!mission) return <View><Text>Mission Not Found</Text></View>;
          
+         const questData = {
+             id: mission.missionId.toString(),
+             type: 'MULTIPLE_CHOICE' as const,
+             question: mission.prompt,
+             options: mission.optionsJson?.choices?.map(c => c.text) || [],
+             answer: '', // Async validation handles this
+             hint: mission.optionsJson?.hintText,
+         };
+
          return (
-            <QuizWidget 
-                mission={mission} 
-                onAnswer={handleQuizAnswer} 
-                isSubmitting={submitMutation.isPending} 
+            <QuestPlay 
+                quest={questData} 
+                onCheckAnswer={handleCheckAnswer}
+                onComplete={onComplete}
+                onClose={onComplete}
+                locationName={targetName || 'Mission'}
+                progressText="1/1"
             />
         );
     }

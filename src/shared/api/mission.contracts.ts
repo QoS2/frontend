@@ -8,13 +8,14 @@ export const MissionStatusSchema = z.enum(['LOCKED', 'OPEN', 'IN_PROGRESS', 'COM
 export const QuizOptionSchema = z.object({
   id: z.string(),
   text: z.string(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().nullable().optional(), // Removed .url() to allow empty strings
 });
 
 export const OptionsJsonSchema = z.object({
   choices: z.array(QuizOptionSchema).optional(),
-  questionImageUrl: z.string().url().optional(),
+  questionImageUrl: z.string().nullable().optional(),
   instruction: z.string().optional(), // Used for PHOTO/TEXT_INPUT potentially
+  hintText: z.string().optional(),
 });
 
 export const MissionStepSchema = z.object({

@@ -4,7 +4,6 @@ import { NavigationContainer, NavigationIndependentTree } from '@react-navigatio
 import { GuideListWidget } from '@widgets/guide-list';
 import { GuideChatWidget } from '@widgets/guide-chat';
 import { QuestBoard } from '@widgets/quest-board';
-import { useGuideContent } from '@entities/guide';
 import { CollectionPage } from '@pages/collection/ui/CollectionPage';
 import { PhotoSpotPage } from '@pages/photo-spot/ui/PhotoSpotPage';
 import { PlacePage } from '@pages/place/ui/PlacePage';
@@ -13,9 +12,9 @@ export type BottomSheetStackParamList = {
   GuideList: undefined;
   GuideChat: { stepId?: string; title?: string } | undefined;
   QuestBoard: { contentId: string };
-  Place: undefined;
+  Place: { itemId?: string };
   Treasure: undefined;
-  Photo: undefined;
+  Photo: { itemId?: string };
 };
 
 const Stack = createNativeStackNavigator<BottomSheetStackParamList>();
@@ -49,9 +48,9 @@ export function BottomSheetNavigator({onRouteChange, navigationRef}: BottomSheet
           <Stack.Screen name="GuideChat" component={GuideChatWidget} />
           <Stack.Screen name="GuideList" component={GuideListWidget} />
           <Stack.Screen name="QuestBoard" component={QuestBoardScreen} />
-          <Stack.Screen name="Place" component={PlacePage} />
-          <Stack.Screen name="Treasure" component={CollectionPage} />
-          <Stack.Screen name="Photo" component={PhotoSpotPage} />
+          <Stack.Screen name="Place" component={PlacePage as any} />
+          <Stack.Screen name="Treasure" component={CollectionPage as any} />
+          <Stack.Screen name="Photo" component={PhotoSpotPage as any} />
         </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>
@@ -60,9 +59,8 @@ export function BottomSheetNavigator({onRouteChange, navigationRef}: BottomSheet
 
 function QuestBoardScreen({ route }: any) {
   const { contentId } = route.params;
-  const { data: guideContent, isLoading } = useGuideContent(contentId);
+  // TODO: Fetch specific quest based on Turn data or mission step API
+  const quests = [] as any[];
 
-  if (isLoading || !guideContent) return null;
-
-  return <QuestBoard quests={(guideContent as any).quests} />;
+  return <QuestBoard quests={quests} />;
 }

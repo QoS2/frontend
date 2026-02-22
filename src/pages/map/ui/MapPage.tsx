@@ -152,7 +152,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
 
     // 순서 모드일 때 메인 장소(PLACE)는 제외시키고 자동 타겟 설정으로 위임
     useGeofenceTrigger(location, isRunMode ? ['PLACE', 'SUB_PLACE'] : undefined);
-    useRunGeofence(location);
+    useRunGeofence(location, isRunMode && currentRun ? currentRun.runId : null);
 
     const handleDiscoveryAction = (type: string, markerId: string) => {
         const marker = markers.find(m => m.id === markerId);

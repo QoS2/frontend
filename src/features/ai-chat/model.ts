@@ -24,17 +24,12 @@ interface ChatState {
   isStreaming: boolean;
   welcomedMarkerIds: string[];
   activeContentId: string | null;
-  guideProgress: Record<string, number>; // contentId -> segmentIndex
 
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   setStreaming: (isStreaming: boolean) => void;
   streamReply: (fullText: string) => void;
   welcomeMarker: (marker: { id: string; title: string; description: string }) => void;
   markAsWelcomed: (markerId: string) => void;
-  
-  // New Methods for Guide Persistence
-  startGuide: (contentId: string) => void;
-  updateProgress: (contentId: string, index: number) => void;
   resetChat: () => void;
 }
 
@@ -43,7 +38,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isStreaming: false,
   welcomedMarkerIds: [],
   activeContentId: null,
-  guideProgress: {},
 
   addMessage: (msg) =>
     set((state) => {
@@ -118,25 +112,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-
-  startGuide: (contentId) => {
-      const { activeContentId } = get();
-      if (activeContentId !== contentId) {
-          // New guide started: clear everything
-          set({ 
-              messages: [], 
-              activeContentId: contentId,
-              isStreaming: false 
-          });
-      }
-      // If same guide, do nothing (preserve messages)
-  },
-
-  updateProgress: (contentId, index) => 
-      set((state) => ({
-          guideProgress: { ...state.guideProgress, [contentId]: index }
-      })),
-
   markAsWelcomed: (markerId) => 
     set((state) => ({ 
       welcomedMarkerIds: Array.from(new Set([...state.welcomedMarkerIds, markerId])) 
@@ -146,7 +121,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [], 
       welcomedMarkerIds: [], 
       activeContentId: null, 
-      guideProgress: {},
       isStreaming: false
   }),
 }));

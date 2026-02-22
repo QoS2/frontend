@@ -40,7 +40,7 @@ export const AssetSchema = z.object({
 export const ActionSchema = z.object({
   type: ActionTypeSchema,
   nextApi: z.string().nullable().optional(),
-  stepId: z.number().optional(), // Only for MISSION_CHOICE
+  stepId: z.number().nullable().optional(),
 });
 
 export const ChatTurnSchema = z.object({

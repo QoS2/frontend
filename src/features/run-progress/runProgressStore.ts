@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { ChatTurn } from '@shared/api/run.contracts';
 
 export interface TargetSpot {
   spotId: number;
@@ -14,9 +15,15 @@ interface RunProgressState {
   isAtTarget: boolean;
   completedSpotIds: number[];
   
+  // Turn-by-turn Session State
+  activeSessionId: number | null;
+  currentTurn: ChatTurn | null;
+
   setCurrentTarget: (target: TargetSpot | null) => void;
   setIsAtTarget: (value: boolean) => void;
   markCompleted: (spotId: number) => void;
+  setSession: (sessionId: number | null, initialTurn: ChatTurn | null) => void;
+  setCurrentTurn: (turn: ChatTurn | null) => void;
   reset: () => void;
 }
 
@@ -24,6 +31,8 @@ export const useRunProgressStore = create<RunProgressState>((set) => ({
   currentTarget: null,
   isAtTarget: false,
   completedSpotIds: [],
+  activeSessionId: null,
+  currentTurn: null,
 
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setIsAtTarget: (value) => set({ isAtTarget: value }),
@@ -32,5 +41,13 @@ export const useRunProgressStore = create<RunProgressState>((set) => ({
       ? state.completedSpotIds 
       : [...state.completedSpotIds, spotId]
   })),
-  reset: () => set({ currentTarget: null, isAtTarget: false, completedSpotIds: [] }),
+  setSession: (sessionId, initialTurn) => set({ activeSessionId: sessionId, currentTurn: initialTurn }),
+  setCurrentTurn: (turn) => set({ currentTurn: turn }),
+  reset: () => set({ 
+    currentTarget: null, 
+    isAtTarget: false, 
+    completedSpotIds: [],
+    activeSessionId: null,
+    currentTurn: null 
+  }),
 }));

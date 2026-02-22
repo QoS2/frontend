@@ -70,7 +70,8 @@ export const TourDetailSchema = z.object({
   access: z.object({
     status: AccessStatusSchema,
     hasAccess: z.boolean(),
-  }).optional().default({ status: 'UNLOCKED', hasAccess: true }),
+  }).optional(),
+  accessStatus: AccessStatusSchema.optional(), // 목록과 동일하게 최상위 필드로 지원
   thumbnails: z.array(z.string()).nullable().optional().default([]),
   currentRun: z.object({
     runId: z.number(),

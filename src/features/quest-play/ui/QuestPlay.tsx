@@ -9,6 +9,7 @@ interface QuestPlayProps {
   quest: Quest;
   onComplete: () => void;
   onClose?: () => void;
+  onCheckAnswer?: (answer: string, callback: (isCorrect: boolean, feedback: string) => void) => void;
   progressText?: string;
   locationName?: string;
   isCompleted?: boolean;
@@ -18,6 +19,7 @@ export function QuestPlay({
   quest,
   onComplete,
   onClose,
+  onCheckAnswer,
   progressText = '1/1',
   locationName = 'Unknown Location',
   isCompleted = false,
@@ -25,9 +27,24 @@ export function QuestPlay({
   const [selectedOption, setSelectedOption] = useState<string | null>(isCompleted ? quest.answer : null);
   const [inputText, setInputText] = useState(isCompleted ? quest.answer : '');
   const [isCorrect, setIsCorrect] = useState<boolean | null>(isCompleted ? true : null);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
 
   const handleCheck = () => {
+    const answer = (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption) || '';
+    
+    if (onCheckAnswer) {
+       onCheckAnswer(answer as string, (correct, feedback) => {
+         setIsCorrect(correct);
+         setFeedbackMessage(feedback || (correct ? '✨ Correct!' : '❌ Try again! Check the hint.'));
+         if (correct) {
+             // Let the user click close, or auto complete? We can just set state and user will click 'Close'
+         }
+       });
+       return;
+    }
+
+    // Default local check logic
     let correct = false;
     if (quest.type === 'MULTIPLE_CHOICE' || quest.type === 'SELECT_IMAGE') {
       correct = selectedOption === quest.answer;
@@ -36,6 +53,8 @@ export function QuestPlay({
     }
 
     setIsCorrect(correct);
+    if (!correct) setFeedbackMessage('❌ Try again! Check the hint.');
+    else setFeedbackMessage('✨ Correct!');
 
     if (correct) {
       onComplete();

@@ -46,6 +46,11 @@ const fetchNextTurn = async ({ sessionId, turnId }: { sessionId: number; turnId:
   return response as ChatTurn;
 };
 
+const fetchNextTurnByUrl = async (nextApi: string): Promise<ChatTurn> => {
+  const response = await httpClient.get<unknown>(nextApi);
+  return response as ChatTurn;
+};
+
 const sendMessage = async ({ sessionId, data }: { sessionId: number; data: ChatMessageRequest }): Promise<ChatMessageResponse> => {
   const response = await httpClient.post<unknown>(`/api/v1/chat-sessions/${sessionId}/messages`, data);
   return ChatMessageResponseSchema.parse(response);
@@ -89,6 +94,12 @@ export const useSendMessage = () => {
 export const useNextTurn = () => {
   return useMutation<ChatTurn, ApiError, { sessionId: number; turnId: number }>({
     mutationFn: fetchNextTurn,
+  });
+};
+
+export const useNextTurnByUrl = () => {
+  return useMutation<ChatTurn, ApiError, string>({
+    mutationFn: fetchNextTurnByUrl,
   });
 };
 

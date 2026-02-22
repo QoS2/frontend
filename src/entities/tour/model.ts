@@ -15,7 +15,7 @@ import { ApiError, ApiErrorSchema } from '../../shared/api/auth.contracts';
 
 const fetchTours = async (): Promise<TourListItem[]> => {
   // [REAL]
-  const response = await httpClient.get<unknown>('/api/v1/tours', { isPublic: true });
+  const response = await httpClient.get<unknown>('/api/v1/tours');
   try {
     return TourListResponseSchema.parse(response);
   } catch (err) {

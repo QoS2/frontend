@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@shared/ui/Text';
-import { useGuideContent } from '@entities/guide';
 import { useTextStream } from '@shared/lib/hooks/useTextStream';
 import { GuidePlayer } from '@widgets/guide-player';
 
@@ -11,7 +10,11 @@ interface StepDetailPageProps {
 }
 
 export function StepDetailPage({ id, onBack }: StepDetailPageProps) {
-  const { data: content, isLoading, isError, error } = useGuideContent(id);
+  // TODO: Refactor StepDetailPage to use Turn-by-Turn API or specific Spot Guide if needed
+  const content = null as any; 
+  const isLoading = false;
+  const isError = false;
+  const error = null as any;
 
   const { displayedText, currentIndex, isComplete, skip } = useTextStream({
     text: (content as any)?.script ?? '',

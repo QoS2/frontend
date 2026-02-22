@@ -33,13 +33,36 @@ export const TourDetailWidget = ({ tourId, onBack, onRunStart }: TourDetailWidge
     );
   }
 
-  const isLocked = tour.access.status === 'LOCKED' && !tour.access.hasAccess;
+  // 서버 응답의 다양한 필드(access.status 또는 최상위 accessStatus)를 모두 고려
+  const status = tour.access?.status || tour.accessStatus || 'UNLOCKED';
+  const hasAccess = tour.access?.hasAccess ?? (status === 'UNLOCKED');
+  const isLocked = status === 'LOCKED' && !hasAccess;
   const isRunning = tour.currentRun?.status === 'IN_PROGRESS';
 
   const handlePrimaryAction = () => {
     if (isLocked) {
       unlockMutation.mutate(tourId, {
-        onSuccess: () => Alert.alert('Unlocked!', 'You can now start this tour.'),
+        onSuccess: () => {
+          Alert.alert('Unlocked!', 'You can now start this tour.');
+          
+          // 언락 성공 시 자동으로 투어 시작 (409 에러 시 CONTINUE로 전환하는 방어 로직 포함)
+          const startTour = (mode: 'START' | 'CONTINUE') => {
+            startMutation.mutate({ tourId, mode }, {
+              onSuccess: (data) => onRunStart(data.runId),
+              onError: (err: any) => {
+                if (mode === 'START' && (err.status === 409 || err.message?.includes('CONTINUE'))) {
+                  console.log('Already in progress, retrying with CONTINUE mode...');
+                  startTour('CONTINUE');
+                  return;
+                }
+                console.error('Auto start error:', err);
+                Alert.alert('Error', `Failed to start tour after unlock: ${err.message || JSON.stringify(err)}`);
+              }
+            });
+          };
+
+          startTour('START');
+        },
         onError: () => Alert.alert('Error', 'Failed to unlock tour.'),
       });
     } else if (isRunning && tour.currentRun) {
@@ -49,7 +72,17 @@ export const TourDetailWidget = ({ tourId, onBack, onRunStart }: TourDetailWidge
       // Start new run
       startMutation.mutate({ tourId, mode: 'START' }, {
         onSuccess: (data) => onRunStart(data.runId),
-        onError: () => Alert.alert('Error', 'Failed to start tour.'),
+        onError: (err: any) => {
+          // 직접 시작 버튼 누를 때도 409 대응
+          if (err.status === 409 || err.message?.includes('CONTINUE')) {
+            startMutation.mutate({ tourId, mode: 'CONTINUE' }, {
+              onSuccess: (data) => onRunStart(data.runId),
+              onError: () => Alert.alert('Error', 'Failed to continue tour.'),
+            });
+            return;
+          }
+          Alert.alert('Error', 'Failed to start tour.');
+        },
       });
     }
   };
