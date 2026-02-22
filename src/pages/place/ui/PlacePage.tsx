@@ -4,11 +4,13 @@ import { CollectionViewWidget } from '@widgets/collection-view';
 import { usePlaceCollection } from '@entities/collection/model';
 import { useTourStore } from '@entities/tour/store';
 import { useRoute } from '@react-navigation/native';
+import { useLocationMarkers } from '@entities/location';
 import { Text } from '@shared/ui';
 
 export function PlacePage() {
   const activeTourId = useTourStore((state) => state.activeTourId);
   const { data: placeData, isLoading, isError } = usePlaceCollection(activeTourId ?? undefined);
+  const { data: markers = [] } = useLocationMarkers();
   const route = useRoute<any>();
   const itemId = route.params?.itemId;
   
@@ -44,6 +46,7 @@ export function PlacePage() {
     <CollectionViewWidget
       title="Place Collection"
       items={placeItems}
+      emptyMessage="No collected places yet."
       initialItemId={itemId}
     />
   );

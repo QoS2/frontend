@@ -17,6 +17,7 @@ export interface CollectionItem {
 interface CollectionViewWidgetProps {
   title: string;
   items: CollectionItem[];
+  emptyMessage?: string;
   initialItemId?: number | string;
   renderHeaderRight?: () => React.ReactNode; 
   onCollect?: (id: number | string) => void;
@@ -25,6 +26,7 @@ interface CollectionViewWidgetProps {
 export function CollectionViewWidget({
   title,
   items,
+  emptyMessage,
   initialItemId,
   renderHeaderRight,
   onCollect,
@@ -48,7 +50,7 @@ export function CollectionViewWidget({
       <View className="flex-1 px-6">
         {!selectedItem ? (
           /* --- Grid List View --- */
-          <Animated.View exiting={FadeOut} entering={FadeIn} layout={Layout}>
+          <Animated.View exiting={FadeOut} entering={FadeIn} layout={Layout} className="flex-1">
             <View className="flex-row items-center justify-between mb-4 mt-2">
               <View className="flex-row items-center">
                 <Text className="text-xl font-extrabold text-gray-900 mr-2">
@@ -63,25 +65,36 @@ export function CollectionViewWidget({
               {renderHeaderRight && renderHeaderRight()}
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="flex-row flex-wrap justify-between pb-20">
-                {items.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => setSelectedItem(item)}
-                    className="w-[48%] aspect-square bg-white rounded-2xl mb-4 border border-gray-100 shadow-sm active:opacity-90 overflow-hidden"
-                  >
-                     <Image 
-                        source={{ uri: item.imageUrl }}
-                        className="w-full h-full"
-                        resizeMode="cover"
-                     />
-                     <View className="absolute bottom-0 left-0 right-0 p-3 bg-white/90">
-                        <Text className="font-bold text-gray-800 text-xs" numberOfLines={1}>{item.title}</Text>
-                     </View>
-                  </Pressable>
-                ))}
-              </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={items.length === 0 ? { flexGrow: 1 } : undefined}>
+              {items.length > 0 ? (
+                <View className="flex-row flex-wrap justify-between pb-20">
+                  {items.map((item) => (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => setSelectedItem(item)}
+                      className="w-[48%] aspect-square bg-white rounded-2xl mb-4 border border-gray-100 shadow-sm active:opacity-90 overflow-hidden"
+                    >
+                      <Image 
+                          source={{ uri: item.imageUrl }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                      />
+                      <View className="absolute bottom-0 left-0 right-0 p-3 bg-white/90">
+                          <Text className="font-bold text-gray-800 text-xs" numberOfLines={1}>{item.title}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <View className="flex-1 justify-center items-center pb-20">
+                   <View className="bg-gray-100 p-6 rounded-full mb-4">
+                      <Sparkles size={40} color="#CBD5E1" />
+                   </View>
+                   <Text className="text-gray-400 text-base font-medium text-center px-10">
+                      {emptyMessage || "No items collected yet."}
+                   </Text>
+                </View>
+              )}
             </ScrollView>
           </Animated.View>
         ) : (

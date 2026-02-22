@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { Text } from './Text';
 
@@ -18,29 +18,41 @@ interface TypewriterTextProps {
  * @param onComplete - 타이핑 완료 시 실행될 콜백
  */
 export function TypewriterText({ 
-  text, 
+  text = '', 
   speed = 60, 
   onComplete, 
   className,
 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState('');
+  const onCompleteRef = useRef(onComplete);
+
+  // Update ref when onComplete changes without restarting effect
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
+    if (!text) {
+      setDisplayedText('');
+      return;
+    }
+
     let index = 0;
     setDisplayedText('');
 
     const intervalId = setInterval(() => {
       if (index < text.length) {
-        setDisplayedText((prev) => prev + text[index]);
+        const char = text.charAt(index);
+        setDisplayedText((prev) => prev + char);
         index++;
       } else {
         clearInterval(intervalId);
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     }, speed);
 
     return () => clearInterval(intervalId);
-  }, [text, speed, onComplete]);
+  }, [text, speed]);
 
   return (
     <View className="flex-row flex-wrap">

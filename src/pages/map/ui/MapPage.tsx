@@ -110,17 +110,20 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const hasInjectedRef = useRef(false);
     useEffect(() => {
         if (isRunMode && !hasInjectedRef.current) {
+            const completedIds = currentRun?.progress?.completedSpotIds || [];
+            if (completedIds.length === 0) {
+                addMessage({
+                    sender: 'ai',
+                    type: 'text',
+                    text: '🎉 투어를 시작합니다! 첫 번째 목적지인 광화문으로 이동해주세요.',
+                });
+            }
             hasInjectedRef.current = true;
-            addMessage({
-                sender: 'ai',
-                type: 'text',
-                text: '🎉 투어를 시작합니다! 첫 번째 목적지인 광화문으로 이동해주세요.',
-            });
         }
         if (!isRunMode) {
             hasInjectedRef.current = false;
         }
-    }, [isRunMode, addMessage]);
+    }, [isRunMode, addMessage, currentRun]);
 
 
     // Trigger Popup for Photo/Treasure markers
