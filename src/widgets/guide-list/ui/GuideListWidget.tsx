@@ -9,7 +9,12 @@ import { Text } from '@shared/ui';
 import { useLocationMarkers } from '@entities/location';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useUserProgress } from '@entities/user';
+import { useTourStore } from '@entities/tour/store';
+import { useTourDetail } from '@entities/tour/model';
 import { LocationMarker } from '@shared/api/contracts';
+import { useQueryClient } from '@tanstack/react-query';
+import { httpClient } from '@shared/api/httpClient';
+import { ChatSessionResponseSchema } from '@shared/api/run.contracts';
 
 type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 
@@ -17,6 +22,9 @@ export function GuideListWidget() {
   const { data: markers = [] } = useLocationMarkers();
   const { activeMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
   const { visitedPlaceIds } = useUserProgress();
+  const activeTourId = useTourStore((state) => state.activeTourId);
+  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
+  const runId = tourDetail?.currentRun?.runId;
 
   // Filter and sort markers for guide list
   const guideItems = markers.filter((m) => m.contentId !== null);
@@ -63,9 +71,10 @@ export function GuideListWidget() {
         data={guideItems}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <GuideItem
+           <GuideItem
             item={item}
             status={getGuideStatus(item, activeMarkerId, visitedPlaceIds)}
+            runId={runId}
           />
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -94,10 +103,12 @@ function getGuideStatus(
 interface GuideItemProps {
   item: LocationMarker;
   status: GuideStatus;
+  runId?: number;
 }
 
-function GuideItem({ item, status }: GuideItemProps) {
+function GuideItem({ item, status, runId }: GuideItemProps) {
   const navigation = useNavigation<NativeStackNavigationProp<BottomSheetStackParamList>>();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { setTriggeredMarkerId } = useMapNavigationStore();
   const isDone = status === 'done';
@@ -113,9 +124,25 @@ function GuideItem({ item, status }: GuideItemProps) {
     }
   };
 
+  const prefetchChatSession = async () => {
+    if (!runId || !item.id) return;
+    const spotId = parseInt(item.id, 10);
+    if (isNaN(spotId)) return;
+
+    queryClient.prefetchQuery({
+      queryKey: ['chat-session', runId, spotId],
+      queryFn: async () => {
+        const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/spots/${spotId}/chat-session`);
+        return ChatSessionResponseSchema.parse(response);
+      },
+      staleTime: 1000 * 60 * 10, // 10 minutes
+    });
+  };
+
   return (
     <Pressable 
       onPress={handlePress}
+      onPressIn={prefetchChatSession}
       className={`flex-row items-center py-4 px-4 border-b border-gray-50 active:opacity-70 ${
         isLive ? 'bg-sky-50/50' : 'bg-white'
       }`}

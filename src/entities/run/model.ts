@@ -74,6 +74,7 @@ export const useChatSession = (runId?: number, spotId?: number) => {
     queryKey: ['chat-session', runId, spotId],
     queryFn: () => fetchChatSession({ runId: runId!, spotId: spotId! }),
     enabled: !!runId && !!spotId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
@@ -82,6 +83,7 @@ export const useChatHistory = (sessionId?: number) => {
     queryKey: ['chat-history', sessionId],
     queryFn: () => fetchChatHistory(sessionId!),
     enabled: !!sessionId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -108,5 +110,6 @@ export const useNextSpot = (runId?: number) => {
     queryKey: ['next-spot', runId],
     queryFn: () => fetchNextSpot(runId!),
     enabled: !!runId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

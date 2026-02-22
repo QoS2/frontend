@@ -54,6 +54,7 @@ export const useTours = () => {
   return useQuery<TourListItem[], ApiError>({
     queryKey: ['tours'],
     queryFn: fetchTours,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
@@ -62,6 +63,7 @@ export const useTourDetail = (tourId: number) => {
     queryKey: ['tour', tourId],
     queryFn: () => fetchTourDetail(tourId),
     enabled: !!tourId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
