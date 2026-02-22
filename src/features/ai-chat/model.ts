@@ -17,6 +17,7 @@ export interface ChatMessage {
   actions?: ChatAction[];
   timestamp: number;
   tags?: string[];
+  isAnimating?: boolean;
 }
 
 interface ChatState {
@@ -28,6 +29,7 @@ interface ChatState {
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   setStreaming: (isStreaming: boolean) => void;
   streamReply: (fullText: string) => void;
+  finishStreaming: (id: string) => void;
   welcomeMarker: (marker: { id: string; title: string; description: string }) => void;
   markAsWelcomed: (markerId: string) => void;
   resetChat: () => void;
@@ -82,25 +84,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set((state) => ({
       isStreaming: true,
-      messages: [...state.messages, { id, sender: 'ai', type: 'text', text: '', timestamp }]
+      messages: [...state.messages, { id, sender: 'ai', type: 'text', text: fullText, timestamp, isAnimating: true }]
     }));
-    
-    let currentText = '';
-    const speed = 10; 
-    let charIndex = 0;
+  },
 
-    const interval = setInterval(() => {
-      if (charIndex < fullText.length) {
-        currentText += fullText[charIndex];
-        charIndex++;
-        set((state) => ({
-          messages: state.messages.map((m) => (m.id === id ? { ...m, text: currentText } : m)),
-        }));
-      } else {
-        clearInterval(interval);
-        set({ isStreaming: false });
-      }
-    }, speed);
+  finishStreaming: (id) => {
+    set((state) => ({
+      isStreaming: false,
+      messages: state.messages.map((m) => (m.id === id ? { ...m, isAnimating: false } : m)),
+    }));
   },
 
   welcomeMarker: (marker) => {

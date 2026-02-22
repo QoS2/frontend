@@ -6,7 +6,7 @@ import { View, Pressable, Image, ScrollView, ActivityIndicator } from 'react-nat
 import { ChevronLeft } from 'lucide-react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
-import { Text } from '@shared/ui';
+import { Text, TypewriterText } from '@shared/ui';
 import { ChatAvatar } from '@shared/assets/icons';
 import type { BottomSheetStackParamList } from '@features/bottom-sheet';
 import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
@@ -28,7 +28,8 @@ export function GuideChatWidget() {
     messages, 
     isStreaming, 
     addMessage, 
-    streamReply 
+    streamReply,
+    finishStreaming
   } = useChatStore();
   const { triggeredMarkerId, activeMarkerId } = useMapNavigationStore();
   const { data: markers } = useLocationMarkers();
@@ -205,7 +206,15 @@ export function GuideChatWidget() {
             <View className="flex-col gap-2 mt-1 min-w-[200px]">
                 {msg.text && (
                      <View className="px-4 py-3 rounded-2xl bg-gray-100 border border-gray-200 rounded-tl-none mb-2">
-                        <Text className="text-base text-gray-800">{msg.text}</Text>
+                        {msg.isAnimating ? (
+                            <TypewriterText 
+                                text={msg.text} 
+                                className="text-base text-gray-800" 
+                                onComplete={() => finishStreaming(msg.id)}
+                            />
+                        ) : (
+                            <Text className="text-base text-gray-800">{msg.text}</Text>
+                        )}
                      </View>
                 )}
               {msg.actions?.map((action, idx) => (
@@ -229,9 +238,17 @@ export function GuideChatWidget() {
                   : 'bg-[#4FAAF0] rounded-br-none'
               }`}
             >
-              <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
-                {msg.text || ''}
-              </Text>
+              {msg.sender === 'ai' && msg.isAnimating ? (
+                  <TypewriterText 
+                    text={msg.text || ''} 
+                    className="text-base leading-5 text-gray-800"
+                    onComplete={() => finishStreaming(msg.id)}
+                  />
+              ) : (
+                  <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
+                    {msg.text || ''}
+                  </Text>
+              )}
             </View>
           );
       }
