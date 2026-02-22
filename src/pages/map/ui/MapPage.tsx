@@ -9,13 +9,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
-import {useNavigationContainerRef} from '@react-navigation/native';
+import type {NavigationContainerRef} from '@react-navigation/native';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
 import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
 
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
 import {BottomSheetNavigator, BottomSheetHandle} from '@features/bottom-sheet';
+import type {BottomSheetStackParamList} from '@features/bottom-sheet';
 
 import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
@@ -39,7 +40,7 @@ interface MapPageProps {
 export function MapPage({ runId, tourId }: MapPageProps) {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<React.ElementRef<typeof NaverMapView>>(null);
-    const bottomSheetNavigationRef = useNavigationContainerRef<any>();
+    const bottomSheetNavigationRef = useRef<NavigationContainerRef<BottomSheetStackParamList>>(null);
     const snapPoints = useMemo(() => ['25%', '50%', '85%'], []);
 
     const setActiveTourId = useTourStore((state) => state.setActiveTourId);
@@ -156,24 +157,17 @@ export function MapPage({ runId, tourId }: MapPageProps) {
 
     const handleDiscoveryAction = (type: string, markerId: string) => {
         const marker = markers.find(m => m.id === markerId);
-        if (!marker || !marker.contentId) return;
+        if (!marker) return;
 
-        // Phase 4 Test: Open Spot Detail first
-        if (type === 'PHOTO' || type === 'PLACE' || type === 'SUB_PLACE') {
-            openAction({
-                type: 'SPOT_DETAIL',
-                contentId: marker.contentId,
-                targetName: marker.title,
-                runId: runId
-            });
-        } else if (type === 'TREASURE') {
-             openAction({
-                type: 'REWARD',
-                contentId: marker.contentId,
-                rewardId: 'treasure-reward',
-                runId: runId
-            });
-        }
+        let targetTab = 'GuideList';
+        if (marker.type === 'PHOTO') targetTab = 'Photo';
+        if (marker.type === 'TREASURE') targetTab = 'Treasure';
+
+        // 1. BottomSheet 올리기 (85%)
+        bottomSheetRef.current?.snapToIndex(2); 
+        
+        // 2. 해당 탭으로 이동
+        bottomSheetNavigationRef.current?.navigate(targetTab as any, { itemId: marker.id });
     };
 
 
@@ -193,11 +187,12 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     }));
 
     // Effect to control BottomSheet based on Action Overlay
+    // close() 대신 snapToIndex(0)을 사용하여 NavigationContainer가 unmount되지 않도록 유지
+    // ActionPage(z-50)가 전체 화면을 덮으므로 25% 위치의 BottomSheet는 사용자에게 보이지 않음
     useEffect(() => {
         if (activeAction) {
-            bottomSheetRef.current?.close();
+            bottomSheetRef.current?.snapToIndex(0);
         } else {
-            // Restore bottom sheet if it was closed by action
             bottomSheetRef.current?.snapToIndex(1);
         }
     }, [activeAction]);
@@ -253,8 +248,9 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                 {/* Location Button */}
                 <Pressable
                     onPress={handleLocationButtonPress}
-                    className="absolute -top-14 right-4 shadow-lg items-center justify-center w-12 h-12 rounded-full active:opacity-70"
+                    className="absolute -top-14 right-4 items-center justify-center w-12 h-12 rounded-full active:opacity-70"
                      style={{
+                        backgroundColor: 'white',
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
                         shadowOpacity: 0.25,
@@ -334,7 +330,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                 ]}
             >
                 <View 
-                    className="flex-row items-center bg-white rounded-3xl px-2 h-[45px] shadow-sm"
+                    className="flex-row items-center bg-white rounded-3xl px-2 h-[45px]"
                     style={{
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},

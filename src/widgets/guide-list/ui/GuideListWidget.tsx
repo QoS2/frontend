@@ -16,24 +16,48 @@ import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@shared/api/httpClient';
 import { ChatSessionResponseSchema } from '@shared/api/run.contracts';
 
+import { useTourRunNextSpot } from '@entities/tour/model';
+
 type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 
 export function GuideListWidget() {
   const { data: markers = [] } = useLocationMarkers();
-  const { activeMarkerId, setTriggeredMarkerId } = useMapNavigationStore();
-  const { visitedPlaceIds } = useUserProgress();
+  const { activeMarkerId } = useMapNavigationStore();
   const activeTourId = useTourStore((state) => state.activeTourId);
   const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
   const runId = tourDetail?.currentRun?.runId;
+  const { data: nextSpotData } = useTourRunNextSpot(runId);
 
-  // Filter and sort markers for guide list
-  const guideItems = markers.filter((m) => m.contentId !== null);
+  // Filter and sort items based on mainMissionPath to ensure correct order according to API
+  const guideItems = React.useMemo(() => {
+    if (!tourDetail?.mainMissionPath || tourDetail.mainMissionPath.length === 0) {
+      // Fallback to markers if mainMissionPath is empty
+      return markers
+        .filter((m) => m.contentId !== null && (m.type === 'PLACE' || m.type === 'SUB_PLACE'))
+        .map(m => ({
+          id: m.id,
+          title: m.title,
+          type: m.type,
+          contentId: m.contentId,
+          orderIndex: 0
+        }));
+    }
 
-  // Calculate progress
-  const totalGuides = guideItems.length;
-  const completedCount = guideItems.filter((item) => 
-    visitedPlaceIds.includes(item.id)
-  ).length;
+    return tourDetail.mainMissionPath.map(p => ({
+      id: p.spotId.toString(),
+      title: p.spotTitle,
+      type: 'PLACE', // mainMissionPath items are usually PLACE/SUB
+      contentId: p.spotId.toString(), // Simplified mapping
+      orderIndex: p.orderIndex,
+    })).sort((a, b) => a.orderIndex - b.orderIndex);
+  }, [tourDetail, markers]);
+
+  // Use progress data from currentRun as per API spec
+  const progress = tourDetail?.currentRun?.progress || nextSpotData?.progress;
+  const totalGuides = progress?.totalCount || guideItems.length;
+  const completedCount = progress?.completedCount || 0;
+  const completedSpotIds = progress?.completedSpotIds?.map(id => id.toString()) || [];
+  const nextSpotId = nextSpotData?.nextSpot?.spotId.toString();
 
   return (
     <View className="flex-1 bg-white">
@@ -61,7 +85,7 @@ export function GuideListWidget() {
         <View className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
           <View 
             className="h-full bg-sky-400 rounded-full" 
-            style={{ width: `${(completedCount / totalGuides) * 100}%` }}
+            style={{ width: `${totalGuides > 0 ? (completedCount / totalGuides) * 100 : 0}%` }}
           />
         </View>
       </View>
@@ -72,8 +96,8 @@ export function GuideListWidget() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
            <GuideItem
-            item={item}
-            status={getGuideStatus(item, activeMarkerId, visitedPlaceIds)}
+            item={item as any}
+            status={getGuideStatus(item.id, nextSpotId, activeMarkerId, completedSpotIds)}
             runId={runId}
           />
         )}
@@ -85,18 +109,20 @@ export function GuideListWidget() {
 
 // Helper function to determine guide status
 function getGuideStatus(
-  marker: LocationMarker,
+  itemId: string,
+  nextSpotId: string | undefined,
   activeMarkerId: string | null,
-  visitedPlaceIds: string[]
+  completedSpotIds: string[]
 ): GuideStatus {
-  if (visitedPlaceIds.includes(marker.id)) {
+  if (completedSpotIds.includes(itemId)) {
     return 'done';
   }
-  if (activeMarkerId === marker.id) {
+  if (nextSpotId === itemId || activeMarkerId === itemId) {
     return 'live';
   }
-  // Simple unlock logic: could be enhanced with distance checks
-  return 'unlock';
+  // If not done and not next, we might need a lock status based on orderIndex,
+  // but for now, we'll mark as lock if it's not the next spot.
+  return 'lock';
 }
 
 // Guide Item Component
@@ -117,6 +143,7 @@ function GuideItem({ item, status, runId }: GuideItemProps) {
   const isLock = status === 'lock';
 
   const handlePress = () => {
+    if (isLock) return;
     // Navigate to GuideChat for any item with content
     if (item.contentId) {
       navigation.navigate('GuideChat', { stepId: item.id, title: item.title });
@@ -125,7 +152,7 @@ function GuideItem({ item, status, runId }: GuideItemProps) {
   };
 
   const prefetchChatSession = async () => {
-    if (!runId || !item.id) return;
+    if (isLock || !runId || !item.id) return;
     const spotId = parseInt(item.id, 10);
     if (isNaN(spotId)) return;
 
@@ -143,9 +170,10 @@ function GuideItem({ item, status, runId }: GuideItemProps) {
     <Pressable 
       onPress={handlePress}
       onPressIn={prefetchChatSession}
-      className={`flex-row items-center py-4 px-4 border-b border-gray-50 active:opacity-70 ${
+      disabled={isLock}
+      className={`flex-row items-center py-4 px-4 border-b border-gray-50 ${
         isLive ? 'bg-sky-50/50' : 'bg-white'
-      }`}
+      } ${isLock ? 'opacity-40' : 'active:opacity-70'}`}
     >
       {/* Left Icon Status Area */}
       <View className="w-12 items-center justify-center mr-3">

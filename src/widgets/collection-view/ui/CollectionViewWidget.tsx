@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, Image, Dimensions } from 'react-native';
-import { ChevronLeft, Volume2 } from 'lucide-react-native';
+import { ChevronLeft, Volume2, Sparkles } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { Text } from '@shared/ui';
 
@@ -9,21 +9,34 @@ export interface CollectionItem {
   title: string;
   subtitle: string;
   imageUrl: string;
-  audioUrl?: string; // Optional (PhotoSpot에는 없음)
+  message?: string;
+  audioUrl?: string;
+  collected?: boolean;
 }
 
 interface CollectionViewWidgetProps {
   title: string;
   items: CollectionItem[];
+  initialItemId?: number | string;
   renderHeaderRight?: () => React.ReactNode; 
+  onCollect?: (id: number | string) => void;
 }
 
 export function CollectionViewWidget({
   title,
   items,
+  initialItemId,
   renderHeaderRight,
+  onCollect,
 }: CollectionViewWidgetProps) {
   const [selectedItem, setSelectedItem] = useState<CollectionItem | null>(null);
+
+  useEffect(() => {
+    if (initialItemId) {
+      const item = items.find(i => i.id.toString() === initialItemId.toString());
+      if (item) setSelectedItem(item);
+    }
+  }, [initialItemId, items]);
 
   const handleBack = () => {
     setSelectedItem(null);
@@ -92,19 +105,45 @@ export function CollectionViewWidget({
             </View>
 
             {/* Detail Card */}
-            <View className="bg-white rounded-[30px] p-6 pt-16 shadow-lg border border-gray-50 w-full items-center min-h-[300px]">
+            <View className="bg-white rounded-[30px] p-6 pt-16 shadow-lg border border-gray-50 w-full items-center min-h-[350px]">
                 <Text className="text-gray-500 text-sm mb-1 self-start font-medium ml-2">
                   {selectedItem.subtitle}
                 </Text>
                 
-                <View className="items-center mt-6 space-y-5">
-                    <Text className="text-2xl font-extrabold text-gray-900 text-center">
+                <View className="items-center mt-4 w-full">
+                    <Text className="text-2xl font-extrabold text-gray-900 text-center mb-4">
                       {selectedItem.title}
                     </Text>
+
+                    {/* Simple Text Message Area */}
+                    {selectedItem.message && (
+                      <View className="bg-gray-50 w-full p-4 rounded-xl mb-6">
+                        <Text className="text-gray-600 text-sm leading-6">
+                          {selectedItem.message}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {/* Collection Button for Treasure */}
+                    {onCollect && !selectedItem.collected && (
+                      <Pressable 
+                        onPress={() => onCollect(selectedItem.id)}
+                        className="flex-row items-center bg-emerald-500 px-8 py-4 rounded-2xl shadow-md active:opacity-80"
+                      >
+                         <Sparkles size={20} color="white" className="mr-2" />
+                         <Text className="text-white font-extrabold text-lg">Collect Treasure</Text>
+                      </Pressable>
+                    )}
+
+                    {selectedItem.collected && (
+                       <View className="bg-gray-100 px-8 py-3 rounded-full">
+                          <Text className="text-gray-400 font-bold">Collected ✨</Text>
+                       </View>
+                    )}
                     
                     {/* Audio Button (Optional) */}
                     {selectedItem.audioUrl && (
-                      <Pressable className="flex-row items-center border-2 border-orange-300 px-5 py-2 rounded-full bg-white active:opacity-50">
+                      <Pressable className="mt-4 flex-row items-center border-2 border-orange-300 px-5 py-2 rounded-full bg-white active:opacity-50">
                           <Text className="text-orange-500 font-bold mr-2 text-base">
                             Listen
                           </Text>

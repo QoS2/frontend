@@ -85,7 +85,16 @@ export function QuestPlay({
           </View>
           
           {/* Progress Tag */}
-          <View className="bg-white border border-gray-100 px-3 py-1.5 rounded-full flex-row items-center shadow-sm">
+          <View 
+            className="bg-white border border-gray-100 px-3 py-1.5 rounded-full flex-row items-center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
             <Gamepad2 size={14} color="#666" />
             <Text className="text-gray-600 font-bold text-xs ml-1">
               {progressText}
@@ -103,7 +112,16 @@ export function QuestPlay({
         {/* Chat Bubble Section */}
         <View className="flex-row items-start mt-4">
           {/* Avatar (AI) */}
-          <View className="w-12 h-12 rounded-full mr-3 bg-white border border-gray-100 items-center justify-center shadow-sm overflow-hidden">
+          <View 
+            className="w-12 h-12 rounded-full mr-3 bg-white border border-gray-100 items-center justify-center overflow-hidden"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
              <Image 
                 source={{ uri: "https://placehold.co/100x100/png?text=AI" }} 
                 style={{ width: '100%', height: '100%' }}
@@ -112,7 +130,16 @@ export function QuestPlay({
           </View>
           
           {/* Text Bubble */}
-          <View className="flex-1 bg-white p-5 rounded-2xl rounded-tl-none shadow-sm border border-gray-50">
+          <View 
+            className="flex-1 bg-white p-5 rounded-2xl rounded-tl-none border border-gray-50"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
             <Text className="text-gray-800 text-sm leading-5 mb-3">
               {quest.question}
             </Text>
@@ -138,8 +165,15 @@ export function QuestPlay({
                         setSelectedOption(option);
                     }}
                     className={`flex-row items-center p-4 rounded-2xl border-2 bg-white active:opacity-70 ${
-                      isSelected ? 'border-[#FFAB91] shadow-sm' : 'border-transparent'
+                      isSelected ? 'border-[#FFAB91]' : 'border-transparent'
                     }`}
+                    style={isSelected ? {
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 2,
+                        elevation: 3,
+                    } : undefined}
                   >
                     <View className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3 ${
                         isSelected ? 'bg-[#FFAB91] border-[#FFAB91]' : 'border-gray-200'
@@ -167,14 +201,23 @@ export function QuestPlay({
                         if (isCompleted || isCorrect) return;
                         setSelectedOption(option);
                     }}
-                    style={{ width: '47%' }}
+                    style={[{ width: '47%' }, !isSelected && {
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 2,
+                      elevation: 2,
+                    }]}
                     className={`aspect-square rounded-2xl overflow-hidden border-4 bg-white active:opacity-70 ${
-                      isSelected ? 'border-[#FFAB91]' : 'border-white shadow-sm'
+                      isSelected ? 'border-[#FFAB91]' : 'border-white'
                     }`}
                   >
                     <Image source={{ uri: option }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     {isSelected && (
-                        <View className="absolute inset-0 bg-black/20 items-center justify-center">
+                        <View 
+                          className="absolute inset-0 items-center justify-center"
+                          style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
+                        >
                             <View className="bg-[#FFAB91] rounded-full p-2">
                                 <Check size={24} color="white" strokeWidth={3} />
                             </View>
@@ -188,10 +231,20 @@ export function QuestPlay({
 
           {/* FILL_BLANKS */}
           {quest.type === 'FILL_BLANKS' && (
-            <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-50">
+            <View 
+              className="bg-white p-5 rounded-2xl border border-gray-50"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 2,
+              }}
+            >
               <Text className="text-gray-400 font-bold mb-3 text-xs uppercase tracking-widest">Please enter the answer</Text>
               <TextInput
-                className="text-xl font-bold text-gray-800 border-b-2 border-[#FFAB91]/30 pb-2"
+                className="text-xl font-bold text-gray-800 pb-2"
+                style={{ borderBottomWidth: 2, borderBottomColor: 'rgba(255, 171, 145, 0.3)' }}
                 placeholder="Type your answer..."
                 placeholderTextColor="#ddd"
                 value={inputText}
@@ -221,7 +274,16 @@ export function QuestPlay({
       </ScrollView>
 
       {/* 3. Fixed Bottom Footer */}
-      <View className="bg-white rounded-t-[30px] p-6 shadow-xl border-t border-gray-50 pb-8">
+      <View 
+        className="bg-white rounded-t-[30px] p-6 border-t border-gray-50 pb-8"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 10,
+        }}
+      >
         
         {/* Hint Button */}
         {quest.hint && (
@@ -239,12 +301,19 @@ export function QuestPlay({
         <Pressable 
             onPress={isCorrect || isCompleted ? onClose : handleCheck}
             disabled={!isCorrect && !isCompleted && (quest.type === 'FILL_BLANKS' ? !inputText.trim() : !selectedOption)}
-            className={`w-full py-4 rounded-xl items-center shadow-md active:opacity-70 ${
+            className={`w-full py-4 rounded-xl items-center active:opacity-70 ${
                 isCorrect || isCompleted
                 ? 'bg-gray-800' // 완료 상태 시 검은색/어두운색 버튼으로 변경하여 닫기 유도
                 : (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption) 
                 ? 'bg-[#FFAB91]' : 'bg-gray-200'
             }`}
+            style={(isCorrect || isCompleted || (quest.type === 'FILL_BLANKS' ? inputText.trim() : selectedOption)) ? {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              elevation: 4,
+            } : undefined}
         >
             <Text className="text-white font-extrabold text-base">
                 {isCorrect || isCompleted ? 'Close' : 'Check Answer'}

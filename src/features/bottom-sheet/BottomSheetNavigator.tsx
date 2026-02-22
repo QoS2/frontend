@@ -13,7 +13,7 @@ export type BottomSheetStackParamList = {
   GuideChat: { stepId?: string; title?: string } | undefined;
   QuestBoard: { contentId: string };
   Place: { itemId?: string };
-  Treasure: undefined;
+  Treasure: { itemId?: string };
   Photo: { itemId?: string };
 };
 

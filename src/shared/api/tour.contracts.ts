@@ -88,6 +88,16 @@ export const TourDetailSchema = z.object({
     secondaryButton: z.string().nullable().optional(),
     moreActions: z.array(z.string()).nullable().optional().default([]),
   }).nullable().optional(),
+  mainMissionPath: z.array(z.object({
+    spotId: z.number(),
+    spotTitle: z.string(),
+    orderIndex: z.number(),
+    missions: z.array(z.object({
+      stepId: z.number(),
+      missionId: z.number(),
+      title: z.string(),
+    })).optional().default([]),
+  })).optional().default([]),
 });
 
 // 4.4 Run Response

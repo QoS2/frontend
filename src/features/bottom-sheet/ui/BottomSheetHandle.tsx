@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
+import { useTourStore } from '@entities/tour/store';
+import { useTourDetail, useTourRunNextSpot } from '@entities/tour/model';
+import { useMapNavigationStore } from '@features/map-navigation';
 
 // 탭 데이터 정의
 const TABS = [
@@ -31,6 +34,12 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
     }
   }, [currentRoute]);
 
+  const activeTourId = useTourStore((state: any) => state.activeTourId);
+  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
+  const { activeMarkerId } = useMapNavigationStore();
+  const runId = tourDetail?.currentRun?.runId;
+  const { data: nextSpotData } = useTourRunNextSpot(runId);
+
   const handleTabPress = (id: string, label: string) => {
       if (!navigationRef?.current) return;
 
@@ -38,9 +47,23 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
           case 'guide-list':
               navigationRef.current.navigate('GuideList');
               break;
-          case 'ai-tour-guide':
-              navigationRef.current.navigate('GuideChat');
+          case 'ai-tour-guide': {
+              // Find Live Spot
+              const nextSpotId = nextSpotData?.nextSpot?.spotId;
+              const targetSpotId = nextSpotId || activeMarkerId;
+              
+              // Find title from mainMissionPath or mapSpots
+              const spot = tourDetail?.mainMissionPath?.find(p => p.spotId === targetSpotId) || 
+                           tourDetail?.mapSpots?.find(s => s.spotId === targetSpotId);
+              
+              const spotTitle = (spot as any)?.spotTitle || (spot as any)?.title || 'Guide';
+              
+              navigationRef.current.navigate('GuideChat', { 
+                  stepId: targetSpotId?.toString(), 
+                  title: spotTitle
+              });
               break;
+          }
           case 'treasure':
               navigationRef.current.navigate('Treasure');
               break;
