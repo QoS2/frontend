@@ -51,10 +51,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         lastMsg.type === msg.type &&
         lastMsg.text === msg.text
       ) {
-          // If actions exist, compare them too
-          if (!msg.actions || JSON.stringify(msg.actions) === JSON.stringify(lastMsg.actions)) {
-            return state;
-          }
+        // If actions exist, compare them too
+        if (!msg.actions || JSON.stringify(msg.actions) === JSON.stringify(lastMsg.actions)) {
+          // Check if last message is too fresh (prevent rapid double triggers)
+          if (Date.now() - lastMsg.timestamp < 500) return state;
+        }
       }
 
       return {

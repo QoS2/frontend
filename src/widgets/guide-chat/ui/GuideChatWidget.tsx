@@ -41,11 +41,10 @@ export function GuideChatWidget() {
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
   // 2. Turn-by-Turn Hooks (For Run Mode)
-  const { activeSessionId, currentTurn, setCurrentTurn } = useRunProgressStore();
+  const { activeSessionId, currentTurn, setCurrentTurn, playedTurnIds, markTurnAsPlayed } = useRunProgressStore();
   const { mutate: fetchNextTurn } = useNextTurnByUrl();
 
   // 3. New Turn-by-Turn Run Mode Logic
-  const playedTurnIds = useRef<Set<number>>(new Set());
   const previousStreamingTurnRef = useRef(isStreaming);
   const [isTurnFetching, setIsTurnFetching] = useState(false);
 
@@ -71,9 +70,6 @@ export function GuideChatWidget() {
          let chatActions: ChatAction[] = [];
          if (action.type === 'MISSION_CHOICE') {
              chatActions.push({ label: '시작하기', actionId: 'start-mission', data: { stepId: action.stepId || currentTurn?.turnId } });
-             if (action.nextApi) {
-                 chatActions.push({ label: '스킵하기', actionId: 'skip-mission', data: { nextApi: action.nextApi } });
-             }
          } else if (action.type === 'NEXT') {
              chatActions.push({ label: '다음 장소로', actionId: 'next-step', data: {} });
          }
@@ -90,10 +86,10 @@ export function GuideChatWidget() {
   // Play currentTurn
   useEffect(() => {
      if (!activeSessionId || !currentTurn) return;
-     if (playedTurnIds.current.has(currentTurn.turnId)) return;
+     if (playedTurnIds.includes(currentTurn.turnId)) return;
      if (isStreaming || isTurnFetching) return;
-
-     playedTurnIds.current.add(currentTurn.turnId);
+ 
+     markTurnAsPlayed(currentTurn.turnId);
 
      // Show assets if any
      if (currentTurn.assets && currentTurn.assets.length > 0) {
@@ -110,8 +106,8 @@ export function GuideChatWidget() {
          // Process Action Immediately if no text streaming is needed
          processTurnAction(currentTurn.action, currentTurn.delayMs);
      }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, addMessage, streamReply]);
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, playedTurnIds, addMessage, streamReply, markTurnAsPlayed]);
 
   // When text streaming ends, process action (delayMs => fetch next)
   useEffect(() => {
@@ -137,25 +133,9 @@ export function GuideChatWidget() {
         openAction({
             type: 'QUIZ',  // QUEST was removed, directly route to QUIZ
             contentId: stepId?.toString() || contentId,
-        });
-        return;
-    } else if (action.actionId === 'skip-mission') {
-        const nextApi = action.data?.nextApi;
-        if (nextApi) {
-             setIsTurnFetching(true);
-             fetchNextTurn(nextApi, {
-                 onSuccess: (nextTurn) => {
-                     setCurrentTurn(nextTurn);
-                     setIsTurnFetching(false);
-                 },
-                 onError: (e) => {
-                     console.error("fetchNextTurn Error", e);
-                     setIsTurnFetching(false);
-                 }
-             });
-        }
-        return;
-    } else if (action.actionId === 'next-step') {
+         });
+         return;
+     } else if (action.actionId === 'next-step') {
         navigation.goBack();
         return;
     }
