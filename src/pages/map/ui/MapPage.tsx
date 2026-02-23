@@ -280,7 +280,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                     onPress={handleLocationButtonPress}
                     className="absolute -top-14 right-4 items-center justify-center w-12 h-12 rounded-full active:opacity-70"
                      style={{
-                        backgroundColor: 'white',
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
                         shadowOpacity: 0.25,

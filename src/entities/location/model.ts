@@ -45,7 +45,8 @@ export const useLocationMarkers = () => {
         title: spot.title,
         description: spot.title,
         contentId: String(spot.spotId),
-        thumbnailUrl: spot.thumbnailUrl || 'https://placehold.co/400x400/png'
+        thumbnailUrl: spot.thumbnailUrl || 'https://placehold.co/400x400/png',
+        isHighlight: spot.isHighlight ?? false,
       };
     });
   }, [tourDetail?.mapSpots]);

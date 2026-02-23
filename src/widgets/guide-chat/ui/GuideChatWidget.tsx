@@ -45,7 +45,7 @@ export function GuideChatWidget() {
   const runId = tourDetail?.currentRun?.runId;
 
   const contextStepId = route.params?.stepId || triggeredMarkerId || activeMarkerId;
-  const activeMarker = markers?.find((m) => m.id === contextStepId);
+  const activeMarker = markers?.find((m) => m.id.toString() === contextStepId?.toString());
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
   // 2. Run Progress Store
@@ -96,6 +96,7 @@ export function GuideChatWidget() {
               }
             });
           }
+
           if (turn.text) {
             historicalMessages.push({
               id: `hist-${turn.turnId}`,
@@ -105,11 +106,63 @@ export function GuideChatWidget() {
               timestamp: Date.now() - 500,
             });
           }
+
+          const chatActions = mapActionToChatActions(turn.action, turn.turnId);
+          if (chatActions.length > 0) {
+            historicalMessages.push({
+              id: `hist-action-${turn.turnId}`,
+              sender: 'ai',
+              type: 'action',
+              actions: chatActions,
+              timestamp: Date.now() - 500,
+            });
+          }
         });
 
         // Step 5: Display
         if (!cancelled) {
-          setMessages(historicalMessages);
+          const RECENCY_THRESHOLD_MS = 20000; // 20 seconds
+          const isFreshSession = history.turns.length > 0 && 
+              history.turns[0].createdAt &&
+              (Date.now() - new Date(history.turns[0].createdAt).getTime() < RECENCY_THRESHOLD_MS);
+
+          if (isFreshSession) {
+              setMessages([]); // Start empty for dramatic reveal
+              let currentDelay = 0;
+              
+              historicalMessages.forEach((msg, idx) => {
+                  setTimeout(() => {
+                      if (cancelled) return;
+                      addMessage({
+                          sender: msg.sender,
+                          type: msg.type,
+                          text: msg.text,
+                          imageUrl: msg.imageUrl,
+                          actions: msg.actions,
+                          isAnimating: msg.sender === 'ai' && msg.type === 'text',
+                      });
+                      
+                      // Trigger AUTO_NEXT on the last item
+                      if (idx === historicalMessages.length - 1) {
+                          const lastTurn = history.turns[history.turns.length - 1];
+                          if (lastTurn && lastTurn.action?.type === 'AUTO_NEXT' && contextStepId === (triggeredMarkerId || activeMarkerId)) {
+                             processTurnAction(lastTurn.action, lastTurn.delayMs);
+                          }
+                      }
+                  }, currentDelay);
+                  
+                  // Calculate delay for the NEXT message based on current message's text length
+                  currentDelay += msg.text ? (msg.text.length * 40 + 800) : 800; 
+              });
+          } else {
+              setMessages(historicalMessages);
+
+              // Step 6: If last turn was AUTO_NEXT, trigger it
+              const lastTurn = history.turns[history.turns.length - 1];
+              if (lastTurn && lastTurn.action?.type === 'AUTO_NEXT' && contextStepId === (triggeredMarkerId || activeMarkerId)) {
+                 processTurnAction(lastTurn.action, lastTurn.delayMs);
+              }
+          }
         }
       } catch (error) {
         console.error('[Chat] Failed to load history:', error);
@@ -122,6 +175,34 @@ export function GuideChatWidget() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextStepId, runId]);
 
+
+  // 5. Action Utilities
+  const mapActionToChatActions = (action: any, turnId?: number): ChatAction[] => {
+    if (!action) return [];
+    const chatActions: ChatAction[] = [];
+    
+    // Priority: 1. action.stepId (Direct link from server)
+    const missionStepId = action.stepId; // Removed turnId fallback to avoid 404
+
+    if (action.type === 'MISSION_CHOICE') {
+        if (!missionStepId) {
+            console.warn('[CHAT_DEBUG] MISSION_CHOICE with no valid stepId');
+            return [];
+        }
+        chatActions.push({ 
+            label: '시작하기', 
+            actionId: 'start-mission', 
+            data: { stepId: missionStepId } 
+        });
+    } else if (action.type === 'NEXT') {
+        chatActions.push({ 
+            label: '다음 장소로', 
+            actionId: 'next-step', 
+            data: {} 
+        });
+    }
+    return chatActions;
+  };
 
   // 7. New Turn-by-Turn Run Mode Logic
   const previousStreamingTurnRef = useRef(isStreaming);
@@ -145,13 +226,8 @@ export function GuideChatWidget() {
                  }
              });
          }, delayMs || 0);
-     } else if (action.type === 'MISSION_CHOICE' || action.type === 'NEXT') {
-         let chatActions: ChatAction[] = [];
-         if (action.type === 'MISSION_CHOICE') {
-             chatActions.push({ label: '시작하기', actionId: 'start-mission', data: { stepId: action.stepId || currentTurn?.turnId } });
-         } else if (action.type === 'NEXT') {
-             chatActions.push({ label: '다음 장소로', actionId: 'next-step', data: {} });
-         }
+     } else {
+         const chatActions = mapActionToChatActions(action, currentTurn?.turnId);
          if (chatActions.length > 0) {
              addMessage({
                  sender: 'ai',
@@ -201,23 +277,32 @@ export function GuideChatWidget() {
 
   // 4. Action Handler (Overlay Activation)
   const handleAction = (action: ChatAction) => {
+    console.log('[CHAT_DEBUG] handleAction called:', JSON.stringify(action));
     const contentId = activeMarker?.contentId;
-    if (!contentId) {
-        console.warn('No content ID for action');
-        return;
-    }
-
+    
     if (action.actionId === 'start-mission') {
-        const stepId = action.data?.stepId || contextStepId;
+        // use action.data.stepId first, then contentId (which is likely the overarching place ID)
+        const targetId = action.data?.stepId || contentId;
+        console.log('[CHAT_DEBUG] start-mission. targetId:', targetId);
+        if (!targetId) {
+            console.warn('[CHAT_DEBUG] No valid target ID for start-mission action');
+            return;
+        }
         openAction({
             type: 'QUIZ',  // QUEST was removed, directly route to QUIZ
-            contentId: stepId?.toString() || contentId,
+            contentId: targetId.toString(),
          });
          return;
      } else if (action.actionId === 'next-step') {
+         console.log('[CHAT_DEBUG] next-step routing to GuideList');
          navigation.navigate('GuideList');
          return;
      }
+
+    if (!contentId) {
+        console.warn('[CHAT_DEBUG] No content ID for action:', action.actionId);
+        return;
+    }
 
     switch (action.actionId) {
       case 'start-game':
@@ -290,24 +375,26 @@ export function GuideChatWidget() {
         case 'text':
         default:
           return (
-            <View
-              className={`px-4 py-3 rounded-2xl max-w-[85%] ${
-                msg.sender === 'ai'
-                  ? 'bg-gray-100 border border-gray-200 rounded-tl-none'
-                  : 'bg-[#4FAAF0] rounded-br-none'
-              }`}
-            >
-              {msg.sender === 'ai' && msg.isAnimating ? (
-                  <TypewriterText 
-                    text={msg.text || ''} 
-                    className="text-base leading-5 text-gray-800"
-                    onComplete={() => finishStreaming(msg.id)}
-                  />
-              ) : (
-                  <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
-                    {msg.text || ''}
-                  </Text>
-              )}
+            <View className="flex-col gap-2 min-w-[200px] items-start">
+              <View
+                className={`px-4 py-3 rounded-2xl max-w-[85%] ${
+                  msg.sender === 'ai'
+                    ? 'bg-gray-100 border border-gray-200 rounded-tl-none'
+                    : 'bg-[#4FAAF0] rounded-br-none self-end'
+                }`}
+              >
+                {msg.sender === 'ai' && msg.isAnimating ? (
+                    <TypewriterText 
+                      text={msg.text || ''} 
+                      className="text-base leading-5 text-gray-800"
+                      onComplete={() => finishStreaming(msg.id)}
+                    />
+                ) : (
+                    <Text className={`text-base leading-5 ${msg.sender === 'ai' ? 'text-gray-800' : 'text-white'}`}>
+                      {msg.text || ''}
+                    </Text>
+                )}
+              </View>
             </View>
           );
       }

@@ -57,6 +57,7 @@ export const LocationMarkerSchema = z.object({
   description: z.string(),
   contentId: z.string().nullable(),
   thumbnailUrl: z.string().url(),
+  isHighlight: z.boolean().optional(),
 });
 
 // --- API Request/Response Schemas ---

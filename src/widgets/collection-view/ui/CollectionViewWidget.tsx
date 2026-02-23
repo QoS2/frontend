@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, Image, Dimensions } from 'react-native';
+import { View, Pressable, Image, Dimensions } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { ChevronLeft, Volume2, Sparkles } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { Text } from '@shared/ui';
@@ -65,7 +66,7 @@ export function CollectionViewWidget({
               {renderHeaderRight && renderHeaderRight()}
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={items.length === 0 ? { flexGrow: 1 } : undefined}>
+            <BottomSheetScrollView showsVerticalScrollIndicator={false} contentContainerStyle={items.length === 0 ? { flexGrow: 1 } : undefined}>
               {items.length > 0 ? (
                 <View className="flex-row flex-wrap justify-between pb-20">
                   {items.map((item) => (
@@ -95,7 +96,7 @@ export function CollectionViewWidget({
                    </Text>
                 </View>
               )}
-            </ScrollView>
+            </BottomSheetScrollView>
           </Animated.View>
         ) : (
           /* --- Detail View --- */
