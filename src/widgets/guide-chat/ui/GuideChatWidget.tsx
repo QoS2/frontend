@@ -14,7 +14,7 @@ import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
 import { useRunProgressStore } from '@features/run-progress/runProgressStore';
-import { useNextTurnByUrl, useChatHistory, useChatSession } from '@entities/run/model';
+import { useNextTurnByUrl, fetchChatSession, fetchChatHistory } from '@entities/run/model';
 import { useTourStore } from '@entities/tour/store';
 import { useTourDetail } from '@entities/tour/model';
 
@@ -48,70 +48,80 @@ export function GuideChatWidget() {
   const activeMarker = markers?.find((m) => m.id === contextStepId);
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
-  // 2. Track Spot Change
+  // 2. Run Progress Store
   const { activeSessionId, currentTurn, setCurrentTurn, playedTurnIds, markTurnAsPlayed, setSession } = useRunProgressStore();
-
-  useEffect(() => {
-    if (contextStepId) {
-      setActiveSpot(contextStepId.toString());
-      // Clear session so useChatHistory(oldSessionId) doesn't fire with cached data
-      setSession(null, null);
-    }
-  }, [contextStepId, setActiveSpot, setSession]);
-
-  // 3. Fetch Session
-  const numericContextStepId = contextStepId ? Number(contextStepId) : undefined;
-  const { data: sessionData, isLoading: isSessionLoading } = useChatSession(runId, numericContextStepId);
-
-  // 4. Turn-by-Turn Hooks (For Run Mode)
   const { mutate: fetchNextTurn } = useNextTurnByUrl();
-  
-  // 5. Sync Session — set activeSessionId when session data arrives
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+  // 3. Single imperative effect: spot → session → history → display
   useEffect(() => {
-    if (sessionData && sessionData.sessionId !== activeSessionId) {
-      setSession(sessionData.sessionId, null);
-    }
-  }, [sessionData, activeSessionId, setSession]);
+    if (!contextStepId || !runId) return;
 
-  const { data: historyData, isLoading: isHistoryLoading } = useChatHistory(activeSessionId ?? undefined);
+    let cancelled = false;
+    const spotIdNum = Number(contextStepId);
+    if (isNaN(spotIdNum)) return;
 
-  // 6. Sync History
-  useEffect(() => {
-     if (historyData && activeSessionId && messages.length === 0) {
-         const historicalMessages: ChatMessage[] = [];
-         historyData.turns.forEach(turn => {
-             // Sync playedTurnIds
-             markTurnAsPlayed(turn.turnId);
+    // Clear old messages for this new spot
+    setActiveSpot(contextStepId.toString());
+    setIsHistoryLoading(true);
 
-             // Map Turn to Messages
-             if (turn.assets) {
-                 turn.assets.forEach(asset => {
-                     if (asset.type === 'IMAGE') {
-                         historicalMessages.push({
-                             id: `hist-asset-${asset.id}`,
-                             sender: 'ai',
-                             type: 'image',
-                             imageUrl: asset.url as any,
-                             timestamp: Date.now() - 1000,
-                         });
-                     }
-                 });
-             }
-             if (turn.text) {
-                 historicalMessages.push({
-                     id: `hist-${turn.turnId}`,
-                     sender: turn.role === 'USER' ? 'user' : 'ai',
-                     type: 'text',
-                     text: turn.text,
-                     timestamp: Date.now() - 500,
-                 });
-             }
-             // Actions in history are usually not needed to be re-rendered as buttons if they were already processed,
-             // but if they are needed, they can be added here.
-         });
-         setMessages(historicalMessages);
-     }
-  }, [historyData, activeSessionId, markTurnAsPlayed, setMessages, messages.length]);
+    (async () => {
+      try {
+        // Step 1: Get session for this spot
+        const session = await fetchChatSession({ runId, spotId: spotIdNum });
+        if (cancelled) return;
+
+        // Step 2: Set session in store
+        setSession(session.sessionId, null);
+
+        // Step 3: Get chat history
+        const history = await fetchChatHistory(session.sessionId);
+        if (cancelled) return;
+
+        // Step 4: Map turns to messages
+        const historicalMessages: ChatMessage[] = [];
+        history.turns.forEach(turn => {
+          markTurnAsPlayed(turn.turnId);
+
+          if (turn.assets) {
+            turn.assets.forEach(asset => {
+              if (asset.type === 'IMAGE') {
+                historicalMessages.push({
+                  id: `hist-asset-${asset.id}`,
+                  sender: 'ai',
+                  type: 'image',
+                  imageUrl: asset.url as any,
+                  timestamp: Date.now() - 1000,
+                });
+              }
+            });
+          }
+          if (turn.text) {
+            historicalMessages.push({
+              id: `hist-${turn.turnId}`,
+              sender: turn.role === 'USER' ? 'user' : 'ai',
+              type: 'text',
+              text: turn.text,
+              timestamp: Date.now() - 500,
+            });
+          }
+        });
+
+        // Step 5: Display
+        if (!cancelled) {
+          setMessages(historicalMessages);
+        }
+      } catch (error) {
+        console.error('[Chat] Failed to load history:', error);
+      } finally {
+        if (!cancelled) setIsHistoryLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextStepId, runId]);
+
 
   // 7. New Turn-by-Turn Run Mode Logic
   const previousStreamingTurnRef = useRef(isStreaming);

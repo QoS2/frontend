@@ -51,7 +51,7 @@ export const ChatTurnSchema = z.object({
   assets: z.array(AssetSchema).optional(),
   delayMs: z.number().nullable().optional(),
   action: ActionSchema.nullable().optional(),
-  createdAt: z.string().datetime().optional(),
+  createdAt: z.string().optional(), // Relaxed: API sends naive datetime without 'Z'
 });
 
 // --- Proximity & GPS ---

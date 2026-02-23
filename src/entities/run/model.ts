@@ -31,12 +31,12 @@ const checkProximity = async ({ runId, data }: { runId: number; data: ProximityR
   return ProximityResponseSchema.parse(response);
 };
 
-const fetchChatSession = async ({ runId, spotId }: { runId: number; spotId: number }): Promise<ChatSessionResponse> => {
+export const fetchChatSession = async ({ runId, spotId }: { runId: number; spotId: number }): Promise<ChatSessionResponse> => {
   const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/spots/${spotId}/chat-session`);
   return ChatSessionResponseSchema.parse(response);
 };
 
-const fetchChatHistory = async (sessionId: number): Promise<ChatHistoryResponse> => {
+export const fetchChatHistory = async (sessionId: number): Promise<ChatHistoryResponse> => {
   const response = await httpClient.get<unknown>(`/api/v1/chat-sessions/${sessionId}/turns`);
   return ChatHistoryResponseSchema.parse(response);
 };
