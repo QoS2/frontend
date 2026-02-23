@@ -39,6 +39,9 @@ export const useAuthStore = create<AuthState>()(
       login: (token) => set({ accessToken: token }),
       logout: () => {
         set({ accessToken: null });
+        // 상태 초기화
+        import('@features/ai-chat').then(m => m.useChatStore.getState().resetChat());
+        import('@features/run-progress/runProgressStore').then(m => m.useRunProgressStore.getState().reset());
       },
     }),
     {

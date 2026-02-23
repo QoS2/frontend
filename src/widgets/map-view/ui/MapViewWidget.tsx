@@ -18,7 +18,7 @@ interface MapViewWidgetProps {
 
 export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, MapViewWidgetProps>(
   ({ markers, onMarkerPress, userLocation, activeMarkerId }, ref) => {
-  const [zoomLevel, setZoomLevel] = useState(15);
+  const [zoomLevel, setZoomLevel] = useState(18);
 
   const handleCameraChange = (e: any) => {
     setZoomLevel(e.zoom);
@@ -29,7 +29,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
       if (zoomLevel < 15) {
         return marker.type === 'PLACE';
       } else if (zoomLevel < 17) {
-        return marker.type === 'PLACE' || marker.type === 'SUB_PLACE' || marker.type === 'PHOTO' || marker.type === 'TREASURE';
+        return marker.type === 'PLACE' || marker.type === 'SUB_PLACE';
       } else {
         return true; // Show all
       }
@@ -71,7 +71,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
         initialCamera={{
           latitude: 37.5759,
           longitude: 126.9768,
-          zoom: 15,
+          zoom: 18,
         }}
         isShowLocationButton={false}
         isShowZoomControls={false}

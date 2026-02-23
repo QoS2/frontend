@@ -30,6 +30,7 @@ import { useRunProgressStore, useRunGeofence } from '@features/run-progress';
 
 import { useTourDetail } from '@entities/tour/model';
 import { useTourStore } from '@entities/tour/store';
+import { useSendMessage } from '@entities/run/model';
 
 interface MapPageProps {
     runId?: number | null;
@@ -64,8 +65,9 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const currentRun = tourDetail?.currentRun;
     const isRunMode = !!runId && !!currentRun;
 
-    const { currentTarget, setCurrentTarget, isAtTarget } = useRunProgressStore();
+    const { currentTarget, setCurrentTarget, isAtTarget, activeSessionId, setCurrentTurn } = useRunProgressStore();
     const { setTriggeredMarkerId } = useMapNavigationStore();
+    const { mutate: sendMessage } = useSendMessage();
 
     // Sync RunState to RunProgressStore
     useEffect(() => {
@@ -205,12 +207,36 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         if (!inputText.trim() || isStreaming) return;
         Keyboard.dismiss();
 
-        addMessage({sender: 'user', text: inputText, type: 'text'});
+        const textToSend = inputText.trim();
+        addMessage({sender: 'user', text: textToSend, type: 'text'});
         setInputText('');
 
-        setTimeout(() => {
-            streamReply(`Response: "${inputText}"`);
-        }, 500);
+        if (activeSessionId) {
+            sendMessage(
+                { sessionId: activeSessionId, data: { text: textToSend } },
+                {
+                    onSuccess: (res) => {
+                        // Map ChatMessageResponse to ChatTurn
+                        const aiTurn = {
+                            turnId: res.aiTurnId,
+                            role: 'GUIDE',
+                            source: 'LLM',
+                            text: res.aiText,
+                            action: res.hasNextScript ? { type: 'AUTO_NEXT', nextApi: res.nextScriptApi } : null,
+                        };
+                        setCurrentTurn(aiTurn as any);
+                    },
+                    onError: (err) => {
+                        console.error('Chat Send Failed:', err);
+                    }
+                }
+            );
+        } else {
+            // Fallback for non-run mode or missing session
+            setTimeout(() => {
+                streamReply(`Response: "${textToSend}"`);
+            }, 500);
+        }
     };
 
     useEffect(() => {

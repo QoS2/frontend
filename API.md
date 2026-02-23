@@ -14,6 +14,7 @@
 2. [인증 (Auth)](#1-인증-auth)
 3. [파일 업로드](#2-파일-업로드)
 4. [투어 (Tour)](#3-투어-tour)
+5. [관리자 API](#4-관리자-api)
 6. [Swagger UI](#swagger-ui)
 7. [수집 API (Place·Treasure·Photo Spot)](#수집-api-placetreasurephoto-spot)
 
@@ -1121,6 +1122,749 @@ Run의 step에 연결된 미션을 제출하고 채점합니다.
 
 ---
 
+## 4. 관리자 API
+
+**Base Path:** `/api/v1/admin`  
+**인증:** `ADMIN` 권한 필수 (JWT Bearer 또는 세션)
+
+---
+
+### 4.1 Tour CRUD
+
+**Base Path:** `/api/v1/admin/tours`
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | 목록 (페이지네이션) |
+| GET | `/{tourId}` | 단건 조회 |
+| POST | `/` | 생성 |
+| PATCH | `/{tourId}` | 수정 |
+| DELETE | `/{tourId}` | 삭제 |
+
+#### Tour 목록
+
+```
+GET /api/v1/admin/tours?page=0&size=20
+```
+
+**Query Parameters**
+
+| 이름 | 타입 | 기본 | 설명 |
+|------|------|------|------|
+| page | int | 0 | 페이지 번호 |
+| size | int | 20 | 페이지 크기 |
+
+**Response 200** — Spring `Page<TourAdminResponse>`
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "externalKey": "gyeongbokgung",
+      "titleEn": "Gyeongbokgung Palace",
+      "descriptionEn": "The main royal palace of Joseon.",
+      "infoJson": {},
+      "goodToKnowJson": {},
+      "mainCount": 8,
+      "subCount": 12,
+      "photoSpotsCount": 5,
+      "treasuresCount": 3,
+      "missionsCount": 4
+    }
+  ],
+  "totalElements": 10,
+  "totalPages": 1,
+  "size": 20,
+  "number": 0,
+  "first": true,
+  "last": true
+}
+```
+
+#### Tour 생성
+
+```
+POST /api/v1/admin/tours
+Content-Type: application/json
+```
+
+**Request Body (TourCreateRequest)**
+
+```json
+{
+  "externalKey": "gyeongbokgung",
+  "titleEn": "Gyeongbokgung Palace",
+  "descriptionEn": "The main royal palace of Joseon Dynasty.",
+  "infoJson": {
+    "entrance_fee": { "adult": 3000, "child": 1500 },
+    "available_hours": [],
+    "estimated_duration_min": 90
+  },
+  "goodToKnowJson": {
+    "tips": ["한복 입장 무료", "편한 신발 추천"]
+  }
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| externalKey | string | O | 고유 식별 키 |
+| titleEn | string | O | 제목 (영문) |
+| descriptionEn | string | X | 설명 (영문) |
+| infoJson | object | X | 입장료, 운영시간, 예상 소요시간 등 |
+| goodToKnowJson | object | X | tips 배열 등 |
+
+**Response 201** — TourAdminResponse
+
+#### Tour 수정
+
+```
+PATCH /api/v1/admin/tours/{tourId}
+Content-Type: application/json
+```
+
+**Request Body (TourUpdateRequest)** — 변경할 필드만 전송
+
+```json
+{
+  "titleEn": "Gyeongbokgung Palace (Updated)",
+  "descriptionEn": "Updated description.",
+  "infoJson": { "estimated_duration_min": 120 },
+  "goodToKnowJson": { "tips": ["새로운 팁"] }
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| titleEn | string | X | 제목 |
+| descriptionEn | string | X | 설명 |
+| infoJson | object | X | 정보 JSON |
+| goodToKnowJson | object | X | 팁 JSON |
+
+#### Tour 삭제
+
+```
+DELETE /api/v1/admin/tours/{tourId}
+```
+
+**Response 204**
+
+---
+
+### 4.2 Tour Spot CRUD
+
+**Base Path:** `/api/v1/admin/tours/{tourId}/spots`
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | Spot 목록 |
+| GET | `/{spotId}` | 단건 조회 |
+| POST | `/` | 생성 |
+| PATCH | `/{spotId}` | 수정 |
+| DELETE | `/{spotId}` | 삭제 |
+
+#### Spot 목록
+
+```
+GET /api/v1/admin/tours/{tourId}/spots
+```
+
+**Response 200** — `List<SpotAdminResponse>`
+
+#### Spot 생성
+
+```
+POST /api/v1/admin/tours/{tourId}/spots
+Content-Type: application/json
+```
+
+**Request Body (SpotCreateRequest)**
+
+```json
+{
+  "type": "MAIN",
+  "title": "광화문",
+  "description": "경복궁 정문",
+  "latitude": 37.576,
+  "longitude": 126.977,
+  "orderIndex": 1,
+  "radiusM": 60
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| type | string | O | `MAIN` \| `SUB` \| `PHOTO` \| `TREASURE` |
+| title | string | O | 스팟 제목 |
+| titleKr | string | X | 한국어 제목 |
+| description | string | X | 설명 |
+| pronunciationUrl | string | X | 발음 오디오 URL |
+| address | string | X | 주소 |
+| latitude | double | X | 위도 |
+| longitude | double | X | 경도 |
+| orderIndex | int | O | 순서 |
+| radiusM | int | X | 근접 감지 반경(미터) |
+
+**SpotType**
+
+| 값 | 설명 |
+|----|------|
+| MAIN | 핵심 장소 |
+| SUB | 서브(이동 경로) |
+| PHOTO | 포토 스팟 |
+| TREASURE | 보물 찾기 |
+
+**Response 201** — SpotAdminResponse
+
+#### Spot 수정
+
+```
+PATCH /api/v1/admin/tours/{tourId}/spots/{spotId}
+```
+
+**Request Body (SpotUpdateRequest)** — 변경할 필드만
+
+```json
+{
+  "title": "광화문 (수정)",
+  "titleKr": "광화문",
+  "description": "경복궁의 정문입니다.",
+  "pronunciationUrl": "https://s3.../audio.mp3",
+  "address": "161 Sajik-ro, Jongno-gu, Seoul",
+  "orderIndex": 2,
+  "latitude": 37.576,
+  "longitude": 126.977,
+  "radiusM": 50
+}
+```
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| title, titleKr | string | 제목 |
+| description | string | 설명 |
+| pronunciationUrl | string | 발음 오디오 URL |
+| address | string | 주소 |
+| orderIndex | int | 순서 |
+| latitude, longitude | double | 위경도 |
+| radiusM | int | 근접 반경(m) |
+
+#### Spot 삭제
+
+```
+DELETE /api/v1/admin/tours/{tourId}/spots/{spotId}
+```
+
+**Response 204**
+
+---
+
+### 4.3 Spot 가이드 (Guide)
+
+**Base Path:** `/api/v1/admin/tours/{tourId}/spots/{spotId}/guide`
+
+스팟 가이드 문장 및 미디어(이미지/오디오) 관리. 미디어 URL은 `POST /api/v1/upload`로 S3 업로드 후 사용합니다.
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | 가이드 조회 |
+| PUT | `/` | 가이드 전체 덮어쓰기 |
+
+#### 가이드 조회
+
+```
+GET /api/v1/admin/tours/{tourId}/spots/{spotId}/guide?lang=ko
+```
+
+**Query Parameters**
+
+| 이름 | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| lang | string | ko | 조회 언어 (`ko`, `en`, `jp`, `cn`) |
+
+**Response 200 (GuideStepsAdminResponse)**
+
+스팟 가이드는 N개 컨텐츠 블록(step)으로 구성됩니다. 각 step은 여러 문장(lines) + 미디어를 가집니다.
+
+```json
+{
+  "language": "ko",
+  "steps": [
+    {
+      "stepId": 1,
+      "stepIndex": 0,
+      "stepTitle": "광화문",
+      "nextAction": "NEXT",
+      "lines": [
+        {
+          "id": 10,
+          "seq": 1,
+          "text": "광화문에 오신 것을 환영합니다.",
+          "assets": [
+            {
+              "id": 1,
+              "url": "https://s3.../image.jpg",
+              "assetType": "IMAGE",
+              "usage": "ILLUSTRATION"
+            },
+            {
+              "id": 2,
+              "url": "https://s3.../audio.mp3",
+              "assetType": "AUDIO",
+              "usage": "SCRIPT_AUDIO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| language | string | 조회 언어 |
+| steps | array | 가이드 스텝 목록 (컨텐츠 블록) |
+| steps[].stepId | long | spot_content_steps.id |
+| steps[].stepIndex | int | 스텝 순서 |
+| steps[].stepTitle | string | 스텝 제목 |
+| steps[].nextAction | string | NEXT \| MISSION_CHOICE |
+| steps[].lines | array | 문장 + 미디어 목록 |
+| steps[].lines[].id | long | 스크립트 라인 ID |
+| steps[].lines[].seq | int | 문장 순서 |
+| steps[].lines[].text | string | 가이드 문장 |
+| steps[].lines[].assets | array | 미디어 (id, url, assetType, usage) |
+
+#### 가이드 저장 (덮어쓰기)
+
+```
+PUT /api/v1/admin/tours/{tourId}/spots/{spotId}/guide
+Content-Type: application/json
+```
+
+**Request Body (GuideStepsSaveRequest)**
+
+N개 컨텐츠 블록 전체를 덮어씁니다.
+
+```json
+{
+  "language": "ko",
+  "steps": [
+    {
+      "stepTitle": "광화문",
+      "nextAction": "NEXT",
+      "lines": [
+        {
+          "text": "광화문에 오신 것을 환영합니다.",
+          "assets": [
+            {
+              "url": "https://s3.../image.jpg",
+              "assetType": "IMAGE",
+              "usage": "ILLUSTRATION"
+            },
+            {
+              "url": "https://s3.../audio.mp3",
+              "assetType": "AUDIO",
+              "usage": "SCRIPT_AUDIO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| language | string | O | 언어 (`ko`, `en`, `jp`, `cn`) |
+| steps | array | O | 가이드 스텝 목록 (최소 1개) |
+
+**GuideStepSaveRequest**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| stepTitle | string | X | 스텝 제목 (없으면 스팟 제목 사용) |
+| nextAction | string | X | `NEXT` \| `MISSION_CHOICE` |
+| lines | array | O | 문장 목록 (최소 1개) |
+
+**GuideLineRequest**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| text | string | O | 가이드 문장 |
+| assets | array | O | 첨부 미디어 (없으면 `[]`) |
+
+**GuideAssetRequest**
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| url | string | O | S3 업로드 API로 얻은 URL |
+| assetType | string | O | `IMAGE` \| `AUDIO` |
+| usage | string | O | `ILLUSTRATION` \| `SCRIPT_AUDIO` |
+
+**Response 200** — GuideStepsAdminResponse (조회 응답과 동일 구조)
+
+---
+
+### 4.4 Tour Assets (투어 레벨 썸네일/이미지)
+
+**Base Path:** `/api/v1/admin/tours/{tourId}/assets`
+
+투어 디테일 페이지용 썸네일·히어로 이미지 관리. tour_assets 테이블 (THUMBNAIL, HERO_IMAGE, GALLERY_IMAGE).
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | 에셋 목록 |
+| POST | `/` | 에셋 추가 |
+| DELETE | `/{tourAssetId}` | 에셋 삭제 |
+
+#### 에셋 목록
+
+```
+GET /api/v1/admin/tours/{tourId}/assets
+```
+
+**Response 200**
+
+```json
+[
+  {
+    "id": 1,
+    "assetId": 101,
+    "url": "https://s3.../images/tour/img1.jpg",
+    "usage": "THUMBNAIL",
+    "sortOrder": 1,
+    "caption": "경복궁 전경"
+  }
+]
+```
+
+#### 에셋 추가
+
+```
+POST /api/v1/admin/tours/{tourId}/assets
+Content-Type: application/json
+```
+
+**Request Body (TourAssetRequest)**
+
+```json
+{
+  "url": "https://s3.../images/tour/img1.jpg",
+  "usage": "THUMBNAIL",
+  "sortOrder": 1,
+  "caption": "경복궁 전경"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| url | string | O | S3 업로드 API로 얻은 URL |
+| usage | string | O | THUMBNAIL \| HERO_IMAGE \| GALLERY_IMAGE |
+| sortOrder | int | X | 정렬 순서 (없으면 자동) |
+| caption | string | X | 캡션 |
+
+**Response 201** — TourAssetResponse
+
+#### 에셋 삭제
+
+```
+DELETE /api/v1/admin/tours/{tourId}/assets/{tourAssetId}
+```
+
+**Response 204**
+
+---
+
+### 4.5 Spot Assets (스팟별 썸네일/히어로/갤러리)
+
+**Base Path:** `/api/v1/admin/tours/{tourId}/spots/{spotId}/assets`
+
+스팟별 에셋(THUMBNAIL, HERO_IMAGE, GALLERY_IMAGE) 관리.  
+THUMBNAIL은 사용자 API `mapSpots[].thumbnailUrl` 및 스팟 상세 썸네일 계산에 사용됩니다.
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | 스팟 에셋 목록 |
+| POST | `/` | 스팟 에셋 추가 |
+| DELETE | `/{spotAssetId}` | 스팟 에셋 삭제 |
+
+(요청/응답 구조는 Tour Assets와 동일: url, usage, sortOrder, caption)
+
+---
+
+### 4.6 Mission Steps (MISSION 스텝 관리)
+
+**Base Path:** `/api/v1/admin/tours/{tourId}/spots/{spotId}/mission-steps`
+
+스팟별 MISSION 스텝 (QUIZ, OX, PHOTO, TEXT_INPUT) CRUD. `options_json`/`answer_json` 구조는 아래 **4.6.1** 스키마를 따릅니다.
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/` | MISSION 스텝 목록 |
+| POST | `/` | MISSION 스텝 추가 |
+| PATCH | `/{stepId}` | MISSION 스텝 수정 |
+| DELETE | `/{stepId}` | MISSION 스텝 삭제 |
+
+#### 스텝 목록
+
+```
+GET /api/v1/admin/tours/{tourId}/spots/{spotId}/mission-steps
+```
+
+**Response 200**
+
+```json
+[
+  {
+    "stepId": 10,
+    "missionId": 5,
+    "missionType": "QUIZ",
+    "prompt": "이 건물은 언제 지어졌나요?",
+    "optionsJson": {"choices": [{"id":"a","text":"1395년"}]},
+    "answerJson": {"answer": "a"},
+    "title": "퀴즈 1",
+    "stepIndex": 1
+  }
+]
+```
+
+| 필드 | 타입 | Nullable | 설명 |
+|------|------|----------|------|
+| stepId | long | X | MISSION 스텝 ID |
+| missionId | long | O | 연결된 미션 ID |
+| missionType | string | O | `QUIZ` \| `OX` \| `PHOTO` \| `TEXT_INPUT` |
+| prompt | string | O | 문제/지시문 |
+| optionsJson | object | X | 미션 옵션(JSON) |
+| answerJson | object | X | 정답/채점 기준(JSON) |
+| title | string | O | 스텝 제목 |
+| stepIndex | int | X | 스텝 순서 |
+
+#### 스텝 추가
+
+```
+POST /api/v1/admin/tours/{tourId}/spots/{spotId}/mission-steps
+Content-Type: application/json
+```
+
+**Request Body (MissionStepCreateRequest)**
+
+```json
+{
+  "missionType": "QUIZ",
+  "prompt": "정답을 고르세요.",
+  "title": "퀴즈 1",
+  "optionsJson": {
+    "choices": [{"id":"a","text":"보기1"},{"id":"b","text":"보기2"}],
+    "hintText": "건물 정면의 현판을 보세요",
+    "hintImageUrl": "https://s3.../mission/hint.png"
+  },
+  "answerJson": {"answer": "a"}
+}
+```
+
+| 필드 | 타입 | 필수 | Nullable | 설명 |
+|------|------|------|----------|------|
+| missionType | string | O | X | `QUIZ` \| `OX` \| `PHOTO` \| `TEXT_INPUT` |
+| prompt | string | X | O | 문제/지시문 |
+| title | string | X | O | 스텝 제목 |
+| optionsJson | object | X | O | 옵션 JSON (`hintText`, `hintImageUrl` 포함 가능) |
+| answerJson | object | X | O | 정답/채점 기준 JSON |
+
+#### 스텝 수정
+
+```
+PATCH /api/v1/admin/tours/{tourId}/spots/{spotId}/mission-steps/{stepId}
+```
+
+**Request Body (MissionStepUpdateRequest)** — prompt, title, optionsJson, answerJson (모두 선택)
+
+| 필드 | 타입 | 필수 | Nullable | 설명 |
+|------|------|------|----------|------|
+| prompt | string | X | O | 문제/지시문 |
+| title | string | X | O | 스텝 제목 |
+| optionsJson | object | X | O | 옵션 JSON (`hintText`, `hintImageUrl` 포함 가능) |
+| answerJson | object | X | O | 정답/채점 기준 JSON |
+
+#### 스텝 삭제
+
+```
+DELETE /api/v1/admin/tours/{tourId}/spots/{spotId}/mission-steps/{stepId}
+```
+
+**Response 204**
+
+#### 4.6.1 Mission Payload 스키마 (`options_json`, `answer_json`)
+
+**missionType 값 정리**
+
+- 관리자 미션 정의(`missions.mission_type`): `QUIZ`, `OX`, `PHOTO`, `TEXT_INPUT`
+- 사용자 미션 제출(`MissionSubmitRequest.missionType`): `QUIZ`, `OX`, `PHOTO`, `TEXT_INPUT`
+
+**options_json 권장 구조**
+
+`QUIZ` (객관식)
+
+```json
+{
+  "choices": [
+    { "id": "a", "text": "보기1 텍스트", "imageUrl": "https://s3.../mission/choice_a.png" },
+    { "id": "b", "text": "보기2 텍스트" },
+    { "id": "c", "text": "보기3 텍스트", "imageUrl": "https://s3.../mission/choice_c.png" }
+  ],
+  "questionImageUrl": "https://s3.../mission/question.png",
+  "hintText": "정답은 현판 연도와 같습니다.",
+  "hintImageUrl": "https://s3.../mission/hint.png"
+}
+```
+
+- `choices`: 보기 배열 (`id`, `text` 필수, `imageUrl` 선택)
+- `questionImageUrl`: 문제 이미지 (선택)
+- `hintText`, `hintImageUrl`: 힌트 텍스트/이미지 (선택)
+
+`OX`
+
+- `QUIZ`와 동일하게 `hintText`, `hintImageUrl`를 사용할 수 있습니다.
+
+`TEXT_INPUT` (주관식)
+
+```json
+{
+  "placeholder": "답을 입력하세요",
+  "hintImageUrl": "https://s3.../mission/hint.png"
+}
+```
+
+`PHOTO` (사진 체크)
+
+```json
+{
+  "exampleImageUrl": "https://s3.../mission/example.png",
+  "instruction": "이 장소를 찍어주세요",
+  "hintText": "왼쪽 기둥 문양이 보이도록 찍어보세요.",
+  "hintImageUrl": "https://s3.../mission/hint_photo.png"
+}
+```
+
+**answer_json 권장 구조**
+
+`QUIZ`
+
+```json
+{ "answer": "a" }
+```
+
+또는
+
+```json
+{ "value": "a" }
+```
+
+`TEXT_INPUT`, `PHOTO`
+
+- 채점 정책에 따라 `value`, `expected` 등 확장 필드 사용 가능
+
+**업로드 연동**
+
+- 미션 이미지 URL은 `POST /api/v1/upload?type=image&category=mission` 업로드 후 사용
+
+---
+
+### 4.7 Enum
+
+```
+GET /api/v1/admin/enums/{enumName}
+```
+
+관리자 폼용 Enum 값 목록 조회.
+
+**Path Parameters**
+
+| 이름 | 타입 | 설명 |
+|------|------|------|
+| enumName | string | `language` \| `spotType` \| `markerType` \| `stepKind` \| `tourAssetUsage` \| `spotAssetUsage` |
+
+**Response 200**
+
+```json
+["KO", "EN", "JP", "CN"]
+```
+
+**enumName별 반환 값**
+
+| enumName | 값 |
+|----------|-----|
+| language | KO, EN, JP, CN |
+| spotType | MAIN, SUB, PHOTO, TREASURE |
+| markerType | STEP, WAYPOINT, PHOTO_SPOT, TREASURE |
+| stepKind | GUIDE, MISSION |
+| tourAssetUsage | THUMBNAIL, HERO_IMAGE, GALLERY_IMAGE |
+| spotAssetUsage | THUMBNAIL, HERO_IMAGE, GALLERY_IMAGE, INTRO_AUDIO, AMBIENT_AUDIO |
+
+**Response 404** — 지원하지 않는 enumName
+
+---
+
+### 4.8 RAG (벡터 지식 동기화)
+
+투어·가이드 콘텐츠를 Pgvector에 임베딩하여 AI 가이드 RAG에 활용합니다. ai-server의 VectorRetriever가 이 데이터를 조회합니다.
+
+**Base Path:** `/api/v1/admin/rag`
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/sync` | 투어 지식 벡터 동기화 |
+| GET | `/search` | 벡터 유사도 검색 테스트 |
+
+**POST /api/v1/admin/rag/sync**
+
+Tour, TourSpot, SpotScriptLine(가이드) 콘텐츠를 OpenAI 임베딩 후 `tour_knowledge_embeddings` 테이블에 저장.
+**요구사항:** Backend `OPENAI_API_KEY` 환경변수 설정 필요. 미설정 시 동기화 스킵.
+
+| Query | 타입 | 설명 |
+|-------|------|------|
+| tourId | long | (선택) 특정 투어만 동기화. 없으면 전체 동기화 |
+
+**Response 200**
+```json
+{
+  "embeddingsCount": 42
+}
+```
+
+**GET /api/v1/admin/rag/search**
+
+유사도 검색 테스트. 질문을 임베딩 후 Pgvector에서 유사 문서 검색.
+
+| Query | 타입 | 설명 |
+|-------|------|------|
+| q | string | 검색할 질문 |
+| limit | int | (기본 5) 반환 개수, 최대 20 |
+
+**Response 200**
+```json
+[
+  "투어: 경복궁...",
+  "[광화문] 광화문은 조선시대..."
+]
+```
+
+---
+
+## 수집 API (Place·Treasure·Photo Spot)
+
+플레이스 도감, 트레저 도감, 포토 스팟 전용 API.
+
+### 개요
+
+| 영역 | 용도 | 핵심 기능 |
+|------|------|-----------|
+| **Place Collection** | 플레이스 도감 | 방문한 MAIN/SUB 스팟 모아보기 |
+| **Treasure Collection** | 트레저 도감 | 발견한 보물 스팟 모아보기 |
+| **Photo Spot** | 포토 스팟 | 사진 찍기 좋은 장소 + 유저 포토 제출 → 검증 → 민트 → 노출 |
+
+---
 
 ### 5.1 Place Collection (플레이스 도감)
 

@@ -25,13 +25,16 @@ interface ChatState {
   isStreaming: boolean;
   welcomedMarkerIds: string[];
   activeContentId: string | null;
+  activeSpotId: string | null;
 
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+  setMessages: (messages: ChatMessage[]) => void;
   setStreaming: (isStreaming: boolean) => void;
   streamReply: (fullText: string) => void;
   finishStreaming: (id: string) => void;
   welcomeMarker: (marker: { id: string; title: string; description: string }) => void;
   markAsWelcomed: (markerId: string) => void;
+  setActiveSpot: (spotId: string) => void;
   resetChat: () => void;
 }
 
@@ -40,6 +43,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isStreaming: false,
   welcomedMarkerIds: [],
   activeContentId: null,
+  activeSpotId: null,
 
   addMessage: (msg) =>
     set((state) => {
@@ -69,6 +73,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ],
       };
     }),
+  
+  setMessages: (messages) => set({ messages }),
 
   setStreaming: (isStreaming) => set({ isStreaming }),
 
@@ -110,10 +116,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
       welcomedMarkerIds: Array.from(new Set([...state.welcomedMarkerIds, markerId])) 
     })),
 
+  setActiveSpot: (spotId) => {
+    const { activeSpotId, resetChat } = get();
+    if (activeSpotId !== spotId) {
+      resetChat();
+      set({ activeSpotId: spotId });
+    }
+  },
+
   resetChat: () => set({ 
       messages: [], 
       welcomedMarkerIds: [], 
-      activeContentId: null, 
+      activeContentId: null,
+      activeSpotId: null,
       isStreaming: false
   }),
 }));

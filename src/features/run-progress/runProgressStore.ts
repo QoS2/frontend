@@ -44,7 +44,11 @@ export const useRunProgressStore = create<RunProgressState>((set) => ({
       ? state.completedSpotIds 
       : [...state.completedSpotIds, spotId]
   })),
-  setSession: (sessionId, initialTurn) => set({ activeSessionId: sessionId, currentTurn: initialTurn }),
+  setSession: (sessionId, initialTurn) => set({ 
+    activeSessionId: sessionId, 
+    currentTurn: initialTurn,
+    playedTurnIds: [] // Reset played turns for new session
+  }),
   setCurrentTurn: (turn) => set({ currentTurn: turn }),
   markTurnAsPlayed: (turnId) => set((state) => ({
     playedTurnIds: state.playedTurnIds.includes(turnId)

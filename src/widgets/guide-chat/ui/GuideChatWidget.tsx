@@ -14,7 +14,9 @@ import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
 import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
 import { useRunProgressStore } from '@features/run-progress/runProgressStore';
-import { useNextTurnByUrl } from '@entities/run/model';
+import { useNextTurnByUrl, useChatHistory, useChatSession } from '@entities/run/model';
+import { useTourStore } from '@entities/tour/store';
+import { useTourDetail } from '@entities/tour/model';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
 
@@ -28,6 +30,8 @@ export function GuideChatWidget() {
     messages, 
     isStreaming, 
     addMessage, 
+    setMessages,
+    setActiveSpot,
     streamReply,
     finishStreaming
   } = useChatStore();
@@ -36,15 +40,80 @@ export function GuideChatWidget() {
   const { openAction } = useActionOverlayStore();
 
   // 1. Determine Context
+  const activeTourId = useTourStore((state) => state.activeTourId);
+  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
+  const runId = tourDetail?.currentRun?.runId;
+
   const contextStepId = route.params?.stepId || triggeredMarkerId || activeMarkerId;
   const activeMarker = markers?.find((m) => m.id === contextStepId);
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
-  // 2. Turn-by-Turn Hooks (For Run Mode)
-  const { activeSessionId, currentTurn, setCurrentTurn, playedTurnIds, markTurnAsPlayed } = useRunProgressStore();
-  const { mutate: fetchNextTurn } = useNextTurnByUrl();
+  // 2. Track Spot Change
+  const { activeSessionId, currentTurn, setCurrentTurn, playedTurnIds, markTurnAsPlayed, setSession } = useRunProgressStore();
 
-  // 3. New Turn-by-Turn Run Mode Logic
+  useEffect(() => {
+    if (contextStepId) {
+      setActiveSpot(contextStepId.toString());
+      // Clear session so useChatHistory(oldSessionId) doesn't fire with cached data
+      setSession(null, null);
+    }
+  }, [contextStepId, setActiveSpot, setSession]);
+
+  // 3. Fetch Session
+  const numericContextStepId = contextStepId ? Number(contextStepId) : undefined;
+  const { data: sessionData, isLoading: isSessionLoading } = useChatSession(runId, numericContextStepId);
+
+  // 4. Turn-by-Turn Hooks (For Run Mode)
+  const { mutate: fetchNextTurn } = useNextTurnByUrl();
+  
+  // 5. Sync Session — set activeSessionId when session data arrives
+  useEffect(() => {
+    if (sessionData && sessionData.sessionId !== activeSessionId) {
+      setSession(sessionData.sessionId, null);
+    }
+  }, [sessionData, activeSessionId, setSession]);
+
+  const { data: historyData, isLoading: isHistoryLoading } = useChatHistory(activeSessionId ?? undefined);
+
+  // 6. Sync History
+  useEffect(() => {
+     if (historyData && activeSessionId && messages.length === 0) {
+         const historicalMessages: ChatMessage[] = [];
+         historyData.turns.forEach(turn => {
+             // Sync playedTurnIds
+             markTurnAsPlayed(turn.turnId);
+
+             // Map Turn to Messages
+             if (turn.assets) {
+                 turn.assets.forEach(asset => {
+                     if (asset.type === 'IMAGE') {
+                         historicalMessages.push({
+                             id: `hist-asset-${asset.id}`,
+                             sender: 'ai',
+                             type: 'image',
+                             imageUrl: asset.url as any,
+                             timestamp: Date.now() - 1000,
+                         });
+                     }
+                 });
+             }
+             if (turn.text) {
+                 historicalMessages.push({
+                     id: `hist-${turn.turnId}`,
+                     sender: turn.role === 'USER' ? 'user' : 'ai',
+                     type: 'text',
+                     text: turn.text,
+                     timestamp: Date.now() - 500,
+                 });
+             }
+             // Actions in history are usually not needed to be re-rendered as buttons if they were already processed,
+             // but if they are needed, they can be added here.
+         });
+         setMessages(historicalMessages);
+     }
+  }, [historyData, activeSessionId, markTurnAsPlayed, setMessages, messages.length]);
+
+  // 7. New Turn-by-Turn Run Mode Logic
   const previousStreamingTurnRef = useRef(isStreaming);
   const [isTurnFetching, setIsTurnFetching] = useState(false);
 
@@ -83,7 +152,7 @@ export function GuideChatWidget() {
      }
   };
 
-  // Play currentTurn
+  // 8. Play currentTurn
   useEffect(() => {
      if (!activeSessionId || !currentTurn) return;
      if (playedTurnIds.includes(currentTurn.turnId)) return;
@@ -109,7 +178,7 @@ export function GuideChatWidget() {
    // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, playedTurnIds, addMessage, streamReply, markTurnAsPlayed]);
 
-  // When text streaming ends, process action (delayMs => fetch next)
+  // 9. When text streaming ends, process action (delayMs => fetch next)
   useEffect(() => {
      if (!activeSessionId || !currentTurn) return;
      
@@ -136,9 +205,9 @@ export function GuideChatWidget() {
          });
          return;
      } else if (action.actionId === 'next-step') {
-        navigation.goBack();
-        return;
-    }
+         navigation.navigate('GuideList');
+         return;
+     }
 
     switch (action.actionId) {
       case 'start-game':
@@ -263,7 +332,7 @@ export function GuideChatWidget() {
                         ? `Connecting to Guide...`
                         : 'No guideable locations nearby.'}
                 </Text>
-                {isTurnFetching && <ActivityIndicator size="small" color="#9CA3AF" className="mt-4" />}
+                {(isTurnFetching || isHistoryLoading) && <ActivityIndicator size="small" color="#9CA3AF" className="mt-4" />}
             </View>
         ) : (
             <>
