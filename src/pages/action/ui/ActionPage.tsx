@@ -37,9 +37,9 @@ export function ActionPage({
     // 1. Mission Type (QUIZ, CAMERA, REWARD)
     const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD') ? contentId : undefined;
     const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
+    const isCompleted = mission?.status === 'COMPLETED';
 
-    // 2. Legacy QUEST Type (Removed API Dependency)
-    const isQuestType = type === 'QUEST';
+    // 2. Legacy QUEST Type (Placeholder preserved for logic)
     const content = null;
     const isContentLoading = false;
 
@@ -48,17 +48,22 @@ export function ActionPage({
     const { data: spotDetail, isLoading: isSpotLoading } = useSpotDetail(isSpotDetailType ? contentId : null);
     const { data: spotGuides } = useSpotGuide(isSpotDetailType ? contentId : null);
 
+    // 4. Mission Type Detection
+    // If the API says it's a PHOTO mission, even if 'QUIZ' was passed, we should show CAMERA.
+    const activeType = mission?.missionType === 'PHOTO' ? 'CAMERA' : (mission?.missionType === 'QUIZ' || mission?.missionType === 'OX') ? 'QUIZ' : type;
+
     // Submission Mutation
     const submitMutation = useSubmitMission();
 
     // --- Handlers ---
     const handleCheckAnswer = (answerText: string, callback: (isCorrect: boolean, feedback: string) => void) => {
+        if (isCompleted) return; // Prevent resubmit
         const choice = mission?.optionsJson?.choices?.find(c => c.text === answerText);
         const optionId = choice?.id || answerText;
         submitMutation.mutate({
             runId: runId || 0,
             stepId: contentId,
-            data: { missionType: 'QUIZ', selectedOptionId: optionId }
+            data: { missionType: mission?.missionType || 'QUIZ', selectedOptionId: optionId }
         }, {
             onSuccess: (data) => callback(data.isCorrect, data.feedback)
         });
@@ -124,7 +129,7 @@ export function ActionPage({
     }
 
     // C. Mission View (QUIZ)
-    if (type === 'QUIZ') {
+    if (activeType === 'QUIZ') {
          if (!mission) return <View><Text>Mission Not Found</Text></View>;
          
          const questData = {
@@ -144,12 +149,13 @@ export function ActionPage({
                 onClose={onComplete}
                 locationName={targetName || 'Mission'}
                 progressText="1/1"
+                isCompleted={isCompleted}
             />
         );
     }
 
     // D. Mission View (CAMERA)
-    if (type === 'CAMERA') {
+    if (activeType === 'CAMERA') {
          if (!mission) return <View><Text>Mission Not Found</Text></View>;
 
          return (

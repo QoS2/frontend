@@ -182,7 +182,11 @@ export function GuideChatWidget() {
     const chatActions: ChatAction[] = [];
     
     // Priority: 1. action.stepId (Direct link from server)
-    const missionStepId = action.stepId; // Removed turnId fallback to avoid 404
+    const missionStepId = action.stepId; 
+
+    // 현재 장소가 완료된 상태인지 확인 (tourDetail의 progress 정보 활용)
+    const completedSpotIds = tourDetail?.currentRun?.progress?.completedSpotIds || [];
+    const isCompleted = missionStepId ? completedSpotIds.includes(Number(missionStepId)) : false;
 
     if (action.type === 'MISSION_CHOICE') {
         if (!missionStepId) {
@@ -190,9 +194,9 @@ export function GuideChatWidget() {
             return [];
         }
         chatActions.push({ 
-            label: '시작하기', 
+            label: isCompleted ? '완료된 미션 보기' : '시작하기', 
             actionId: 'start-mission', 
-            data: { stepId: missionStepId } 
+            data: { stepId: missionStepId, isCompleted } 
         });
     } else if (action.type === 'NEXT') {
         chatActions.push({ 
@@ -283,13 +287,19 @@ export function GuideChatWidget() {
     if (action.actionId === 'start-mission') {
         // use action.data.stepId first, then contentId (which is likely the overarching place ID)
         const targetId = action.data?.stepId || contentId;
-        console.log('[CHAT_DEBUG] start-mission. targetId:', targetId);
+        const isCompleted = action.data?.isCompleted || false;
+        
+        console.log('[CHAT_DEBUG] start-mission. targetId:', targetId, 'isCompleted:', isCompleted);
         if (!targetId) {
             console.warn('[CHAT_DEBUG] No valid target ID for start-mission action');
             return;
         }
+
+        // 마커 타입을 기반으로 퀴즈인지 카메라 미션인지 판단 (추후 ActionPage에서 API 결과로 더 정확히 판단함)
+        const guessType = activeMarker?.type === 'PHOTO' ? 'CAMERA' : 'QUIZ';
+
         openAction({
-            type: 'QUIZ',  // QUEST was removed, directly route to QUIZ
+            type: guessType,
             contentId: targetId.toString(),
          });
          return;

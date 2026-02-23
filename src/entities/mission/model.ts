@@ -37,10 +37,12 @@ export const useSubmitMission = () => {
   return useMutation<MissionSubmitResponse, ApiError, { runId: number; stepId: string; data: MissionSubmitRequest }>({
     mutationFn: submitMission,
     onSuccess: (data, variables) => {
-      // Invalidate mission state or run progress
-      // queryClient.invalidateQueries({ queryKey: ['run', variables.runId] });
+      // 투어 진행 상태나 다음 스팟 정보를 최신화하도록 쿼리 무효화
+      queryClient.invalidateQueries({ queryKey: ['tour-run', variables.runId, 'next-spot'] });
+      queryClient.invalidateQueries({ queryKey: ['tour'] });
+      
       if (data.isCorrect) {
-          // Maybe refetch mission step to show completed state
+          // 미션 성공 시 해당 미션 단계 정보도 갱신
           queryClient.invalidateQueries({ queryKey: ['mission', variables.stepId] });
       }
     },

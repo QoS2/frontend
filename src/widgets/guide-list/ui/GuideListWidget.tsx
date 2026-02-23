@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, FlatList } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { ChevronLeft, Check, LockKeyhole, LockKeyholeOpen, Radio } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -28,39 +29,32 @@ export function GuideListWidget() {
   const runId = tourDetail?.currentRun?.runId;
   const { data: nextSpotData } = useTourRunNextSpot(runId);
 
-  // Filter and sort items based on mainMissionPath to ensure correct order according to API
+  // Filter and sort items based on markers and their ID order
   const guideItems = React.useMemo(() => {
-    // Create a lookup for marker types
-    const markerMap = new Map(markers.map(m => [m.id, m]));
+    if (!markers || markers.length === 0) return [];
 
-    if (!tourDetail?.mainMissionPath || tourDetail.mainMissionPath.length === 0) {
-      // Fallback to markers if mainMissionPath is empty
-      return markers
-        .filter((m) => m.contentId !== null && (m.type === 'PLACE' || m.type === 'SUB_PLACE'))
-        .map(m => ({
+    return markers
+      .filter((m) => m.type === 'PLACE' || m.type === 'SUB_PLACE')
+      .map((m) => {
+        return {
           id: m.id,
           title: m.title,
           type: m.type,
           contentId: m.contentId,
-          orderIndex: 0
-        }));
-    }
-
-    // Map mainMissionPath and filter only PLACE and SUB_PLACE
-    return tourDetail.mainMissionPath
-      .map(p => {
-        const marker = markerMap.get(p.spotId.toString());
-        return {
-          id: p.spotId.toString(),
-          title: p.spotTitle,
-          type: marker?.type || 'PLACE',
-          contentId: p.spotId.toString(),
-          orderIndex: p.orderIndex,
         };
       })
-      .filter(item => item.type === 'PLACE' || item.type === 'SUB_PLACE')
-      .sort((a, b) => a.orderIndex - b.orderIndex);
-  }, [tourDetail, markers]);
+      .sort((a, b) => {
+        // Sort by ID numerically
+        const idA = parseInt(a.id, 10);
+        const idB = parseInt(b.id, 10);
+        
+        if (!isNaN(idA) && !isNaN(idB)) {
+          return idA - idB;
+        }
+        // Fallback to string comparison if IDs are not numeric
+        return a.id.localeCompare(b.id);
+      });
+  }, [markers]);
 
   // Use progress data if available, but filter by guideItems to ensure count only includes PLACE/SUB_PLACE
   const completedSpotIds = tourDetail?.currentRun?.progress?.completedSpotIds?.map(id => id.toString()) || 
@@ -102,18 +96,18 @@ export function GuideListWidget() {
       </View>
 
       {/* Guide List */}
-      <FlatList
-        data={guideItems}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-           <GuideItem
+      <BottomSheetScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
+        {guideItems.map((item) => (
+          <GuideItem
+            key={item.id}
             item={item as any}
             status={getGuideStatus(item.id, nextSpotId, activeMarkerId, completedSpotIds)}
             runId={runId}
           />
-        )}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      />
+        ))}
+      </BottomSheetScrollView>
     </View>
   );
 }
@@ -125,14 +119,19 @@ function getGuideStatus(
   activeMarkerId: string | null,
   completedSpotIds: string[]
 ): GuideStatus {
+  // 1. 완료 여부를 최우선으로 체크
   if (completedSpotIds.includes(itemId)) {
     return 'done';
   }
-  if (nextSpotId === itemId || activeMarkerId === itemId) {
+  
+  // 2. 현재 진행 중인(Live) 장소인지 체크
+  // nextSpotId가 있으면 그것을 우선으로 하고, 없으면 지도에서 선택된 마커를 참고하되
+  // 완료된 항목은 이미 위에서 걸러졌으므로 안전합니다.
+  if (nextSpotId === itemId || (nextSpotId === undefined && activeMarkerId === itemId)) {
     return 'live';
   }
-  // If not done and not next, we might need a lock status based on orderIndex,
-  // but for now, we'll mark as lock if it's not the next spot.
+
+  // 3. 그 외에는 잠금 상태 (순서 기반 잠금 로직은 필요시 추가 가능)
   return 'lock';
 }
 
