@@ -4,7 +4,7 @@ export default {
   scheme: 'questofseoul',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './src/shared/assets/icons/app_logo.png',
+  icon: './assets/app_logo.png',
   userInterfaceStyle: 'light',
   splash: {
     image: './assets/splash.png',
@@ -18,13 +18,13 @@ export default {
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './src/shared/assets/icons/app_logo.png',
+      foregroundImage: './assets/app_logo.png',
       backgroundColor: '#ffffff',
     },
     package: 'com.questofseoul.app',
   },
   web: {
-    favicon: './src/shared/assets/icons/app_logo.png',
+    favicon: './assets/app_logo.png',
   },
   plugins: [
     'expo-router',
