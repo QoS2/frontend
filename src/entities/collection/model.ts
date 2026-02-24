@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../shared/api/httpClient';
 import {
   PlaceCollectionResponse,
@@ -30,6 +30,11 @@ const fetchPhotoSpots = async (tourId?: number): Promise<PhotoSpotsResponse> => 
 };
 
 
+const collectTreasure = async ({ runId, spotId }: { runId: number; spotId: number }): Promise<void> => {
+  await httpClient.post<unknown>(`/api/v1/tour-runs/${runId}/treasures/${spotId}/collect`, {});
+};
+
+
 // --- Hooks ---
 export const usePlaceCollection = (tourId?: number) => {
   return useQuery<PlaceCollectionResponse, ApiError>({
@@ -43,6 +48,19 @@ export const useTreasureCollection = (tourId?: number) => {
       queryKey: ['collection', 'treasures', tourId],
       queryFn: () => fetchTreasureCollection(tourId),
     });
+};
+
+export const useCollectTreasure = () => {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { runId: number; spotId: number }>({
+    mutationFn: collectTreasure,
+    onSuccess: () => {
+      // 보물 목록 갱신
+      queryClient.invalidateQueries({ queryKey: ['collection', 'treasures'] });
+      // 투어 진행 상태도 갱신 (가이드 리스트 등 반영)
+      queryClient.invalidateQueries({ queryKey: ['tour'] });
+    },
+  });
 };
 
 export const usePhotoSpots = (tourId?: number) => {

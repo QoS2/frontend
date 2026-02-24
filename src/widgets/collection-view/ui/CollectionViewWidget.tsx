@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Pressable, Image, Dimensions } from 'react-native';
+import { View, Pressable, Image, Text as RNText } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { ChevronLeft, Volume2, Sparkles } from 'lucide-react-native';
+import { ChevronLeft, Volume2, Sparkles, Lock } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { Text } from '@shared/ui';
 
@@ -79,7 +79,17 @@ export function CollectionViewWidget({
                           source={{ uri: item.imageUrl }}
                           className="w-full h-full"
                           resizeMode="cover"
+                          style={!item.collected ? { opacity: 0.5 } : undefined}
                       />
+                      {/* Lock overlay for uncollected items */}
+                      {!item.collected && (
+                        <View className="absolute inset-0 items-center justify-center">
+                          <View className="flex-row items-center gap-1.5 bg-white/70 px-3 py-1.5 rounded-full shadow-sm">
+                            <Lock size={12} color="black" strokeWidth={2.5} />
+                            <RNText style={{ color: 'black', fontWeight: '800', fontSize: 10, letterSpacing: 1.5 }}>LOCKED</RNText>
+                          </View>
+                        </View>
+                      )}
                       <View className="absolute bottom-0 left-0 right-0 p-3 bg-white/90">
                           <Text className="font-bold text-gray-800 text-xs" numberOfLines={1}>{item.title}</Text>
                       </View>

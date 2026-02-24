@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { View, Pressable, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Pressable, Image, ScrollView, ActivityIndicator, Modal, SafeAreaView } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -69,6 +69,13 @@ export function GuideChatWidget() {
   const { activeSessionId, currentTurn, setCurrentTurn, playedTurnIds, markTurnAsPlayed, setSession } = useRunProgressStore();
   const { mutate: fetchNextTurn } = useNextTurnByUrl();
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+
+  // playedTurnIds를 ref로도 동기화 (Effect 의존성에서 제거하기 위함)
+  const playedTurnIdsRef = useRef<number[]>([]);
+  useEffect(() => {
+    playedTurnIdsRef.current = playedTurnIds;
+  }, [playedTurnIds]);
 
   // 3. Single imperative effect: spot → session → history → display
   useEffect(() => {
@@ -107,7 +114,7 @@ export function GuideChatWidget() {
                   id: `hist-asset-${asset.id}`,
                   sender: 'ai',
                   type: 'image',
-                  imageUrl: asset.url as any,
+                  imageUrl: asset.url,
                   timestamp: Date.now() - 1000,
                 });
               }
@@ -154,7 +161,7 @@ export function GuideChatWidget() {
                           sender: msg.sender,
                           type: msg.type,
                           text: msg.text,
-                          imageUrl: msg.imageUrl,
+                          imageUrl: msg.imageUrl as string,
                           actions: msg.actions,
                           isAnimating: msg.sender === 'ai' && msg.type === 'text',
                       });
@@ -272,7 +279,10 @@ export function GuideChatWidget() {
   // 8. Play currentTurn
   useEffect(() => {
      if (!activeSessionId || !currentTurn) return;
-     if (playedTurnIds.includes(currentTurn.turnId)) return;
+     // 히스토리 로딩 중에는 turn 재생 금지 (이전 AUTO_NEXT가 재실행되는 버그 방지)
+     if (isHistoryLoading) return;
+     // ref로 읽어서 이 Effect 자체가 playedTurnIds 변경에 반응하지 않도록 함
+     if (playedTurnIdsRef.current.includes(currentTurn.turnId)) return;
      if (isStreaming || isTurnFetching) return;
  
      markTurnAsPlayed(currentTurn.turnId);
@@ -281,7 +291,7 @@ export function GuideChatWidget() {
      if (currentTurn.assets && currentTurn.assets.length > 0) {
          currentTurn.assets.forEach(asset => {
              if (asset.type === 'IMAGE') {
-                 addMessage({ sender: 'ai', type: 'image', imageUrl: asset.url as any });
+                 addMessage({ sender: 'ai', type: 'image', imageUrl: asset.url });
              }
          });
      }
@@ -293,7 +303,7 @@ export function GuideChatWidget() {
          processTurnAction(currentTurn.action, currentTurn.delayMs);
      }
    // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, playedTurnIds, addMessage, streamReply, markTurnAsPlayed]);
+   }, [activeSessionId, currentTurn, isStreaming, isTurnFetching, isHistoryLoading]);
 
   // 9. When text streaming ends, process action (delayMs => fetch next)
   useEffect(() => {
@@ -386,13 +396,18 @@ export function GuideChatWidget() {
       switch (msg.type) {
         case 'image':
           return (
-            <View className="rounded-2xl overflow-hidden border border-gray-200 mt-1">
-              <Image 
-                source={msg.imageUrl} 
-                style={{ width: 220, height: 160 }} 
-                resizeMode="cover" 
+            <Pressable
+              onPress={() => msg.imageUrl && setSelectedImageUrl(msg.imageUrl)}
+              className="rounded-2xl overflow-hidden border border-gray-200 mt-1"
+              style={{ width: 220, height: 160 }}
+            >
+              <Image
+                source={{ uri: msg.imageUrl }}
+                style={{ width: 220, height: 160 }}
+                resizeMode="cover"
+                onError={(e) => console.warn('[Chat] Image load error:', e.nativeEvent.error)}
               />
-            </View>
+            </Pressable>
           );
         case 'action':
           return (
@@ -508,6 +523,45 @@ export function GuideChatWidget() {
             </>
         )}
       </BottomSheetScrollView>
+
+      {/* Fullscreen Image Viewer */}
+      <Modal
+        visible={selectedImageUrl !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedImageUrl(null)}
+        statusBarTranslucent
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)' }}>
+          <Pressable
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => setSelectedImageUrl(null)}
+          >
+            <Image
+              source={{ uri: selectedImageUrl ?? undefined }}
+              style={{ width: '100%', height: '75%' }}
+              resizeMode="contain"
+            />
+          </Pressable>
+          {/* Close button */}
+          <Pressable
+            onPress={() => setSelectedImageUrl(null)}
+            style={{
+              position: 'absolute',
+              top: 56,
+              right: 20,
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              borderRadius: 20,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>✕</Text>
+          </Pressable>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }

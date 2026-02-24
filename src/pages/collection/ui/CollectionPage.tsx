@@ -1,18 +1,22 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import { Text } from '@shared/ui';
 import { CollectionViewWidget } from '@widgets/collection-view';
-import { useTreasureCollection } from '@entities/collection/model';
+import { useTreasureCollection, useCollectTreasure } from '@entities/collection/model';
 import { useTourStore } from '@entities/tour/store';
+import { useTourDetail } from '@entities/tour/model';
 import { useRoute } from '@react-navigation/native';
 import { useLocationMarkers } from '@entities/location';
 
 export function CollectionPage() {
   const activeTourId = useTourStore((state) => state.activeTourId);
   const { data: treasureData, isLoading, isError } = useTreasureCollection(activeTourId ?? undefined);
+  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
+  const runId = tourDetail?.currentRun?.runId;
   const { data: markers = [] } = useLocationMarkers();
   const route = useRoute<any>();
   const itemId = route.params?.itemId;
+  const { mutate: collectTreasure, isPending: isCollecting } = useCollectTreasure();
   
   // Convert treasures into collection items, merging with markers for description if needed
   // CRITICAL: Hook must be called before conditional returns
@@ -47,8 +51,17 @@ export function CollectionPage() {
   }
 
   const handleCollect = (id: string | number) => {
-    console.log(`[Collect Treasure] ${id}`);
-    // TODO: Call API to collect treasure
+    if (!runId) {
+      Alert.alert('오류', '투어 정보를 찾을 수 없습니다.');
+      return;
+    }
+    collectTreasure(
+      { runId, spotId: Number(id) },
+      {
+        onSuccess: () => Alert.alert('🎉 수집 완료!', '보물을 획득했습니다!'),
+        onError: () => Alert.alert('오류', '보물 수집에 실패했습니다. 다시 시도해주세요.'),
+      }
+    );
   };
 
   return (
