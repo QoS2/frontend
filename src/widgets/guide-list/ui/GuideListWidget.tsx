@@ -64,6 +64,17 @@ export function GuideListWidget() {
   const completedCount = guideItems.filter(item => completedSpotIds.includes(item.id)).length;
   const nextSpotId = nextSpotData?.nextSpot?.spotId.toString();
 
+  useEffect(() => {
+    console.log('[GUIDE_LIST_DEBUG] State updated:', {
+      completedSpotIds,
+      nextSpotId,
+      activeMarkerId,
+      guideItemIds: guideItems.map(i => i.id),
+      tourRunProgress: tourDetail?.currentRun?.progress,
+      nextSpotProgress: nextSpotData?.progress
+    });
+  }, [completedSpotIds, nextSpotId, activeMarkerId]);
+
   return (
     <View className="flex-1 bg-white">
       {/* Header */}

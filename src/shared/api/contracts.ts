@@ -15,7 +15,7 @@ export const QuestSchema = z.object({
   question: z.string(),
   options: z.array(z.string()),
   answer: z.string(),
-  hint: z.string().optional(),
+  hintText: z.string().optional(),
 });
 
 export const InteractionTypeSchema = z.enum(['MEDIA', 'QUEST', 'CAMERA', 'REWARD']);

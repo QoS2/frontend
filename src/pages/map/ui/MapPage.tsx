@@ -57,6 +57,10 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const { activeAction, closeAction, openAction } = useActionOverlayStore();
     const { showPopup, dismissedMarkerId } = useDiscoveryPopupStore();
 
+    useEffect(() => {
+        console.log('[CHAT_DEBUG] MapPage - activeAction changed:', JSON.stringify(activeAction));
+    }, [activeAction]);
+
     const {addMessage, streamReply, isStreaming} = useChatStore();
     const [inputText, setInputText] = React.useState('');
 
@@ -331,24 +335,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
             {/* Discovery Popup */}
             <DiscoveryPopup onAction={handleDiscoveryAction} />
 
-            {/* Action Overlay Layer */}
-            {activeAction && (
-                <Animated.View
-                    entering={SlideInDown.duration(300)}
-                    exiting={SlideOutDown.duration(300)}
-                    className="absolute inset-0 z-50"
-                >
-                    <ActionPage 
-                        type={activeAction.type}
-                        contentId={activeAction.contentId}
-                        questId={activeAction.questId}
-                        targetName={activeAction.targetName}
-                        rewardId={activeAction.rewardId}
-                        runId={runId || 0}
-                        onComplete={closeAction}
-                    />
-                </Animated.View>
-            )}
 
             {/* Animated Floating Input */}
             <Animated.View
@@ -390,6 +376,31 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                     </Pressable>
                 </View>
             </Animated.View>
+
+            {/* Action Overlay Layer - Ensure it's the LAST child for stacking priority */}
+            {activeAction && (
+                <View 
+                    className="absolute inset-0" 
+                    pointerEvents="box-none"
+                    style={{ zIndex: 9999, elevation: 10 }}
+                >
+                    <Animated.View
+                        entering={SlideInDown.duration(300)}
+                        exiting={SlideOutDown.duration(300)}
+                        className="flex-1 bg-white"
+                    >
+                        <ActionPage 
+                            type={activeAction.type}
+                            contentId={activeAction.contentId}
+                            questId={activeAction.questId}
+                            targetName={activeAction.targetName}
+                            rewardId={activeAction.rewardId}
+                            runId={runId || 0}
+                            onComplete={closeAction}
+                        />
+                    </Animated.View>
+                </View>
+            )}
         </GestureHandlerRootView>
     );
 }

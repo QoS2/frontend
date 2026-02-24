@@ -252,16 +252,30 @@ export function QuestPlay({
                 autoCapitalize="none"
                 editable={!isCompleted && isCorrect !== true}
               />
-              {showHint && quest.hint && (
-                <View className="mt-4 p-3 bg-yellow-50 rounded-xl flex-row items-start">
-                    <HelpCircle size={16} color="#EAB308" className="mr-2 mt-0.5" />
-                    <Text className="text-yellow-800 text-sm flex-1">{quest.hint}</Text>
-                </View>
-              )}
             </View>
           )}
 
         </View>
+
+        {/* Global Hint Area */}
+        {showHint && quest.hintText && (
+          <View 
+            className="mt-6 p-4 bg-yellow-50 rounded-2xl flex-row items-start border border-yellow-100"
+            style={{
+               shadowColor: '#EAB308',
+               shadowOffset: { width: 0, height: 1 },
+               shadowOpacity: 0.1,
+               shadowRadius: 2,
+               elevation: 1,
+            }}
+          >
+              <HelpCircle size={18} color="#EAB308" className="mr-3 mt-0.5" />
+              <View className="flex-1">
+                <Text className="text-yellow-900 font-bold mb-1 text-xs uppercase tracking-wider">Hint</Text>
+                <Text className="text-yellow-800 text-sm leading-5">{quest.hintText}</Text>
+              </View>
+          </View>
+        )}
 
         {/* Feedback Message */}
         {isCorrect !== null && (
@@ -286,7 +300,7 @@ export function QuestPlay({
       >
         
         {/* Hint Button */}
-        {quest.hint && (
+        {quest.hintText && (
             <Pressable 
                 onPress={handleToggleHint}
                 className="w-full py-4 rounded-xl border border-gray-100 items-center mb-3 bg-white active:opacity-70"

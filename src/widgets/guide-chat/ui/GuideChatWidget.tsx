@@ -9,6 +9,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Text, TypewriterText } from '@shared/ui';
 import { ChatAvatar } from '@shared/assets/icons';
 import type { BottomSheetStackParamList } from '@features/bottom-sheet';
+import { useQueryClient } from '@tanstack/react-query';
 import { useChatStore, ChatMessage, ChatAction } from '@features/ai-chat';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useLocationMarkers } from '@entities/location';
@@ -17,12 +18,14 @@ import { useRunProgressStore } from '@features/run-progress/runProgressStore';
 import { useNextTurnByUrl, fetchChatSession, fetchChatHistory } from '@entities/run/model';
 import { useTourStore } from '@entities/tour/store';
 import { useTourDetail } from '@entities/tour/model';
+import { httpClient } from '@shared/api/httpClient';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
 
 export function GuideChatWidget() {
   const route = useRoute<GuideChatRouteProp>();
   const navigation = useNavigation<NativeStackNavigationProp<BottomSheetStackParamList>>();
+  const queryClient = useQueryClient();
   const scrollViewRef = useRef<ScrollView>(null);
   
   // Store Hooks
@@ -44,7 +47,21 @@ export function GuideChatWidget() {
   const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
   const runId = tourDetail?.currentRun?.runId;
 
-  const contextStepId = route.params?.stepId || triggeredMarkerId || activeMarkerId;
+  const contextStepIdRaw = route.params?.stepId || triggeredMarkerId || activeMarkerId;
+  
+  // Note: Only PLACE and SUB_PLACE markers have chat sessions.
+  // Maintain the last valid context so chat doesn't disrupt when passing by a PHOTO spot.
+  const lastValidContextRef = useRef<string | null>(null);
+  const contextStepId = React.useMemo(() => {
+    if (!contextStepIdRaw || !markers) return lastValidContextRef.current;
+    const marker = markers.find((m) => m.id.toString() === contextStepIdRaw.toString());
+    if (marker && (marker.type === 'PLACE' || marker.type === 'SUB_PLACE')) {
+      lastValidContextRef.current = contextStepIdRaw.toString();
+      return contextStepIdRaw.toString();
+    }
+    return lastValidContextRef.current;
+  }, [contextStepIdRaw, markers]);
+
   const activeMarker = markers?.find((m) => m.id.toString() === contextStepId?.toString());
   const displayTitle = route.params?.title || activeMarker?.title || 'AI Tour Guide';
 
@@ -107,10 +124,10 @@ export function GuideChatWidget() {
             });
           }
 
-          const chatActions = mapActionToChatActions(turn.action, turn.turnId);
+          const chatActions = mapActionToChatActions(turn.action);
           if (chatActions.length > 0) {
             historicalMessages.push({
-              id: `hist-action-${turn.turnId}`,
+              id: `hist-action-${turn.turnId}`, // turnId is for message identity
               sender: 'ai',
               type: 'action',
               actions: chatActions,
@@ -177,20 +194,30 @@ export function GuideChatWidget() {
 
 
   // 5. Action Utilities
-  const mapActionToChatActions = (action: any, turnId?: number): ChatAction[] => {
+  const mapActionToChatActions = (action: any): ChatAction[] => {
     if (!action) return [];
     const chatActions: ChatAction[] = [];
     
     // Priority: 1. action.stepId (Direct link from server)
-    const missionStepId = action.stepId; 
+    // 2. Lookup in tourDetail.mainMissionPath using current contextStepId (spotId)
+    let missionStepId = action.stepId;
+    if (!missionStepId && contextStepId) {
+      const spotMatched = tourDetail?.mainMissionPath?.find(
+        (path) => path.spotId.toString() === contextStepId.toString()
+      );
+      // spot에 연결된 미션들 중 첫 번째 미션의 stepId를 가져옵니다. (보통 1개의 메인 미션)
+      if (spotMatched && spotMatched.missions && spotMatched.missions.length > 0) {
+        missionStepId = spotMatched.missions[0].stepId;
+      }
+    }
 
     // 현재 장소가 완료된 상태인지 확인 (tourDetail의 progress 정보 활용)
     const completedSpotIds = tourDetail?.currentRun?.progress?.completedSpotIds || [];
-    const isCompleted = missionStepId ? completedSpotIds.includes(Number(missionStepId)) : false;
+    const isCompleted = contextStepId ? completedSpotIds.includes(Number(contextStepId)) : false;
 
     if (action.type === 'MISSION_CHOICE') {
         if (!missionStepId) {
-            console.warn('[CHAT_DEBUG] MISSION_CHOICE with no valid stepId');
+            console.warn('[CHAT_DEBUG] MISSION_CHOICE with no valid stepId or contextStepId');
             return [];
         }
         chatActions.push({ 
@@ -202,7 +229,7 @@ export function GuideChatWidget() {
         chatActions.push({ 
             label: '다음 장소로', 
             actionId: 'next-step', 
-            data: {} 
+            data: { nextApi: action.nextApi } 
         });
     }
     return chatActions;
@@ -231,7 +258,7 @@ export function GuideChatWidget() {
              });
          }, delayMs || 0);
      } else {
-         const chatActions = mapActionToChatActions(action, currentTurn?.turnId);
+         const chatActions = mapActionToChatActions(action);
          if (chatActions.length > 0) {
              addMessage({
                  sender: 'ai',
@@ -305,6 +332,18 @@ export function GuideChatWidget() {
          return;
      } else if (action.actionId === 'next-step') {
          console.log('[CHAT_DEBUG] next-step routing to GuideList');
+         
+         // 만약 nextApi가 있다면 호출하여 백엔드 상태 갱신 트리거
+         if (action.data?.nextApi) {
+             httpClient.get(action.data.nextApi).catch(e => {
+                 console.warn('[CHAT_DEBUG] nextApi call failed:', e);
+             });
+         }
+
+         // 백엔드 상태 갱신을 위해 관련 쿼리 무효화
+         queryClient.invalidateQueries({ queryKey: ['tour-run', runId, 'next-spot'] });
+         queryClient.invalidateQueries({ queryKey: ['tour', activeTourId] });
+
          navigation.navigate('GuideList');
          return;
      }

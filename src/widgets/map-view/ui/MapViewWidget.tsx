@@ -8,6 +8,7 @@ import {
 import { LocationMarker } from '@shared/api/contracts';
 import { getDistance } from '@shared/lib/geo';
 import { PlaceIcon, SubPlaceIcon, PhotoIcon, TreasureIcon } from '@shared/assets/icons';
+import { PlaceNumberMarker } from '@shared/ui';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
@@ -36,6 +37,26 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
     });
   }, [markers, zoomLevel]);
 
+  // Handle place numbering - only for main PLACES
+  const placeOrderMap = useMemo(() => {
+    const places = markers
+      .filter((m) => m.type === 'PLACE')
+      .sort((a, b) => {
+        const idA = parseInt(a.id, 10);
+        const idB = parseInt(b.id, 10);
+        if (!isNaN(idA) && !isNaN(idB)) {
+          return idA - idB;
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+    const map: Record<string, number> = {};
+    places.forEach((p, index) => {
+      map[p.id] = index + 1;
+    });
+    return map;
+  }, [markers]);
+
   /* Helper to get marker icon component based on type */
   const getMarkerIcon = (type: string) => {
     switch (type) {
@@ -55,7 +76,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
   /* Helper to get marker size based on type */
   const getMarkerSize = (type: string) => {
     switch (type) {
-      case 'PLACE': return { width: 40, height: 40 };
+      case 'PLACE': return { width: 35, height: 35 };
       case 'SUB_PLACE': return { width: 25, height: 25 };
       case 'PHOTO': return { width: 25, height: 25 };
       case 'TREASURE': return { width: 25, height: 25 };
@@ -110,7 +131,15 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
                 anchor={{ x: 0.5, y: 0.5 }}
                 onTap={() => onMarkerPress(marker)}
               >
+                {marker.type === 'PLACE' ? (
+                  <PlaceNumberMarker
+                    number={placeOrderMap[marker.id]}
+                    width={size.width}
+                    height={size.height}
+                  />
+                ) : (
                   <Icon width={size.width} height={size.height} />
+                )}
               </NaverMapMarkerOverlay>
               
               {/* Circle Overlay */}

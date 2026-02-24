@@ -10,8 +10,8 @@ export const useLocationMarkers = () => {
   const markers: LocationMarker[] = useMemo(() => {
     if (!tourDetail?.mapSpots) return [];
     
-    // 좌표별 마커 개수 추적을 위한 맵
-    const coordCounts: Record<string, number> = {};
+    // 좌표별 non-PLACE 마커 개수 추적 (PLACE는 항상 원래 위치)
+    const nonPlaceCoordCounts: Record<string, number> = {};
     const OFFSET_BASE = 0.00008; // 약 8-10m 정도의 미세한 오프셋
 
     return tourDetail.mapSpots.map((spot) => {
@@ -21,20 +21,22 @@ export const useLocationMarkers = () => {
       else if (spot.type === 'PHOTO') mappedType = 'PHOTO';
       else if (spot.type === 'TREASURE') mappedType = 'TREASURE';
 
-      const coordKey = `${spot.lat.toFixed(6)},${spot.lng.toFixed(6)}`;
-      const count = coordCounts[coordKey] || 0;
-      coordCounts[coordKey] = count + 1;
-
-      // 중복 좌표인 경우 원형으로 미세하게 분산
       let adjustedLat = spot.lat;
       let adjustedLng = spot.lng;
 
-      if (count > 0) {
-        // 인덱스에 따라 각도를 다르게 하여 원형 배치 (간단한 Jittering)
-        const angle = (count * 137.5) * (Math.PI / 180); // 황금각 사용
-        const radius = OFFSET_BASE * Math.sqrt(count);
-        adjustedLat += radius * Math.cos(angle);
-        adjustedLng += radius * Math.sin(angle);
+      // PLACE(메인)는 항상 원래 좌표 유지, 나머지만 분산
+      if (mappedType !== 'PLACE') {
+        const coordKey = `${spot.lat.toFixed(6)},${spot.lng.toFixed(6)}`;
+        const count = nonPlaceCoordCounts[coordKey] || 0;
+        nonPlaceCoordCounts[coordKey] = count + 1;
+
+        if (count > 0) {
+          // 황금각 기반 원형 분산 배치 (Jittering)
+          const angle = (count * 137.5) * (Math.PI / 180);
+          const radius = OFFSET_BASE * Math.sqrt(count);
+          adjustedLat += radius * Math.cos(angle);
+          adjustedLng += radius * Math.sin(angle);
+        }
       }
 
       return {

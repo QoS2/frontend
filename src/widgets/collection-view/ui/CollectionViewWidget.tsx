@@ -100,72 +100,66 @@ export function CollectionViewWidget({
           </Animated.View>
         ) : (
           /* --- Detail View --- */
-          <Animated.View entering={FadeIn} exiting={FadeOut} className="flex-1 pt-4">
-            {/* Back Button */}
-            <Pressable
-              onPress={handleBack}
-              className="mb-4 w-10 h-10 justify-center items-center bg-white rounded-full shadow-sm active:opacity-70"
-            >
-              <ChevronLeft size={24} color="#333" />
-            </Pressable>
-
-            {/* 3D Image Area (Floating Effect) */}
-            <View className="items-center z-10 -mb-12">
-               <Image 
-                  source={{ uri: selectedItem.imageUrl }}
-                  className="w-64 h-64"
-                  resizeMode="contain"
-               />
+          <Animated.View entering={FadeIn} exiting={FadeOut} className="flex-1">
+            {/* Hero Image — Full Width */}
+            <View className="w-full h-56 rounded-2xl overflow-hidden mb-4">
+              <Image
+                source={{ uri: selectedItem.imageUrl }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+              {/* Back Button overlaid on image */}
+              <Pressable
+                onPress={handleBack}
+                className="absolute top-3 left-3 w-9 h-9 justify-center items-center bg-black/30 rounded-full active:opacity-70"
+              >
+                <ChevronLeft size={22} color="white" />
+              </Pressable>
             </View>
 
-            {/* Detail Card */}
-            <View className="bg-white rounded-[30px] p-6 pt-16 shadow-lg border border-gray-50 w-full items-center min-h-[350px]">
-                <Text className="text-gray-500 text-sm mb-1 self-start font-medium ml-2">
-                  {selectedItem.subtitle}
-                </Text>
-                
-                <View className="items-center mt-4 w-full">
-                    <Text className="text-2xl font-extrabold text-gray-900 text-center mb-4">
-                      {selectedItem.title}
-                    </Text>
+            {/* Detail Content */}
+            <BottomSheetScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+              <Text className="text-gray-500 text-sm mb-1 font-medium">
+                {selectedItem.subtitle}
+              </Text>
+              <Text className="text-2xl font-extrabold text-gray-900 mb-4">
+                {selectedItem.title}
+              </Text>
 
-                    {/* Simple Text Message Area */}
-                    {selectedItem.message && (
-                      <View className="bg-gray-50 w-full p-4 rounded-xl mb-6">
-                        <Text className="text-gray-600 text-sm leading-6">
-                          {selectedItem.message}
-                        </Text>
-                      </View>
-                    )}
-                    
-                    {/* Collection Button for Treasure */}
-                    {onCollect && !selectedItem.collected && (
-                      <Pressable 
-                        onPress={() => onCollect(selectedItem.id)}
-                        className="flex-row items-center bg-emerald-500 px-8 py-4 rounded-2xl shadow-md active:opacity-80"
-                      >
-                         <Sparkles size={20} color="white" className="mr-2" />
-                         <Text className="text-white font-extrabold text-lg">Collect Treasure</Text>
-                      </Pressable>
-                    )}
-
-                    {selectedItem.collected && (
-                       <View className="bg-gray-100 px-8 py-3 rounded-full">
-                          <Text className="text-gray-400 font-bold">Collected ✨</Text>
-                       </View>
-                    )}
-                    
-                    {/* Audio Button (Optional) */}
-                    {selectedItem.audioUrl && (
-                      <Pressable className="mt-4 flex-row items-center border-2 border-orange-300 px-5 py-2 rounded-full bg-white active:opacity-50">
-                          <Text className="text-orange-500 font-bold mr-2 text-base">
-                            Listen
-                          </Text>
-                          <Volume2 size={18} color="#F97316" />
-                      </Pressable>
-                    )}
+              {/* Message */}
+              {selectedItem.message && (
+                <View className="bg-gray-50 w-full p-4 rounded-xl mb-6">
+                  <Text className="text-gray-600 text-sm leading-6">
+                    {selectedItem.message}
+                  </Text>
                 </View>
-            </View>
+              )}
+
+              {/* Collection Button */}
+              {onCollect && !selectedItem.collected && (
+                <Pressable
+                  onPress={() => onCollect(selectedItem.id)}
+                  className="flex-row items-center justify-center bg-emerald-500 px-8 py-4 rounded-2xl shadow-md active:opacity-80 mb-3"
+                >
+                  <Sparkles size={20} color="white" className="mr-2" />
+                  <Text className="text-white font-extrabold text-lg">Collect Treasure</Text>
+                </Pressable>
+              )}
+
+              {selectedItem.collected && (
+                <View className="bg-gray-100 px-8 py-3 rounded-full items-center mb-3">
+                  <Text className="text-gray-400 font-bold">Collected ✨</Text>
+                </View>
+              )}
+
+              {/* Audio Button */}
+              {selectedItem.audioUrl && (
+                <Pressable className="mt-2 flex-row items-center border-2 border-orange-300 px-5 py-2 rounded-full bg-white active:opacity-50">
+                  <Text className="text-orange-500 font-bold mr-2 text-base">Listen</Text>
+                  <Volume2 size={18} color="#F97316" />
+                </Pressable>
+              )}
+            </BottomSheetScrollView>
           </Animated.View>
         )}
       </View>

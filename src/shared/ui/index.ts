@@ -5,3 +5,4 @@ export * from './avatar';
 export * from './separator';
 export * from './spacing';
 export * from './TypewriterText';
+export * from './PlaceNumberMarker';

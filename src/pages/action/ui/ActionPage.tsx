@@ -35,9 +35,12 @@ export function ActionPage({
     // --- Data Fetching ---
     
     // 1. Mission Type (QUIZ, CAMERA, REWARD)
+    // Note: contentId passed here is the mission's stepId (equivalent to spotId for spot guides)
     const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD') ? contentId : undefined;
     const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
     const isCompleted = mission?.status === 'COMPLETED';
+
+    console.log('[CHAT_DEBUG] ActionPage - stepId:', stepId, 'missionStatus:', mission?.status, 'isCompleted:', isCompleted);
 
     // 2. Legacy QUEST Type (Placeholder preserved for logic)
     const content = null;
@@ -51,6 +54,8 @@ export function ActionPage({
     // 4. Mission Type Detection
     // If the API says it's a PHOTO mission, even if 'QUIZ' was passed, we should show CAMERA.
     const activeType = mission?.missionType === 'PHOTO' ? 'CAMERA' : (mission?.missionType === 'QUIZ' || mission?.missionType === 'OX') ? 'QUIZ' : type;
+
+    console.log('[CHAT_DEBUG] ActionPage - activeType:', activeType, 'missionType:', mission?.missionType);
 
     // Submission Mutation
     const submitMutation = useSubmitMission();
@@ -138,7 +143,7 @@ export function ActionPage({
              question: mission.prompt,
              options: mission.optionsJson?.choices?.map(c => c.text) || [],
              answer: '', // Async validation handles this
-             hint: mission.optionsJson?.hintText,
+             hintText: mission.optionsJson?.hintText,
          };
 
          return (

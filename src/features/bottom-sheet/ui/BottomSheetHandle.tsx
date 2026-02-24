@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useTourStore } from '@entities/tour/store';
 import { useTourDetail, useTourRunNextSpot } from '@entities/tour/model';
 import { useMapNavigationStore } from '@features/map-navigation';
@@ -12,7 +12,7 @@ const TABS = [
   { id: 'ai-tour-guide', label: 'AI Tour Guide', active: true }, // 기본 활성화 (예시)
   { id: 'place', label: 'Place', active: false },
   { id: 'treasure', label: 'Treasure', active: false },
-  { id: 'photo', label: 'Photo Spot', active: false },
+  { id: 'photo', label: 'Photo', active: false },
 ];
 
 type BottomSheetHandlePropsWithNav = BottomSheetHandleProps & {
@@ -83,34 +83,35 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
         <View className="w-10 h-1 rounded-full bg-gray-300" />
       </View>
 
-      {/* 2. Scrollable Tabs */}
-      <View className="h-10">
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-        >
-          {TABS.map((tab) => (
-            <Pressable
-              key={tab.id}
-              onPress={() => handleTabPress(tab.id, tab.label)}
-              className={`px-4 py-1.5 rounded-full border justify-center items-center ${
-                activeTabId === tab.id
-                  ? 'bg-[#5AC8FA] border-[#5AC8FA]' 
-                  : 'bg-white border-transparent'
-              } active:opacity-70`}
+      {/* 2. Scrollable Tab Carousel */}
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 4 }}
+      >
+        {TABS.map((tab) => (
+          <Pressable
+            key={tab.id}
+            onPress={() => handleTabPress(tab.id, tab.label)}
+            className={`px-4 py-1.5 rounded-full border justify-center items-center ${
+              activeTabId === tab.id
+                ? 'bg-[#5AC8FA] border-[#5AC8FA]'
+                : 'bg-white border-transparent'
+            } active:opacity-70`}
+          >
+            <Text
+              className={`text-sm font-bold ${
+                activeTabId === tab.id ? 'text-white' : 'text-gray-600'
+              }`}
             >
-              <Text 
-                className={`text-sm font-bold ${
-                  activeTabId === tab.id ? 'text-white' : 'text-gray-600'
-                }`}
-              >
-                {tab.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
+              {tab.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 };
