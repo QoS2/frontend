@@ -13,7 +13,7 @@ export interface ChatMessage {
   sender: 'ai' | 'user';
   type: MessageType;
   text?: string;
-  imageUrl?: any;
+  imageUrl?: string;
   actions?: ChatAction[];
   timestamp: number;
   tags?: string[];

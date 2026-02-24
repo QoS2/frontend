@@ -28,7 +28,7 @@ import { useActionOverlayStore } from '@features/action-overlay/useActionOverlay
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 import { useRunProgressStore, useRunGeofence } from '@features/run-progress';
 
-import { useTourDetail } from '@entities/tour/model';
+import { useTourDetail, useTourRunNextSpot } from '@entities/tour/model';
 import { useTourStore } from '@entities/tour/store';
 import { useSendMessage } from '@entities/run/model';
 
@@ -99,6 +99,10 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         if (!isRunMode || !currentTarget) return null;
         return markers.find(m => m.type === 'PLACE' && m.title === currentTarget.title) || null;
     }, [isRunMode, currentTarget, markers]);
+
+    // next-spot API 기반으로 Live 마커를 결정 (GuideListWidget과 동일 소스)
+    const { data: nextSpotData } = useTourRunNextSpot(currentRun?.runId);
+    const nextLiveSpotId = nextSpotData?.nextSpot?.spotId?.toString();
 
     // Calculate Distance
     const distanceText = useDistanceCalculator(
@@ -312,6 +316,8 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                 userLocation={location}
                 onMarkerPress={handleMarkerPress}
                 activeMarkerId={activeMarkerId}
+                completedSpotIds={currentRun?.progress?.completedSpotIds?.map((id: number) => id.toString()) || []}
+                nextSpotId={nextLiveSpotId}
             />
 
             <BottomSheet

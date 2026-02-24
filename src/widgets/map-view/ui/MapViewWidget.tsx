@@ -7,18 +7,28 @@ import {
 } from '@mj-studio/react-native-naver-map';
 import { LocationMarker } from '@shared/api/contracts';
 import { getDistance } from '@shared/lib/geo';
-import { PlaceIcon, SubPlaceIcon, PhotoIcon, TreasureIcon } from '@shared/assets/icons';
-import { PlaceNumberMarker } from '@shared/ui';
+import {
+  SubPlaceIcon,
+  PhotoIcon,
+  TreasureIcon,
+  PlaceCompleteIcon,
+  SubPlaceCompleteIcon,
+  PhotoCompleteIcon,
+  TreasureCompleteIcon,
+} from '@shared/assets/icons';
+import { PlaceNumberMarker, LivePlaceNumberMarker } from '@shared/ui';
 
 interface MapViewWidgetProps {
   markers: LocationMarker[];
   onMarkerPress: (marker: LocationMarker) => void;
   userLocation: { latitude: number; longitude: number } | null;
   activeMarkerId?: string | null;
+  completedSpotIds?: string[];
+  nextSpotId?: string;
 }
 
 export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, MapViewWidgetProps>(
-  ({ markers, onMarkerPress, userLocation, activeMarkerId }, ref) => {
+  ({ markers, onMarkerPress, userLocation, activeMarkerId, completedSpotIds = [], nextSpotId }, ref) => {
   const [zoomLevel, setZoomLevel] = useState(18);
 
   const handleCameraChange = (e: any) => {
@@ -57,19 +67,24 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
     return map;
   }, [markers]);
 
-  /* Helper to get marker icon component based on type */
-  const getMarkerIcon = (type: string) => {
+  /* Helper to get the default (non-complete) icon for non-PLACE types */
+  const getDefaultIcon = (type: string) => {
     switch (type) {
-      case 'PLACE':
-        return PlaceIcon;
-      case 'SUB_PLACE':
-        return SubPlaceIcon;
-      case 'PHOTO':
-        return PhotoIcon;
-      case 'TREASURE':
-        return TreasureIcon;
-      default:
-        return PlaceIcon;
+      case 'SUB_PLACE': return SubPlaceIcon;
+      case 'PHOTO': return PhotoIcon;
+      case 'TREASURE': return TreasureIcon;
+      default: return SubPlaceIcon;
+    }
+  };
+
+  /* Helper to get the complete icon for each type */
+  const getCompleteIcon = (type: string) => {
+    switch (type) {
+      case 'PLACE': return PlaceCompleteIcon;
+      case 'SUB_PLACE': return SubPlaceCompleteIcon;
+      case 'PHOTO': return PhotoCompleteIcon;
+      case 'TREASURE': return TreasureCompleteIcon;
+      default: return PlaceCompleteIcon;
     }
   };
 
@@ -103,8 +118,9 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
         isShowCompass={false}
       >
         {visibleMarkers.map((marker) => {
-          const Icon = getMarkerIcon(marker.type);
           const size = getMarkerSize(marker.type);
+          const isCompleted = completedSpotIds.includes(marker.id);
+          const isLive = nextSpotId === marker.id;
 
           /* Calculate distance to user */
           const distance = userLocation
@@ -119,6 +135,54 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
           /* Show circle if active OR within 50m */
           const showCircle = activeMarkerId === marker.id || distance < 50;
 
+          /* Render marker content based on type and status */
+          const renderMarkerContent = () => {
+            if (marker.type === 'PLACE') {
+              if (isCompleted) {
+                const CompleteIcon = getCompleteIcon('PLACE');
+                return <CompleteIcon width={size.width} height={size.height} />;
+              }
+              if (isLive) {
+                return (
+                  <LivePlaceNumberMarker
+                    number={placeOrderMap[marker.id]}
+                    width={size.width}
+                    height={size.height}
+                  />
+                );
+              }
+              return (
+                <PlaceNumberMarker
+                  number={placeOrderMap[marker.id]}
+                  width={size.width}
+                  height={size.height}
+                />
+              );
+            }
+
+            // Non-PLACE types
+            if (isCompleted) {
+              const CompleteIcon = getCompleteIcon(marker.type);
+              return <CompleteIcon width={size.width} height={size.height} />;
+            }
+            if (isLive && marker.type === 'SUB_PLACE') {
+              // SUB_PLACE live 상태: 기본 아이콘에 강조 표시
+              return (
+                <View style={{ position: 'relative' }}>
+                  <View style={{
+                    position: 'absolute', top: -3, right: -3,
+                    width: 10, height: 10, borderRadius: 5,
+                    backgroundColor: '#22C55E', borderWidth: 2, borderColor: '#FFFFFF',
+                    zIndex: 1,
+                  }} />
+                  <SubPlaceIcon width={size.width} height={size.height} />
+                </View>
+              );
+            }
+            const DefaultIcon = getDefaultIcon(marker.type);
+            return <DefaultIcon width={size.width} height={size.height} />;
+          };
+
           return (
             <React.Fragment key={marker.id}>
               {/* Marker Overlay */}
@@ -131,15 +195,7 @@ export const MapViewWidget = forwardRef<React.ElementRef<typeof NaverMapView>, M
                 anchor={{ x: 0.5, y: 0.5 }}
                 onTap={() => onMarkerPress(marker)}
               >
-                {marker.type === 'PLACE' ? (
-                  <PlaceNumberMarker
-                    number={placeOrderMap[marker.id]}
-                    width={size.width}
-                    height={size.height}
-                  />
-                ) : (
-                  <Icon width={size.width} height={size.height} />
-                )}
+                {renderMarkerContent()}
               </NaverMapMarkerOverlay>
               
               {/* Circle Overlay */}

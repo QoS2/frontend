@@ -23,7 +23,7 @@ export const TourCountsSchema = z.object({
 
 export const SpotSchema = z.object({
   spotId: z.number(),
-  type: SpotTypeSchema.optional().default('MAIN'), // Optional in some contexts
+  type: SpotTypeSchema, 
   title: z.string(),
   lat: z.number(),
   lng: z.number(),
