@@ -65,7 +65,7 @@ export const TourDetailSchema = z.object({
     estimated_duration_min: z.number().nullable().optional().default(0),
   }).nullable().optional().default({ estimated_duration_min: 0 }),
   goodToKnow: z.array(z.string()).nullable().optional().default([]),
-  startSpot: SpotSchema,
+  startSpot: SpotSchema.extend({ type: SpotTypeSchema.optional() }),
   mapSpots: z.array(SpotSchema).optional().default([]),
   access: z.object({
     status: AccessStatusSchema,
@@ -111,7 +111,7 @@ export const RunResponseSchema = z.object({
     totalCount: z.number(),
     completedSpotIds: z.array(z.number()),
   }),
-  startSpot: SpotSchema,
+  startSpot: SpotSchema.extend({ type: SpotTypeSchema.optional() }),
 });
 
 // --- Payload Schemas ---

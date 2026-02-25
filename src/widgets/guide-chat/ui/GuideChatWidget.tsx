@@ -17,7 +17,7 @@ import { useActionOverlayStore } from '@features/action-overlay/useActionOverlay
 import { useRunProgressStore } from '@features/run-progress/runProgressStore';
 import { useNextTurnByUrl, fetchChatSession, fetchChatHistory } from '@entities/run/model';
 import { useTourStore } from '@entities/tour/store';
-import { useTourDetail } from '@entities/tour/model';
+import { useTourDetail, useCurrentRun } from '@entities/tour/model';
 import { httpClient } from '@shared/api/httpClient';
 
 type GuideChatRouteProp = RouteProp<BottomSheetStackParamList, 'GuideChat'>;
@@ -43,9 +43,7 @@ export function GuideChatWidget() {
   const { openAction } = useActionOverlayStore();
 
   // 1. Determine Context
-  const activeTourId = useTourStore((state) => state.activeTourId);
-  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
-  const runId = tourDetail?.currentRun?.runId;
+  const { activeTourId, tourDetail, runId } = useCurrentRun();
 
   const contextStepIdRaw = route.params?.stepId || triggeredMarkerId || activeMarkerId;
   

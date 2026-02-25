@@ -21,16 +21,16 @@ import type {BottomSheetStackParamList} from '@features/bottom-sheet';
 import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
-import {useLocationTracker, useDistanceCalculator} from '@shared/lib';
+import {useLocationTracker, useDistanceCalculator, getTargetTabForMarker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
 import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
 import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
 import { useRunProgressStore, useRunGeofence } from '@features/run-progress';
 
-import { useTourDetail, useTourRunNextSpot } from '@entities/tour/model';
+import { useTourDetail, useCurrentRun } from '@entities/tour/model';
 import { useTourStore } from '@entities/tour/store';
-import { useSendMessage } from '@entities/run/model';
+import { useSendMessage, useNextSpot } from '@entities/run/model';
 
 interface MapPageProps {
     runId?: number | null;
@@ -65,8 +65,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const [inputText, setInputText] = React.useState('');
 
     // --- Run Mode ---
-    const { data: tourDetail } = useTourDetail(tourId ?? 0);
-    const currentRun = tourDetail?.currentRun;
+    const { tourDetail, currentRun } = useCurrentRun();
     const isRunMode = !!runId && !!currentRun;
 
     const { currentTarget, setCurrentTarget, isAtTarget, activeSessionId, setCurrentTurn } = useRunProgressStore();
@@ -101,7 +100,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     }, [isRunMode, currentTarget, markers]);
 
     // next-spot API 기반으로 Live 마커를 결정 (GuideListWidget과 동일 소스)
-    const { data: nextSpotData } = useTourRunNextSpot(currentRun?.runId);
+    const { data: nextSpotData } = useNextSpot(currentRun?.runId);
     const nextLiveSpotId = nextSpotData?.nextSpot?.spotId?.toString();
 
     // Calculate Distance
@@ -172,10 +171,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         const marker = markers.find(m => m.id === markerId);
         if (!marker) return;
 
-        let targetTab = 'GuideList';
-        if (marker.type === 'PLACE' || marker.type === 'SUB_PLACE') targetTab = 'Place';
-        if (marker.type === 'PHOTO') targetTab = 'Photo';
-        if (marker.type === 'TREASURE') targetTab = 'Treasure';
+        const targetTab = getTargetTabForMarker(marker.type);
 
         // 1. BottomSheet 올리기 (85%)
         bottomSheetRef.current?.snapToIndex(2); 
@@ -257,10 +253,7 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const handleMarkerPress = (marker: any) => {
         console.log(`[Marker Click] ${marker.title}`);
         
-        let targetTab = 'GuideList';
-        if (marker.type === 'PLACE' || marker.type === 'SUB_PLACE') targetTab = 'Place';
-        if (marker.type === 'PHOTO') targetTab = 'Photo';
-        if (marker.type === 'TREASURE') targetTab = 'Treasure';
+        const targetTab = getTargetTabForMarker(marker.type);
 
         // 1. BottomSheet 올리기 (85%)
         bottomSheetRef.current?.snapToIndex(2); 

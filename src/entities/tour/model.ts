@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@shared/api/httpClient';
+import { useTourStore } from './store';
 import {
   TourListResponseSchema,
   TourDetailSchema,
@@ -9,8 +10,6 @@ import {
   TourDetail,
   RunResponse,
   RunActionSchema,
-  RunStatusSchema,
-  SpotTypeSchema,
 } from '../../shared/api/tour.contracts';
 import { ApiError, ApiErrorSchema } from '../../shared/api/auth.contracts';
 
@@ -51,47 +50,23 @@ const startTourApi = async ({ tourId, mode }: { tourId: number; mode: 'START' | 
   return RunResponseSchema.parse(response);
 };
 
-// --- Additional Schemas ---
-export const NextSpotResponseSchema = z.object({
-  runId: z.number(),
-  status: RunStatusSchema,
-  hasNextSpot: z.boolean(),
-  nextSpot: z.object({
-    spotId: z.number(),
-    spotType: SpotTypeSchema,
-    title: z.string(),
-    lat: z.number(),
-    lng: z.number(),
-    radiusM: z.number(),
-    orderIndex: z.number(),
-  }).nullable(),
-  progress: z.object({
-    completedCount: z.number(),
-    totalCount: z.number(),
-    completedSpotIds: z.array(z.number()),
-  }),
-});
 
-export type NextSpotResponse = z.infer<typeof NextSpotResponseSchema>;
 
-// --- API Functions ---
+export const useCurrentRun = () => {
+  const activeTourId = useTourStore((state) => state.activeTourId);
+  const { data: tourDetail, isLoading: isTourDetailLoading } = useTourDetail(activeTourId ?? 0);
+  const currentRun = tourDetail?.currentRun;
+  const runId = currentRun?.runId;
+  const isRunMode = !!runId && !!currentRun;
 
-const fetchNextSpot = async (runId: number): Promise<NextSpotResponse> => {
-  const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/next-spot`);
-  return NextSpotResponseSchema.parse(response);
-};
-
-// ... inside existing fetch functions ...
-
-// --- Hooks ---
-
-export const useTourRunNextSpot = (runId?: number) => {
-  return useQuery<NextSpotResponse, ApiError>({
-    queryKey: ['tour-run', runId, 'next-spot'],
-    queryFn: () => fetchNextSpot(runId!),
-    enabled: !!runId,
-    staleTime: 1000 * 30, // 30 seconds
-  });
+  return {
+    activeTourId,
+    tourDetail,
+    isTourDetailLoading,
+    currentRun,
+    runId,
+    isRunMode,
+  };
 };
 
 export const useTours = () => {

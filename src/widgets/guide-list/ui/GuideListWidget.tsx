@@ -11,23 +11,20 @@ import { useLocationMarkers } from '@entities/location';
 import { useMapNavigationStore } from '@features/map-navigation';
 import { useUserProgress } from '@entities/user';
 import { useTourStore } from '@entities/tour/store';
-import { useTourDetail } from '@entities/tour/model';
+import { useTourDetail, useCurrentRun } from '@entities/tour/model';
 import { LocationMarker } from '@shared/api/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '@shared/api/httpClient';
 import { ChatSessionResponseSchema } from '@shared/api/run.contracts';
-
-import { useTourRunNextSpot } from '@entities/tour/model';
+import { useNextSpot } from '@entities/run/model';
 
 type GuideStatus = 'done' | 'live' | 'unlock' | 'lock';
 
 export function GuideListWidget() {
   const { data: markers = [] } = useLocationMarkers();
   const { activeMarkerId } = useMapNavigationStore();
-  const activeTourId = useTourStore((state) => state.activeTourId);
-  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
-  const runId = tourDetail?.currentRun?.runId;
-  const { data: nextSpotData } = useTourRunNextSpot(runId);
+  const { tourDetail, runId } = useCurrentRun();
+  const { data: nextSpotData } = useNextSpot(runId);
 
   // Filter and sort items based on markers and their ID order
   const guideItems = React.useMemo(() => {

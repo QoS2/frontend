@@ -3,7 +3,8 @@ import { View, Text, Pressable } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
 import { useTourStore } from '@entities/tour/store';
-import { useTourDetail, useTourRunNextSpot } from '@entities/tour/model';
+import { useTourDetail, useCurrentRun } from '@entities/tour/model';
+import { useNextSpot } from '@entities/run/model';
 import { useMapNavigationStore } from '@features/map-navigation';
 
 // 탭 데이터 정의
@@ -34,11 +35,9 @@ export const BottomSheetHandle = ({ animatedIndex, animatedPosition, navigationR
     }
   }, [currentRoute]);
 
-  const activeTourId = useTourStore((state: any) => state.activeTourId);
-  const { data: tourDetail } = useTourDetail(activeTourId ?? 0);
+  const { tourDetail, runId } = useCurrentRun();
   const { activeMarkerId } = useMapNavigationStore();
-  const runId = tourDetail?.currentRun?.runId;
-  const { data: nextSpotData } = useTourRunNextSpot(runId);
+  const { data: nextSpotData } = useNextSpot(runId);
 
   const handleTabPress = (id: string, label: string) => {
       if (!navigationRef?.current) return;
