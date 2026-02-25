@@ -21,22 +21,26 @@ import type {BottomSheetStackParamList} from '@features/bottom-sheet';
 import {Mic} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
-import {useLocationTracker, useDistanceCalculator, getTargetTabForMarker} from '@shared/lib';
+import {useLocationTracker, getTargetTabForMarker} from '@shared/lib';
 import {useGeofenceTrigger, useMapNavigationStore} from '@features/map-navigation';
 import {ActionPage} from '@pages/action';
 import { useActionOverlayStore } from '@features/action-overlay/useActionOverlayStore';
-import { DiscoveryPopup, useDiscoveryPopupStore } from '@features/discovery-popup';
+import { DiscoveryPopup } from '@features/discovery-popup';
 import { useRunProgressStore, useRunGeofence } from '@features/run-progress';
 
-import { useTourDetail, useCurrentRun } from '@entities/tour/model';
+import { useCurrentRun } from '@entities/tour/model';
 import { useTourStore } from '@entities/tour/store';
-import { useSendMessage, useNextSpot } from '@entities/run/model';
+import { useNextSpot } from '@entities/run/model';
+
+// --- Custom Hooks ---
+import { useRunSync } from '../lib/useRunSync';
+import { useDiscoveryTrigger } from '../lib/useDiscoveryTrigger';
+import { useChatSend } from '../lib/useChatSend';
 
 interface MapPageProps {
     runId?: number | null;
     tourId?: number | null;
 }
-
 
 export function MapPage({ runId, tourId }: MapPageProps) {
     const bottomSheetRef = useRef<BottomSheet>(null);
@@ -54,134 +58,65 @@ export function MapPage({ runId, tourId }: MapPageProps) {
     const {activeMarkerId} = useMapNavigationStore();
     const [currentRoute, setCurrentRoute] = React.useState<string>('GuideChat');
 
-    const { activeAction, closeAction, openAction } = useActionOverlayStore();
-    const { showPopup, dismissedMarkerId } = useDiscoveryPopupStore();
+    const { activeAction, closeAction } = useActionOverlayStore();
+    const { isStreaming } = useChatStore();
 
-    useEffect(() => {
-        console.log('[CHAT_DEBUG] MapPage - activeAction changed:', JSON.stringify(activeAction));
-    }, [activeAction]);
-
-    const {addMessage, streamReply, isStreaming} = useChatStore();
-    const [inputText, setInputText] = React.useState('');
-
-    // --- Run Mode ---
+    // --- Run Mode Content ---
     const { tourDetail, currentRun } = useCurrentRun();
     const isRunMode = !!runId && !!currentRun;
 
-    const { currentTarget, setCurrentTarget, isAtTarget, activeSessionId, setCurrentTurn } = useRunProgressStore();
-    const { setTriggeredMarkerId } = useMapNavigationStore();
-    const { mutate: sendMessage } = useSendMessage();
+    const { targetMarker, navDestination, navDistance } = useRunSync({
+        isRunMode,
+        tourDetail,
+        currentRun,
+        location,
+    });
 
-    // Sync RunState to RunProgressStore
-    useEffect(() => {
-        if (!isRunMode || !tourDetail || !currentRun) {
-            setCurrentTarget(null);
-            return;
-        }
-        const completedIds = currentRun.progress.completedSpotIds;
-        const nextSpot = tourDetail.mapSpots.find(spot => !completedIds.includes(spot.spotId));
-        if (nextSpot) {
-            setCurrentTarget({
-                spotId: nextSpot.spotId,
-                title: nextSpot.title,
-                lat: nextSpot.lat,
-                lng: nextSpot.lng,
-                radiusM: nextSpot.radiusM ?? 50,
-            });
-        } else {
-            setCurrentTarget(null);
-        }
-    }, [isRunMode, tourDetail, currentRun, setCurrentTarget]);
+    const { isAtTarget, activeSessionId } = useRunProgressStore();
 
-    // Target Logic: 
-    const targetMarker = useMemo(() => {
-        if (!isRunMode || !currentTarget) return null;
-        return markers.find(m => m.type === 'PLACE' && m.title === currentTarget.title) || null;
-    }, [isRunMode, currentTarget, markers]);
-
-    // next-spot API 기반으로 Live 마커를 결정 (GuideListWidget과 동일 소스)
+    // next-spot API 기반으로 Live 마커를 결정
     const { data: nextSpotData } = useNextSpot(currentRun?.runId);
     const nextLiveSpotId = nextSpotData?.nextSpot?.spotId?.toString();
 
-    // Calculate Distance
-    const distanceText = useDistanceCalculator(
-        location, 
-        currentTarget 
-            ? { latitude: currentTarget.lat, longitude: currentTarget.lng } 
-            : (targetMarker ? targetMarker.coordinate : null)
-    );
+    // --- Chat Trigger & Geo-fences ---
+    useDiscoveryTrigger({
+        isRunMode,
+        isAtTarget,
+        targetMarkerId: targetMarker?.id,
+        markers,
+        currentRun,
+    });
 
-    // Derive TopNavBar data
-    const navDestination = currentTarget ? currentTarget.title : (targetMarker ? targetMarker.title : 'Exploring Seoul');
-    const navDistance = distanceText || 'Calculating...';
-
-    // Inject guide welcome message when entering run mode
-    const hasInjectedRef = useRef(false);
-    useEffect(() => {
-        if (isRunMode && !hasInjectedRef.current) {
-            const completedIds = currentRun?.progress?.completedSpotIds || [];
-            if (completedIds.length === 0) {
-                addMessage({
-                    sender: 'ai',
-                    type: 'text',
-                    text: '🎉 투어를 시작합니다! 첫 번째 목적지인 광화문으로 이동해주세요.',
-                });
-            }
-            hasInjectedRef.current = true;
-        }
-        if (!isRunMode) {
-            hasInjectedRef.current = false;
-        }
-    }, [isRunMode, addMessage, currentRun]);
-
-
-    // Trigger Popup for Photo/Treasure markers
-    const { triggeredMarkerId } = useMapNavigationStore();
-    
-    // Auto-trigger GuideChat when entering Target Geofence
-    useEffect(() => {
-        if (isRunMode && isAtTarget && targetMarker) {
-            setTriggeredMarkerId(targetMarker.id);
-        }
-    }, [isRunMode, isAtTarget, targetMarker, setTriggeredMarkerId]);
-
-    useEffect(() => {
-        if (!triggeredMarkerId) return;
-
-        const marker = markers.find(m => m.id === triggeredMarkerId);
-        if (!marker) return;
-
-        // Check if user already dismissed this marker popup in this session
-        if (dismissedMarkerId === marker.id) return;
-
-        if (marker.type === 'PHOTO' || marker.type === 'TREASURE') {
-            showPopup({
-                type: marker.type as 'PHOTO' | 'TREASURE',
-                markerId: marker.id,
-                markerTitle: marker.title,
-            });
-        }
-    }, [triggeredMarkerId, markers, dismissedMarkerId, showPopup]);
-
-    // 순서 모드일 때 메인 장소(PLACE)는 제외시키고 자동 타겟 설정으로 위임
     useGeofenceTrigger(location, isRunMode ? ['PLACE', 'SUB_PLACE'] : undefined);
     useRunGeofence(location, isRunMode && currentRun ? currentRun.runId : null);
+
+    // --- Actions & Handlers ---
+    const { inputText, setInputText, handleSend: sendMsg } = useChatSend({ activeSessionId });
+
+    const handleSend = useCallback(() => {
+        sendMsg(isStreaming);
+    }, [sendMsg, isStreaming]);
 
     const handleDiscoveryAction = (type: string, markerId: string) => {
         const marker = markers.find(m => m.id === markerId);
         if (!marker) return;
 
         const targetTab = getTargetTabForMarker(marker.type);
-
-        // 1. BottomSheet 올리기 (85%)
         bottomSheetRef.current?.snapToIndex(2); 
-        
-        // 2. 해당 탭으로 이동
         bottomSheetNavigationRef.current?.navigate(targetTab as any, { itemId: marker.id });
     };
 
+    const handleMarkerPress = (marker: any) => {
+        const targetTab = getTargetTabForMarker(marker.type);
+        bottomSheetRef.current?.snapToIndex(2); 
+        bottomSheetNavigationRef.current?.navigate(targetTab as any, { itemId: marker.id });
+    };
 
-    // Animation for input visibility
+    const handleLocationButtonPress = () => {
+        mapRef.current?.setLocationTrackingMode('Follow');
+    };
+
+    // --- Animations & UI Effects ---
     const inputOpacity = useSharedValue(1);
     const inputTranslateY = useSharedValue(0);
 
@@ -189,16 +124,13 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         const shouldShow = currentRoute === 'GuideChat';
         inputOpacity.value = withTiming(shouldShow ? 1 : 0, {duration: 200});
         inputTranslateY.value = withTiming(shouldShow ? 0 : 20, {duration: 200});
-    }, [currentRoute]);
+    }, [currentRoute, inputOpacity, inputTranslateY]);
 
     const inputAnimatedStyle = useAnimatedStyle(() => ({
         opacity: inputOpacity.value,
         transform: [{translateY: inputTranslateY.value}],
     }));
 
-    // Effect to control BottomSheet based on Action Overlay
-    // close() 대신 snapToIndex(0)을 사용하여 NavigationContainer가 unmount되지 않도록 유지
-    // ActionPage(z-50)가 전체 화면을 덮으므로 25% 위치의 BottomSheet는 사용자에게 보이지 않음
     useEffect(() => {
         if (activeAction) {
             bottomSheetRef.current?.snapToIndex(0);
@@ -207,42 +139,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         }
     }, [activeAction]);
 
-    const handleSend = () => {
-        if (!inputText.trim() || isStreaming) return;
-        Keyboard.dismiss();
-
-        const textToSend = inputText.trim();
-        addMessage({sender: 'user', text: textToSend, type: 'text'});
-        setInputText('');
-
-        if (activeSessionId) {
-            sendMessage(
-                { sessionId: activeSessionId, data: { text: textToSend } },
-                {
-                    onSuccess: (res) => {
-                        // Map ChatMessageResponse to ChatTurn
-                        const aiTurn = {
-                            turnId: res.aiTurnId,
-                            role: 'GUIDE',
-                            source: 'LLM',
-                            text: res.aiText,
-                            action: res.hasNextScript ? { type: 'AUTO_NEXT', nextApi: res.nextScriptApi } : null,
-                        };
-                        setCurrentTurn(aiTurn as any);
-                    },
-                    onError: (err) => {
-                        console.error('Chat Send Failed:', err);
-                    }
-                }
-            );
-        } else {
-            // Fallback for non-run mode or missing session
-            setTimeout(() => {
-                streamReply(`Response: "${textToSend}"`);
-            }, 500);
-        }
-    };
-
     useEffect(() => {
         const timer = setTimeout(() => {
             mapRef.current?.setLocationTrackingMode('Follow');
@@ -250,23 +146,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
         return () => clearTimeout(timer);
     }, []);
 
-    const handleMarkerPress = (marker: any) => {
-        console.log(`[Marker Click] ${marker.title}`);
-        
-        const targetTab = getTargetTabForMarker(marker.type);
-
-        // 1. BottomSheet 올리기 (85%)
-        bottomSheetRef.current?.snapToIndex(2); 
-        
-        // 2. 해당 탭으로 이동 (TODO: itemId params 전달)
-        bottomSheetNavigationRef.current?.navigate(targetTab as any, { itemId: marker.id });
-    };
-
-    const handleLocationButtonPress = () => {
-        mapRef.current?.setLocationTrackingMode('Follow');
-    };
-
-    // Custom Handle Component
     const renderHandle = useCallback(
         (props: BottomSheetHandleProps) => (
              <View className="relative">
@@ -275,8 +154,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                     navigationRef={bottomSheetNavigationRef} 
                     currentRoute={currentRoute}
                 />
-                
-                {/* Location Button */}
                 <Pressable
                     onPress={handleLocationButtonPress}
                     className="absolute -top-14 right-4 items-center justify-center w-12 h-12 rounded-full active:opacity-70"
@@ -297,12 +174,10 @@ export function MapPage({ runId, tourId }: MapPageProps) {
 
     return (
         <GestureHandlerRootView className="flex-1 relative">
-            {/* Top Navigation */}
             <View className="absolute left-0 right-0 top-0 z-10">
                 <TopNavBar destination={navDestination} distance={navDistance}/>
             </View>
 
-            {/* Map */}
             <MapViewWidget
                 ref={mapRef}
                 markers={markers}
@@ -331,11 +206,8 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                 />
             </BottomSheet>
 
-            {/* Discovery Popup */}
             <DiscoveryPopup onAction={handleDiscoveryAction} />
 
-
-            {/* Animated Floating Input */}
             <Animated.View
                 className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-white border-t border-gray-100"
                 style={[
@@ -376,7 +248,6 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                 </View>
             </Animated.View>
 
-            {/* Action Overlay Layer - Ensure it's the LAST child for stacking priority */}
             {activeAction && (
                 <View 
                     className="absolute inset-0" 
