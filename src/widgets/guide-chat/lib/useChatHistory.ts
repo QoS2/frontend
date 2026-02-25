@@ -23,7 +23,7 @@ export function useChatHistory({
 }: UseChatHistoryProps) {
     const { triggeredMarkerId, activeMarkerId } = useMapNavigationStore();
     const { setActiveSpot, setMessages, addMessage } = useChatStore();
-    const { setSession, markTurnAsPlayed } = useRunProgressStore();
+    const { setSession, markTurnAsPlayed, activeSessionId, currentTarget } = useRunProgressStore();
 
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
@@ -91,6 +91,25 @@ export function useChatHistory({
         let cancelled = false;
         const spotIdNum = Number(contextStepId);
         if (isNaN(spotIdNum)) return;
+
+        // 가드: 스팟 언락 여부 확인
+        const completedIds = tourDetail?.currentRun?.progress?.completedSpotIds || [];
+        const isCompleted = completedIds.includes(spotIdNum);
+        const isCurrentWithSession = currentTarget?.spotId === spotIdNum && !!activeSessionId;
+
+        if (!isCompleted && !isCurrentWithSession) {
+            setActiveSpot(contextStepId.toString());
+            const markerTitle = activeMarker?.title || '다음 장소';
+            setMessages([{
+                id: 'nav-guide', 
+                sender: 'ai', 
+                type: 'text',
+                text: `📍 ${markerTitle}(으)로 이동해주세요!\n도착하면 AI 가이드가 시작됩니다.`,
+                timestamp: Date.now(),
+            }]);
+            setIsHistoryLoading(false);
+            return;
+        }
 
         // Clear old messages for this new spot
         // getState() for setActiveSpot isn't needed here because we got it from hook,
@@ -189,8 +208,21 @@ export function useChatHistory({
                         }
                     }
                 }
-            } catch (error) {
-                console.error('[Chat] Failed to load history:', error);
+            } catch (error: any) {
+                if (error?.status === 400 || error?.response?.status === 400) {
+                    const markerTitle = activeMarker?.title || '다음 장소';
+                    if (!cancelled) {
+                        setMessages([{
+                            id: 'nav-guide', 
+                            sender: 'ai', 
+                            type: 'text',
+                            text: `📍 ${markerTitle}(으)로 이동해주세요!\n도착하면 AI 가이드가 시작됩니다.`,
+                            timestamp: Date.now(),
+                        }]);
+                    }
+                } else {
+                    console.error('[Chat] Failed to load history:', error);
+                }
             } finally {
                 if (!cancelled) setIsHistoryLoading(false);
             }
@@ -198,7 +230,8 @@ export function useChatHistory({
 
         return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contextStepId, runId]); // Primitive deps only
+    }, [contextStepId, runId, activeSessionId]); // Added activeSessionId dependency
+
 
     return {
         contextStepId,
