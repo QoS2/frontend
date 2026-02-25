@@ -15,8 +15,12 @@ interface ActionOverlayState {
   closeAction: () => void;
 }
 
-export const useActionOverlayStore = create<ActionOverlayState>((set) => ({
+export const initialState: Pick<ActionOverlayState, 'activeAction'> = {
   activeAction: null,
+};
+
+export const useActionOverlayStore = create<ActionOverlayState>((set) => ({
+  ...initialState,
   openAction: (action) => set({ activeAction: action }),
   closeAction: () => set({ activeAction: null }),
 }));

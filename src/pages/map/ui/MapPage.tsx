@@ -11,14 +11,14 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import BottomSheet, {BottomSheetHandleProps} from '@gorhom/bottom-sheet';
 import type {NavigationContainerRef} from '@react-navigation/native';
 import {NaverMapView} from '@mj-studio/react-native-naver-map';
-import { LocateIcon, VoiceIcon } from '@shared/assets/icons';
+import { LocateIcon } from '@shared/assets/icons';
 
 import {MapViewWidget} from '@widgets/map-view';
 import {TopNavBar} from '@widgets/top-nav';
 import {BottomSheetNavigator, BottomSheetHandle} from '@features/bottom-sheet';
 import type {BottomSheetStackParamList} from '@features/bottom-sheet';
 
-import {Mic} from 'lucide-react-native';
+import {Send} from 'lucide-react-native';
 import {useChatStore} from '@features/ai-chat';
 import {useLocationMarkers} from '@entities/location';
 import {useLocationTracker, getTargetTabForMarker} from '@shared/lib';
@@ -235,15 +235,15 @@ export function MapPage({ runId, tourId }: MapPageProps) {
                         onSubmitEditing={handleSend}
                         returnKeyType="send"
                     />
-                    <Pressable className="p-2 mr-1 active:opacity-70">
-                        <Mic size={24} color="#6B7280" />
-                    </Pressable>
                     <Pressable
                         onPress={handleSend}
                         disabled={!inputText.trim() || isStreaming}
-                        className="items-center justify-center active:opacity-70"
+                        className="p-2 items-center justify-center active:opacity-70"
                     >
-                        <VoiceIcon width={28} height={28} />
+                        <Send 
+                            size={24} 
+                            color={!inputText.trim() || isStreaming ? '#D1D5DB' : '#3B82F6'} 
+                        />
                     </Pressable>
                 </View>
             </Animated.View>

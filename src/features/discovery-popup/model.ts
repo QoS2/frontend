@@ -19,9 +19,13 @@ interface DiscoveryPopupState {
   clearDismissed: () => void;
 }
 
-export const useDiscoveryPopupStore = create<DiscoveryPopupState>((set) => ({
+export const initialState: Pick<DiscoveryPopupState, 'popupInfo' | 'dismissedMarkerId'> = {
   popupInfo: null,
   dismissedMarkerId: null,
+};
+
+export const useDiscoveryPopupStore = create<DiscoveryPopupState>((set) => ({
+  ...initialState,
 
   showPopup: (info) => set({ popupInfo: info }),
   dismissPopup: () => set((state) => ({ 

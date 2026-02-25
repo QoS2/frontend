@@ -65,7 +65,9 @@ export function GuideChatWidget() {
     const { handleActionClick } = useChatActionHandler({
         contextStepId,
         activeMarker,
-        runId
+        runId,
+        navigation,
+        processTurnAction: (action, delay) => turnPlayer.processTurnAction(action, delay)
     });
 
     // Auto-scroll to bottom

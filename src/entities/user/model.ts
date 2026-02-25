@@ -17,15 +17,19 @@ interface UserProgressState {
   completeQuest: (questId: string) => void;
 }
 
+export const initialState: Pick<UserProgressState, 'currentStepId' | 'visitedPlaceIds' | 'textProgressIndex' | 'completedQuestIds' | 'inventory' | 'totalMint'> = {
+  currentStepId: null,
+  visitedPlaceIds: [],
+  textProgressIndex: 0,
+  completedQuestIds: [],
+  inventory: [],
+  totalMint: 0,
+};
+
 export const useUserProgress = create<UserProgressState>()(
   persist(
     (set) => ({
-      currentStepId: null,
-      visitedPlaceIds: [],
-      textProgressIndex: 0,
-      completedQuestIds: [],
-      inventory: [],
-      totalMint: 0,
+      ...initialState,
 
       setCurrentStep: (stepId) => set({ currentStepId: stepId }),
       addVisitedPlace: (placeId) =>

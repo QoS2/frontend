@@ -7,7 +7,11 @@ interface BottomSheetState {
   setView: (view: BottomSheetView) => void;
 }
 
-export const useBottomSheetStore = create<BottomSheetState>((set) => ({
+export const initialState: Pick<BottomSheetState, 'currentView'> = {
   currentView: 'chat',
+};
+
+export const useBottomSheetStore = create<BottomSheetState>((set) => ({
+  ...initialState,
   setView: (view) => set({ currentView: view }),
 }));

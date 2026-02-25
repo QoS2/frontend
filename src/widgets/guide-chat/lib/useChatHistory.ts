@@ -75,11 +75,19 @@ export function useChatHistory({
                 data: { stepId: missionStepId, isCompleted } 
             });
         } else if (action.type === 'NEXT') {
-            chatActions.push({ 
-                label: '다음 장소로', 
-                actionId: 'next-step', 
-                data: { nextApi: action.nextApi } 
-            });
+            if (action.nextApi) {
+                chatActions.push({ 
+                    label: '다음으로', 
+                    actionId: 'next-turn', 
+                    data: { nextApi: action.nextApi } 
+                });
+            } else {
+                chatActions.push({ 
+                    label: '다음 장소로', 
+                    actionId: 'go-guide-list', 
+                    data: {} 
+                });
+            }
         }
         return chatActions;
     };

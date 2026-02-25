@@ -9,9 +9,13 @@ interface MapNavigationState {
   reset: () => void;
 }
 
-export const useMapNavigationStore = create<MapNavigationState>((set) => ({
+export const initialState: Pick<MapNavigationState, 'activeMarkerId' | 'triggeredMarkerId'> = {
   activeMarkerId: null,
   triggeredMarkerId: null,
+};
+
+export const useMapNavigationStore = create<MapNavigationState>((set) => ({
+  ...initialState,
 
   setActiveMarkerId: (id) => set({ activeMarkerId: id }),
   setTriggeredMarkerId: (id) => set({ triggeredMarkerId: id }),

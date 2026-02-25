@@ -7,9 +7,11 @@ interface UseChatActionHandlerProps {
     contextStepId?: string | null;
     activeMarker?: any;
     runId?: number | null;
+    navigation?: any;
+    processTurnAction?: (action: any, delayMs?: number | null) => void;
 }
 
-export function useChatActionHandler({ contextStepId, activeMarker, runId }: UseChatActionHandlerProps) {
+export function useChatActionHandler({ contextStepId, activeMarker, runId, navigation, processTurnAction }: UseChatActionHandlerProps) {
     const { setTriggeredMarkerId } = useMapNavigationStore();
     const { openAction } = useActionOverlayStore();
     const { currentRun } = useCurrentRun();
@@ -23,23 +25,23 @@ export function useChatActionHandler({ contextStepId, activeMarker, runId }: Use
                 setTriggeredMarkerId(contextStepId);
                 
                 openAction({
-                    type: action.data.isCompleted ? 'MISSION_CHOICE' : activeMarker.type,
-                    contentId: contextStepId,
-                    questId: action.data.stepId.toString(),
+                    type: 'MISSION_CHOICE', // ActionPage determines actual type via useMissionStep
+                    contentId: action.data.stepId.toString(),
                     targetName: activeMarker.title,
                 });
                 break;
                 
-            case 'next-step':
+            case 'next-turn':
+                processTurnAction?.(
+                    { type: 'AUTO_NEXT', nextApi: action.data.nextApi },
+                    0
+                );
+                break;
+                
+            case 'go-guide-list':
                 // Set to null to indicate we're going to the next spot
                 setTriggeredMarkerId(null);
-                
-                openAction({
-                    type: 'NEXT_PLACE',
-                    contentId: contextStepId,
-                    questId: '0',
-                    targetName: '다음 장소 힌트',
-                });
+                navigation?.navigate('GuideList');
                 break;
                 
             default:

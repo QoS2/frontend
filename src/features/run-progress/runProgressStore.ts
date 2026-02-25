@@ -29,13 +29,17 @@ interface RunProgressState {
   reset: () => void;
 }
 
-export const useRunProgressStore = create<RunProgressState>((set) => ({
+export const initialState: Pick<RunProgressState, 'currentTarget' | 'isAtTarget' | 'completedSpotIds' | 'activeSessionId' | 'currentTurn' | 'playedTurnIds'> = {
   currentTarget: null,
   isAtTarget: false,
   completedSpotIds: [],
   activeSessionId: null,
   currentTurn: null,
   playedTurnIds: [],
+};
+
+export const useRunProgressStore = create<RunProgressState>((set) => ({
+  ...initialState,
 
   setCurrentTarget: (target) => set({ currentTarget: target }),
   setIsAtTarget: (value) => set({ isAtTarget: value }),

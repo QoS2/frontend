@@ -49,7 +49,7 @@ export function useChatSend({ activeSessionId }: UseChatSendProps) {
         } else {
             // Fallback for non-run mode or missing session
             setTimeout(() => {
-                streamReply(`Response: "${textToSend}"`);
+                streamReply('📍 해당 위치에 도착한 후 질문을 시작할 수 있습니다!');
             }, 500);
         }
     };

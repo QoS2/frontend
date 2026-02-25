@@ -180,7 +180,7 @@ function GuideItem({ item, status, runId }: GuideItemProps) {
         const response = await httpClient.get<unknown>(`/api/v1/tour-runs/${runId}/spots/${spotId}/chat-session`);
         return ChatSessionResponseSchema.parse(response);
       },
-      staleTime: 1000 * 60 * 10, // 10 minutes
+      // staleTime: 1000 * 60 * 10, // 10 minutes - Caching disabled
     });
   };
 

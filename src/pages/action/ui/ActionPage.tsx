@@ -34,9 +34,9 @@ export function ActionPage({
     
     // --- Data Fetching ---
     
-    // 1. Mission Type (QUIZ, CAMERA, REWARD)
+    // 1. Mission Type (QUIZ, CAMERA, REWARD, MISSION_CHOICE)
     // Note: contentId passed here is the mission's stepId (equivalent to spotId for spot guides)
-    const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD') ? contentId : undefined;
+    const stepId = (type === 'QUIZ' || type === 'CAMERA' || type === 'REWARD' || type === 'MISSION_CHOICE') ? contentId : undefined;
     const { data: mission, isLoading: isMissionLoading } = useMissionStep(stepId);
     const isCompleted = mission?.status === 'COMPLETED';
 

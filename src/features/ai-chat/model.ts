@@ -38,12 +38,16 @@ interface ChatState {
   resetChat: () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const initialState: Pick<ChatState, 'messages' | 'isStreaming' | 'welcomedMarkerIds' | 'activeContentId' | 'activeSpotId'> = {
   messages: [],
   isStreaming: false,
   welcomedMarkerIds: [],
   activeContentId: null,
   activeSpotId: null,
+};
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  ...initialState,
 
   addMessage: (msg) =>
     set((state) => {
