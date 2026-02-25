@@ -168,44 +168,19 @@ export function useChatHistory({
                 });
 
                 if (!cancelled) {
-                    const RECENCY_THRESHOLD_MS = 20000;
-                    const isFreshSession = history.turns.length > 0 && 
-                        history.turns[0].createdAt &&
-                        (Date.now() - new Date(history.turns[0].createdAt).getTime() < RECENCY_THRESHOLD_MS);
+                    // 첫 입장 (히스토리 없음)
+                    if (history.turns.length === 0 && history.hasNextScript && history.nextScriptApi) {
+                        setMessages([]); // Start empty
+                        processTurnAction({ type: 'AUTO_NEXT', nextApi: history.nextScriptApi }, 0);
+                        return;
+                    }
 
-                    if (isFreshSession) {
-                        setMessages([]); // Start empty for dramatic reveal
-                        let currentDelay = 0;
-                        
-                        historicalMessages.forEach((msg, idx) => {
-                            setTimeout(() => {
-                                if (cancelled) return;
-                                addMessage({
-                                    sender: msg.sender,
-                                    type: msg.type,
-                                    text: msg.text,
-                                    imageUrl: msg.imageUrl as string,
-                                    actions: msg.actions,
-                                    isAnimating: msg.sender === 'ai' && msg.type === 'text',
-                                });
-                                
-                                if (idx === historicalMessages.length - 1) {
-                                    const lastTurn = history.turns[history.turns.length - 1];
-                                    if (lastTurn && lastTurn.action?.type === 'AUTO_NEXT' && contextStepId === (triggeredMarkerId || activeMarkerId)) {
-                                        processTurnAction(lastTurn.action, lastTurn.delayMs);
-                                    }
-                                }
-                            }, currentDelay);
-                            
-                            currentDelay += msg.text ? (msg.text.length * 40 + 800) : 800; 
-                        });
-                    } else {
-                        setMessages(historicalMessages);
+                    // 재방문 (히스토리 있음)
+                    setMessages(historicalMessages);
 
-                        const lastTurn = history.turns[history.turns.length - 1];
-                        if (lastTurn && lastTurn.action?.type === 'AUTO_NEXT' && contextStepId === (triggeredMarkerId || activeMarkerId)) {
-                            processTurnAction(lastTurn.action, lastTurn.delayMs);
-                        }
+                    const lastTurn = history.turns[history.turns.length - 1];
+                    if (lastTurn && lastTurn.action?.type === 'AUTO_NEXT' && contextStepId === (triggeredMarkerId || activeMarkerId)) {
+                        processTurnAction(lastTurn.action, lastTurn.delayMs);
                     }
                 }
             } catch (error: any) {

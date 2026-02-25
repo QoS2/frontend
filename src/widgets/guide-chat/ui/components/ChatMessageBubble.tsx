@@ -59,9 +59,9 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({
                 <Pressable
                   key={idx}
                   onPress={() => onAction(action)}
-                  className="bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90 shadow-sm"
+                  className="group bg-white border border-[#5AC8FA] py-3 px-4 rounded-xl items-center flex-row justify-center active:bg-[#5AC8FA] active:opacity-90 shadow-sm"
                 >
-                  <Text className="text-[#5AC8FA] font-bold text-base active:text-white">{action.label}</Text>
+                  <Text className="text-[#5AC8FA] font-bold text-base group-active:text-white">{action.label}</Text>
                 </Pressable>
               ))}
             </View>
